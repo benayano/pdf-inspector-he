@@ -712,12 +712,6 @@ pub(crate) fn normalize_presentation_forms(text: &str) -> Cow<'_, str> {
 /// assumed to separate them when the line is read back for reordering.
 const WORD_GAP_EM: f32 = 0.1;
 
-/// Gap, in em, from which a word space is assumed between two items that
-/// meet with digits or the separators of a number: a hyphen or a decimal
-/// point set a little apart from its digits must not cut the number in two
-/// before the weak rules see it.
-const NUMBER_GAP_EM: f32 = 0.3;
-
 /// Whether `c` can sit inside a number: a digit or one of the separators
 /// and terminators rules W4 and W5 join to digits.
 fn joins_number(c: char) -> bool {
@@ -742,7 +736,7 @@ fn joins_number(c: char) -> bool {
 /// one, in em of the smaller font beside the gap, when its gaps yield one
 /// (a line shown one glyph per item, see `glyph_run_word_gap_floor`);
 /// otherwise a gap is a word gap from a tenth of an em. Between the two halves of a number it takes
-/// three tenths whatever the floor — digits keep their own widths where a
+/// the number gap of `crate::tuning` (two tenths by default) whatever the floor — digits keep their own widths where a
 /// font's letters are off, and a kerned or split number is still one
 /// token, which a space would break into two numbers the paragraph
 /// direction then orders.
@@ -771,6 +765,12 @@ pub(crate) fn logical_line_order<T>(
     word_gap: Option<f32>,
     rtl_base: bool,
 ) -> Vec<(usize, String)> {
+    // Gap, in em, from which a word space is assumed between two items
+    // that meet with digits or the separators of a number: a decimal point
+    // set a little apart from its digits must not cut the number in two,
+    // while two numbers a regular space apart (≈0.28 em) must stay two.
+    // See `crate::tuning`.
+    let number_gap_em = crate::tuning::current_number_gap().floor_em(word_gap);
     let mut visual: Vec<VisualChar> = Vec::new();
     let mut counts: Vec<usize> = vec![0; items.len()];
     let mut prev_right: Option<f32> = None;
@@ -787,7 +787,7 @@ pub(crate) fn logical_line_order<T>(
             let numeric_junction = prev_last.is_some_and(joins_number)
                 && display.chars().next().is_some_and(joins_number);
             let floor = match word_gap {
-                _ if numeric_junction => em_of(item).max(1.0) * NUMBER_GAP_EM,
+                _ if numeric_junction => em_of(item).max(1.0) * number_gap_em,
                 Some(floor_em) => floor_em * em_of(item).min(prev_em).max(1.0),
                 None => em_of(item).max(1.0) * WORD_GAP_EM,
             };
@@ -1146,6 +1146,68 @@ mod tests {
             Cow::Borrowed("plain")
         ));
         assert!(!is_presentation_form('\u{FEFF}'));
+    }
+
+    #[test]
+    fn two_numbers_a_space_apart_stay_two_numbers() {
+        // An invoice line "מגולוון 1.2 3" (length 1.2, three units): in
+        // screen order "3", "1.2", then the word, the numbers a regular
+        // space apart (2.0pt at 7.2pt, 0.28 em). Read back, the word comes
+        // first, then 1.2, then 3 — not one number "31.2".
+        let items = [
+            ("3", 100.0f32, 4.0f32),
+            ("1.2", 106.0, 10.0),
+            (
+                "\u{05DE}\u{05D2}\u{05D5}\u{05DC}\u{05D5}\u{05D5}\u{05DF}",
+                118.0,
+                20.0,
+            ),
+        ];
+        let read = |gap: crate::tuning::NumberGap| {
+            crate::tuning::with_number_gap(gap, || {
+                logical_line_order(
+                    &items,
+                    |i| i.0,
+                    |i| (i.1, i.2),
+                    |_| 7.2,
+                    |_| false,
+                    None,
+                    true,
+                )
+                .into_iter()
+                .map(|(index, _)| index)
+                .collect::<Vec<_>>()
+            })
+        };
+        assert_eq!(read(crate::tuning::NumberGap::default()), vec![2, 1, 0]);
+        assert_eq!(read(crate::tuning::NumberGap::Auto), vec![2, 1, 0]);
+        // The former fixed 0.3 em glued them into one number, read in
+        // screen order.
+        assert_eq!(read(crate::tuning::NumberGap::Fixed(0.3)), vec![2, 0, 1]);
+    }
+
+    #[test]
+    fn a_decimal_point_set_a_little_apart_keeps_its_number() {
+        // "1" "." "25" with 0.05 em gaps on an RTL line: one number.
+        let items = [
+            ("1", 100.0f32, 4.0f32),
+            (".", 104.4, 2.0),
+            ("25", 106.8, 8.0),
+            ("\u{05DE}\u{05D8}\u{05E8}", 118.0, 12.0),
+        ];
+        let order: Vec<usize> = logical_line_order(
+            &items,
+            |i| i.0,
+            |i| (i.1, i.2),
+            |_| 7.2,
+            |_| false,
+            None,
+            true,
+        )
+        .into_iter()
+        .map(|(index, _)| index)
+        .collect();
+        assert_eq!(order, vec![3, 0, 1, 2]);
     }
 
     #[test]

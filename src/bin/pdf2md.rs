@@ -541,6 +541,7 @@ const VALUE_OPTIONS: &[&str] = &[
     "--ocr-min-confidence",
     "--ocr-hosted-threshold",
     "--ocr-model-dir",
+    "--number-gap",
 ];
 
 fn print_usage(argv0: &str) {
@@ -562,6 +563,9 @@ fn print_usage(argv0: &str) {
     eprintln!("  --pages             Insert page break markers (<!-- Page N -->)");
     eprintln!("  --select-pages N    Only process specified pages (e.g. 1,3,5-10)");
     eprintln!("  --password PW       Password for an encrypted PDF");
+    eprintln!("  --number-gap V      Gap (em) splitting two numbers on an RTL line,");
+    eprintln!("                      or `auto` to take it from the line's own word gaps");
+    eprintln!("                      (default 0.2; env PDF_INSPECTOR_NUMBER_GAP_EM)");
     eprintln!("  --detect-only       Only detect PDF type (no extraction)");
     eprintln!("  --analyze           Detect + extract + layout analysis (no markdown)");
     eprintln!("  --ocr MODE          OCR mode: off, auto, or force (requires feature `ocr`)");
@@ -611,6 +615,24 @@ fn positional_args(args: &[String]) -> Result<Vec<String>, ()> {
 }
 
 fn main() {
+    let args: Vec<String> = env::args().collect();
+    let gap = argument_value(&args, "--number-gap").unwrap_or_else(|error| {
+        eprintln!("Error: {error}");
+        process::exit(1);
+    });
+    match gap {
+        Some(value) => {
+            let gap = pdf_inspector::NumberGap::parse(value).unwrap_or_else(|| {
+                eprintln!("Error: --number-gap takes `auto` or a non-negative number");
+                process::exit(1);
+            });
+            pdf_inspector::with_number_gap(gap, run)
+        }
+        None => run(),
+    }
+}
+
+fn run() {
     #[cfg(not(target_arch = "wasm32"))]
     env_logger::init();
     let args: Vec<String> = env::args().collect();

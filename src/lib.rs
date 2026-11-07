@@ -47,6 +47,7 @@ pub mod tables;
 mod text_quality;
 pub mod text_utils;
 pub mod tounicode;
+pub mod tuning;
 pub mod types;
 pub mod vision;
 mod xref_repair;
@@ -69,6 +70,7 @@ pub use markdown::{
     to_markdown_from_items_with_rects_and_page_count, MarkdownOptions, MarkdownProfile,
 };
 pub use process_mode::ProcessMode;
+pub use tuning::{current_number_gap, with_number_gap, NumberGap, DEFAULT_NUMBER_GAP_EM};
 pub use types::{BoldSource, LayoutComplexity, PdfLine, PdfRect, TextItem};
 
 use lopdf::Document;

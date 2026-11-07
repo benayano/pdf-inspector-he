@@ -1973,6 +1973,10 @@ fn inside_number(a: &str, b: &str) -> bool {
     material(a) && material(b) && (numeric_fragment(a) || numeric_fragment(b))
 }
 
+/// Gaps above this many em stay out of the word-gap sample of
+/// [`glyph_run_word_gap_floor`].
+const MAX_WORD_GAP_SAMPLE_EM: f32 = 1.0;
+
 /// Word-gap floor for a line of right-to-left text shown one glyph per
 /// item, from its own gaps: the letter gaps of such a line cluster below
 /// its word gaps. Declared advance widths are often off for these fonts,
@@ -1991,11 +1995,49 @@ fn inside_number(a: &str, b: &str) -> bool {
 /// well be the word gaps of one-letter words, and the fixed thresholds
 /// decide them: `None`.
 fn glyph_run_word_gap_floor(gaps: &[f32]) -> Option<f32> {
+    // Gaps wider than an em are column or cell gaps (a table row is one
+    // line): never mid-word, and in the sample they pull the word-gap
+    // class up so far that every real word space falls under the floor.
+    let gaps: Vec<f32> = gaps
+        .iter()
+        .copied()
+        .filter(|g| *g <= MAX_WORD_GAP_SAMPLE_EM)
+        .collect();
     if gaps.len() < 3 {
         return None;
     }
-    let mut sorted: Vec<f32> = gaps.to_vec();
+    let mut sorted: Vec<f32> = gaps;
     sorted.sort_by(|a, b| a.total_cmp(b));
+    let upper_quartile = sorted[sorted.len() * 3 / 4];
+    let Some(mut floor) = otsu_word_gap_split(&sorted) else {
+        return if upper_quartile <= 0.13 {
+            Some(f32::INFINITY)
+        } else {
+            None
+        };
+    };
+    // A line can hold three classes — letter gaps, word spaces, and the
+    // wider gaps around a currency sign or between cells — and a single
+    // split then lands between the last two, under which every word space
+    // reads as a letter gap. While the lower class splits again by the same
+    // criteria, the floor moves down to that split.
+    loop {
+        let below = sorted.partition_point(|g| *g < floor);
+        match otsu_word_gap_split(&sorted[..below]) {
+            Some(lower) if lower < floor => floor = lower,
+            _ => break,
+        }
+    }
+    Some(floor)
+}
+
+/// Otsu's split of sorted gaps (em) into letter gaps and word gaps: the
+/// midpoint between the two class means when the upper class is a space's
+/// worth apart from the lower one (and at least 0.2 em), else `None`.
+fn otsu_word_gap_split(sorted: &[f32]) -> Option<f32> {
+    if sorted.len() < 3 {
+        return None;
+    }
     let total: f32 = sorted.iter().sum();
     let n = sorted.len() as f32;
     let mut best: Option<(f32, f32, f32)> = None; // (between-class variance, low mean, high mean)
@@ -2011,12 +2053,10 @@ fn glyph_run_word_gap_floor(gaps: &[f32]) -> Option<f32> {
             best = Some((variance, low_mean, high_mean));
         }
     }
-    let upper_quartile = sorted[sorted.len() * 3 / 4];
     match best {
         Some((_, low_mean, high_mean)) if high_mean - low_mean >= 0.12 && high_mean >= 0.2 => {
             Some((low_mean + high_mean) / 2.0)
         }
-        _ if upper_quartile <= 0.13 => Some(f32::INFINITY),
         _ => None,
     }
 }
@@ -2544,6 +2584,20 @@ mod tests {
         let gaps = [0.06, 0.08, 0.07, 0.34, 0.09, 0.06, 0.32, 0.08];
         let floor = glyph_run_word_gap_floor(&gaps).expect("two classes");
         assert!(floor > 0.09 && floor < 0.32, "{floor}");
+    }
+
+    #[test]
+    fn glyph_run_word_gap_floor_finds_word_spaces_under_wider_gaps() {
+        // A table row of one-glyph items: letter gaps at 0, word spaces at
+        // 0.28 em, gaps around a currency sign at 0.67 em, and cell gaps of
+        // several em. The floor must fall between letters and word spaces,
+        // not between word spaces and the wider gaps.
+        let mut gaps = vec![0.0f32; 21];
+        gaps.extend([0.28; 8]);
+        gaps.extend([0.67; 5]);
+        gaps.extend([1.23, 2.45, 11.04]);
+        let floor = glyph_run_word_gap_floor(&gaps).expect("two classes");
+        assert!(floor > 0.05 && floor < 0.28, "{floor}");
     }
 
     #[test]
