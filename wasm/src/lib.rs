@@ -70,6 +70,8 @@ export interface PositionedText {
   font: string;
   isBold: boolean;
   isItalic: boolean;
+  /** Degrees counter-clockwise from +x: 0 upright, 90/270 vertical runs. */
+  rotation: number;
 }
 
 export function extractTextWithPositions(data: Uint8Array, options?: PositionOptions): PositionedText[];
@@ -232,6 +234,7 @@ struct WasmPositionedText {
     font: String,
     is_bold: bool,
     is_italic: bool,
+    rotation: f32,
 }
 
 #[derive(Debug, Deserialize)]
@@ -520,6 +523,7 @@ pub fn extract_text_with_positions(data: &[u8], options: JsValue) -> Result<JsVa
             font: item.font,
             is_bold: item.is_bold,
             is_italic: item.is_italic,
+            rotation: item.rotation,
         })
         .collect();
     serialize(&items)

@@ -7,11 +7,15 @@
 // (numbered 1..N, none missing) and one column count on every row; and the
 // whole Markdown must equal `<name>.expected.md`. `--update` rewrites the
 // expected files after an intended change — review that diff before
-// committing it. Exit code 1 on any failure.
+// committing it. The invoice layer (he/invoice.mjs) then reads the same PDF:
+// every line, discount, VAT and total check must hold, and the header
+// fields listed in expectations.json must come out. Exit code 1 on any
+// failure.
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseInvoice } from "./invoice.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const dir = path.join(here, "fixtures", "invoices");
@@ -67,11 +71,28 @@ for (const [file, expect] of Object.entries(expectations)) {
       );
     }
   }
+  // The invoice layer: every arithmetic check it can run must hold, and the
+  // ones this invoice is known to support must run.
+  const items = JSON.parse(execFileSync(bin, ["--items-json", ...tune, pdf], { encoding: "utf8" }));
+  const invoice = parseInvoice({ markdown, items });
+  if (invoice.lines?.rows.length !== expect.itemRows) {
+    problems.push(`invoice layer: ${invoice.lines?.rows.length ?? 0} lines, expected ${expect.itemRows}`);
+  }
+  for (const c of invoice.checks.filter((c) => !c.ok)) {
+    problems.push(`invoice check ${c.name} failed: ${JSON.stringify(c).slice(0, 200)}`);
+  }
+  const ran = new Set(invoice.checks.map((c) => c.name));
+  const absent = (expect.checks ?? []).filter((name) => !ran.has(name));
+  if (absent.length) problems.push(`invoice checks did not run: ${absent.join(", ")}`);
+  for (const [label, value] of Object.entries(expect.fields ?? {})) {
+    const got = invoice.header.fields.find((f) => f.label === label)?.value;
+    if (got !== value) problems.push(`header field ${label}: ${got ?? "missing"}, expected ${value}`);
+  }
   if (problems.length) {
     failures++;
     console.log(`FAIL ${file}\n  - ${problems.join("\n  - ")}`);
   } else {
-    console.log(`ok   ${file} (${rows.length} rows x ${columnCounts[0]} columns)`);
+    console.log(`ok   ${file} (${rows.length} rows x ${columnCounts[0]} columns, ${ran.size} checks)`);
   }
 }
 if (update) console.log("expected outputs updated — review the diff before committing");

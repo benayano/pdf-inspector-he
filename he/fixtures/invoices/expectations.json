@@ -1,6 +1,66 @@
 {
-  "print-to-pdf-5p.pdf": { "itemRows": 162, "columns": 9, "producer": "Microsoft: Print To PDF" },
-  "priority-2p.pdf": { "itemRows": 38, "columns": 10, "producer": "Winnovative HTML to PDF Converter" },
-  "priority-1p.pdf": { "itemRows": 15, "columns": 9, "producer": "Winnovative HTML to PDF Converter" },
-  "priority-4p.pdf": { "itemRows": 129, "columns": 10, "producer": "Winnovative HTML to PDF Converter" }
+  "print-to-pdf-5p.pdf": {
+    "itemRows": 162,
+    "columns": 9,
+    "producer": "Microsoft: Print To PDF",
+    "checks": [
+      "lines-sum",
+      "line-arithmetic",
+      "discount",
+      "vat",
+      "grand-total"
+    ],
+    "fields": {
+      "תאריך חשבונית": "31/08/26",
+      "מספר תעודה": "ES045328008"
+    }
+  },
+  "priority-2p.pdf": {
+    "itemRows": 38,
+    "columns": 10,
+    "producer": "Winnovative HTML to PDF Converter",
+    "checks": [
+      "lines-sum",
+      "line-arithmetic",
+      "discount",
+      "vat",
+      "grand-total"
+    ],
+    "fields": {
+      "תאריך חשבונית": "30/09/22",
+      "מספר תעודה": "IS782235329"
+    }
+  },
+  "priority-1p.pdf": {
+    "itemRows": 15,
+    "columns": 9,
+    "producer": "Winnovative HTML to PDF Converter",
+    "checks": [
+      "lines-sum",
+      "line-arithmetic",
+      "discount",
+      "vat",
+      "grand-total"
+    ],
+    "fields": {
+      "תאריך חשבונית": "31/10/22",
+      "מספר תעודה": "IS782237565"
+    }
+  },
+  "priority-4p.pdf": {
+    "itemRows": 129,
+    "columns": 10,
+    "producer": "Winnovative HTML to PDF Converter",
+    "checks": [
+      "lines-sum",
+      "line-arithmetic",
+      "discount",
+      "vat",
+      "grand-total"
+    ],
+    "fields": {
+      "תאריך חשבונית": "31/08/22",
+      "מספר תעודה": "IS782235525"
+    }
+  }
 }

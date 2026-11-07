@@ -60,13 +60,13 @@ jobs:
         run: wasm-pack build wasm --target deno --out-dir pkg-deno --out-name pdf_inspector --release
       - name: Copy the JS check layer into both packages
         run: |
-          cp he/rtl-check.mjs he/rtl-check.d.ts wasm/pkg-web/
-          cp he/rtl-check.mjs he/rtl-check.d.ts wasm/pkg-deno/
+          cp he/rtl-check.mjs he/rtl-check.d.ts he/invoice.mjs he/invoice.d.ts wasm/pkg-web/
+          cp he/rtl-check.mjs he/rtl-check.d.ts he/invoice.mjs he/invoice.d.ts wasm/pkg-deno/
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
       - name: Smoke test on Deno (the Edge Function runtime)
-        run: deno run --allow-read he/deno-smoke.ts wasm/pkg-deno tests/fixtures/rtl_hebrew_glyph_by_glyph.pdf
+        run: deno run --allow-read he/deno-smoke.ts wasm/pkg-deno tests/fixtures/rtl_hebrew_glyph_by_glyph.pdf he/fixtures/invoices/priority-1p.pdf
       - uses: actions/upload-artifact@v4
         with:
           name: pdf-inspector-he-wasm-web
