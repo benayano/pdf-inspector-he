@@ -2621,8 +2621,129 @@ fn merge_text_items_with_clips(
         }
     }
 
-    merged
+    join_vertical_glyph_runs(merged)
 }
+
+/// Whether `item` is a vertical text run that [`join_vertical_glyph_runs`]
+/// reads in its own frame.
+fn is_vertical_text(item: &TextItem) -> bool {
+    matches!(item.item_type, crate::types::ItemType::Text) && !item.is_horizontal()
+}
+
+/// Joins vertical glyphs into the runs they spell.
+///
+/// Some producers (browser Print-To-PDF among them) show a rotated margin
+/// stamp one glyph at a time. The x-ascending merge leaves every glyph
+/// standing alone, and line grouping then files each one under whatever
+/// body line shares its y, scattering the stamp through the page
+/// ("ט\" א א" inside an address block).
+///
+/// Each vertical column is turned into the frame it is read in — the
+/// baseline along +x — merged by the same walk as upright text, so word
+/// gaps and right-to-left order are decided exactly as for a horizontal
+/// line, and turned back. A column of one item is left as it was.
+fn join_vertical_glyph_runs(items: Vec<TextItem>) -> Vec<TextItem> {
+    if items.iter().filter(|i| is_vertical_text(i)).count() < 2 {
+        return items;
+    }
+    // Reading downwards (270) or upwards (90).
+    let reads_down = |item: &TextItem| item.rotation.rem_euclid(360.0) > 180.0;
+    let mut kept = Vec::with_capacity(items.len());
+    let mut groups: Vec<((u32, bool), Vec<TextItem>)> = Vec::new();
+    for item in items {
+        if !is_vertical_text(&item) {
+            kept.push(item);
+            continue;
+        }
+        let key = (item.page, reads_down(&item));
+        match groups.iter_mut().find(|(k, _)| *k == key) {
+            Some((_, g)) => g.push(item),
+            None => groups.push((key, vec![item])),
+        }
+    }
+    for ((_, down), group) in groups {
+        if group.len() < 2 {
+            kept.extend(group);
+            continue;
+        }
+        let rotation = group[0].rotation;
+        // Into the reading frame: distance along the baseline becomes x,
+        // the column's left edge becomes the baseline.
+        let turned: Vec<TextItem> = group
+            .iter()
+            .map(|item| {
+                let mut t = item.clone();
+                t.x = if down {
+                    -(item.y + item.height)
+                } else {
+                    item.y
+                };
+                t.y = item.x;
+                t.width = item.height;
+                t.height = item.font_size;
+                t.rotation = 0.0;
+                t
+            })
+            .collect();
+        let em = group
+            .iter()
+            .map(|i| i.width)
+            .fold(0.0_f32, f32::max)
+            .max(0.0);
+        let merged = join_column_runs(merge_text_items_with_clips(turned, &[], false, &[]));
+        if merged.len() >= group.len() {
+            // Nothing joined: keep the items exactly as extracted.
+            kept.extend(group);
+            continue;
+        }
+        for mut item in merged {
+            let (along, length) = (item.x, item.width);
+            item.x = item.y;
+            item.y = if down { -(along + length) } else { along };
+            item.width = if em > 0.0 { em } else { item.font_size };
+            item.height = length;
+            item.rotation = rotation;
+            kept.push(item);
+        }
+    }
+    kept
+}
+
+/// Joins the runs of one turned column that sit up to [`COLUMN_RUN_GAP_EM`]
+/// apart — a stamp drawn a glyph at a time often leaves a wider space
+/// around a dash or a Latin word than the merge walk takes for a word
+/// space. Runs are taken in reading order: right to left when either
+/// holds right-to-left letters, left to right otherwise.
+fn join_column_runs(mut runs: Vec<TextItem>) -> Vec<TextItem> {
+    runs.sort_by(|a, b| a.y.total_cmp(&b.y).then(a.x.total_cmp(&b.x)));
+    let mut out: Vec<TextItem> = Vec::with_capacity(runs.len());
+    for run in runs {
+        if let Some(last) = out.last_mut() {
+            let em = last.font_size.max(run.font_size).max(1.0);
+            let same_column = (last.y - run.y).abs() <= em * 0.3;
+            let gap = run.x - (last.x + last.width);
+            if same_column && gap >= -em * 0.5 && gap <= em * COLUMN_RUN_GAP_EM {
+                let rtl = [&last.text, &run.text]
+                    .iter()
+                    .any(|t| t.chars().any(crate::text_utils::is_rtl_char));
+                let (first, second) = if rtl {
+                    (run.text.trim(), last.text.trim())
+                } else {
+                    (last.text.trim(), run.text.trim())
+                };
+                last.text = format!("{first} {second}");
+                last.width = run.x + run.width - last.x;
+                continue;
+            }
+        }
+        out.push(run);
+    }
+    out
+}
+
+/// Widest gap, in em, at which two runs of one vertical column still read
+/// as one stamp.
+const COLUMN_RUN_GAP_EM: f32 = 1.5;
 
 /// Helper to get f32 from Object
 pub(crate) fn get_number(obj: &Object) -> Option<f32> {
@@ -6055,6 +6176,63 @@ BT /F1 12 Tf 0 1 -1 0 240 100 Tm (WORLD) Tj ET"
         assert!(
             texts.contains(&"\u{05DE}\u{05E1}\u{05D9}\u{05DC}\u{05D4} \u{05DC}\u{05E4}\u{05D0}\u{05E0}\u{05DC} 1.2 3 \u{05DE}\u{05D8}\u{05E8}"),
             "{texts:?}"
+        );
+    }
+
+    /// A margin stamp turned a quarter clockwise (reading downwards) and
+    /// shown one glyph per item: "הופק Zoom", then a word a wider space on. Each glyph's box is 5pt wide (the em) and as tall
+    /// as its advance.
+    fn vertical_stamp() -> Vec<TextItem> {
+        let glyph = |text: &str, top: f32, advance: f32| {
+            let mut item = make_item_fs(text, 55.0, top - advance, 5.0, 5.0);
+            item.height = advance;
+            item.rotation = 270.0;
+            item
+        };
+        // The baseline runs down the page, so right to left is bottom to
+        // top: the first letter of "הופק" is the lowest of its word, and
+        // the word stands below "Zoom". "בא" stands above, past a wider gap.
+        vec![
+            glyph("\u{05D4}", 75.0, 3.0),
+            glyph("\u{05D5}", 76.2, 1.2),
+            glyph("\u{05E4}", 79.2, 3.0),
+            glyph("\u{05E7}", 82.2, 3.0),
+            glyph(" Zoom ", 97.5, 15.0),
+            glyph("\u{05D1}", 104.5, 3.0),
+            glyph("\u{05D0}", 107.5, 3.0),
+        ]
+    }
+
+    #[test]
+    fn a_vertical_stamp_shown_glyph_by_glyph_is_one_run() {
+        let merged = merge_text_items_with_clips(vertical_stamp(), &[], false, &[]);
+        assert_eq!(merged.len(), 1, "{merged:?}");
+        let stamp = &merged[0];
+        assert_eq!(
+            stamp.text,
+            "\u{05D4}\u{05D5}\u{05E4}\u{05E7} Zoom \u{05D1}\u{05D0}"
+        );
+        assert_eq!(stamp.rotation, 270.0);
+        assert_eq!(stamp.width, 5.0);
+        assert!((stamp.y - 72.0).abs() < 0.01, "{}", stamp.y);
+        assert!(
+            (stamp.y + stamp.height - 107.5).abs() < 0.01,
+            "{}",
+            stamp.height
+        );
+    }
+
+    #[test]
+    fn a_lone_vertical_item_is_left_as_it_was() {
+        let mut label = make_item_fs("Percent", 36.0, 200.0, 7.0, 7.0);
+        label.rotation = 90.0;
+        label.height = 25.0;
+        let body = make_item_fs("12", 50.0, 210.0, 8.0, 8.0);
+        let merged = merge_text_items_with_clips(vec![label.clone(), body], &[], false, &[]);
+        let out = merged.iter().find(|i| i.rotation == 90.0).unwrap();
+        assert_eq!(
+            (out.text.as_str(), out.y, out.height),
+            ("Percent", 200.0, 25.0)
         );
     }
 

@@ -2202,7 +2202,28 @@ fn group_into_lines_with_thresholds_and_regions_impl(
     let mut all_lines = Vec::new();
 
     for page in pages {
-        let page_items: Vec<TextItem> = items.iter().filter(|i| i.page == page).cloned().collect();
+        let (page_items, vertical): (Vec<TextItem>, Vec<TextItem>) = items
+            .iter()
+            .filter(|i| i.page == page)
+            .cloned()
+            .partition(|i| !is_vertical_stamp(i));
+        // A vertical run (a margin stamp, a rotated running header) shares
+        // its box bottom with whichever body line it happens to stand
+        // beside; filed by y it would be glued onto that line. Each one is a
+        // line of its own, after the page's body.
+        let vertical_lines: Vec<TextLine> = vertical
+            .into_iter()
+            .map(|item| TextLine {
+                y: item.y,
+                page,
+                adaptive_threshold: 0.10,
+                items: vec![item],
+            })
+            .collect();
+        if page_items.is_empty() {
+            all_lines.extend(vertical_lines);
+            continue;
+        }
         // The page's direction settles how a line with right-to-left letters
         // reads when its own letters do not (see `rtl_line_base`); every
         // column and band of the page shares it.
@@ -2254,6 +2275,7 @@ fn group_into_lines_with_thresholds_and_regions_impl(
                         page_rtl,
                     ));
                 }
+                all_lines.extend(vertical_lines);
                 continue;
             }
         }
@@ -2329,10 +2351,25 @@ fn group_into_lines_with_thresholds_and_regions_impl(
                 page_rtl,
             ));
         }
+        all_lines.extend(vertical_lines);
     }
 
     all_lines
 }
+
+/// A sentence-long text run read along the page's y axis — a margin stamp
+/// ("produced by …"), a rotated running header — joined by
+/// `join_vertical_glyph_runs` into one item per column. Short rotated
+/// labels (a chart's y-axis title, a rotated table header) keep their old
+/// placement beside the text they label.
+fn is_vertical_stamp(item: &TextItem) -> bool {
+    matches!(item.item_type, crate::types::ItemType::Text)
+        && !item.is_horizontal()
+        && item.text.trim().chars().count() >= VERTICAL_STAMP_MIN_CHARS
+}
+
+/// Shortest vertical run, in characters, read as a stamp of its own line.
+const VERTICAL_STAMP_MIN_CHARS: usize = 16;
 
 /// Order a multi-column region's items into reading order.
 ///
