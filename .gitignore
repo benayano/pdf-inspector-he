@@ -42,3 +42,6 @@ test_output/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# pdf-inspector-he: the anonymized invoice corpus is committed
+!he/fixtures/invoices/*.pdf
