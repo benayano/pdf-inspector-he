@@ -31,9 +31,12 @@ jobs:
       - run: cargo fmt --check
       - run: cargo clippy -- -D warnings
       - run: cargo test --release
+      - run: cargo build --release --bin pdf2md
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Invoice regression corpus
+        run: node he/regression.mjs
       - name: JS check layer
         run: node --test he/*.test.mjs
 
