@@ -101,7 +101,12 @@ fn strip_pdf_comments(data: &[u8]) -> Vec<u8> {
 /// bounding box (user space) is at most `rule_thickness` (3) units thick and at least four
 /// times as long, so a bevelled border strip (two corners cut at 45°)
 /// qualifies as well as an exact rectangle. `None` for anything wider.
-fn filled_rule_centerline(min_x: f32, min_y: f32, w: f32, h: f32) -> Option<(f32, f32, f32, f32)> {
+pub(crate) fn filled_rule_centerline(
+    min_x: f32,
+    min_y: f32,
+    w: f32,
+    h: f32,
+) -> Option<(f32, f32, f32, f32)> {
     let max_thickness = crate::tuning::knob(|t| t.rule_thickness).or_auto(|| 3.0);
     if max_thickness <= 0.0 {
         return None;
@@ -2058,6 +2063,14 @@ pub(crate) fn extract_page_text_items_with_options(
                                     });
                                 }
                                 XObjectType::Form(form_id) => {
+                                    // The form's rules and cell boxes, for
+                                    // table detection (see
+                                    // `extract_form_xobject_geometry`).
+                                    let geometry = super::xobjects::extract_form_xobject_geometry(
+                                        doc, *form_id, page_num, &ctm,
+                                    );
+                                    fill_rects.extend(geometry.fill_rects);
+                                    lines.extend(geometry.lines);
                                     // Extract text from Form XObject
                                     let mut form_runs = Vec::new();
                                     extract_form_xobject_text(
@@ -2629,6 +2642,14 @@ pub(crate) fn extract_page_text_items_with_options(
     // typically section-level wrappers and the fills are the actual table
     // cell backgrounds (e.g. shaded-header tables drawn with `m`/`l`/`h`/`f*`
     // sequences). In that case, prefer fills.
+    // A page whose `re` rects are a handful against many filled cell
+    // boxes — its page or section clips
+    // (`re W n`), with the table drawn as filled cell boxes — the shape of
+    // HTML-to-PDF converters that wrap the page in one form — keeps the
+    // clips out of the way of the cells.
+    if !rects.is_empty() && fill_rects.len() >= 6 && fill_rects.len() >= rects.len() * 10 {
+        rects.clear();
+    }
     if rects.is_empty() {
         dedup_rects(&mut clip_rects);
         let prefer_fills = !fill_rects.is_empty() && fill_rects.len() >= clip_rects.len() * 3;

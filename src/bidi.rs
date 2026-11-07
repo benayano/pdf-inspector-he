@@ -904,9 +904,33 @@ pub(crate) fn logical_line_order<T>(
 
     let mut chars = logical.iter().filter(|v| v.item.is_some()).map(|v| v.ch);
     let mut result: Vec<(usize, String)> = reading
-        .into_iter()
-        .map(|index| (index, chars.by_ref().take(counts[index]).collect()))
+        .iter()
+        .map(|&index| (index, chars.by_ref().take(counts[index]).collect()))
         .collect();
+    // Taking stretches keeps a bracket pair split across runs whole, but
+    // when the line's neutrals resolve across a wide gap — two table cells
+    // such as "+3" and "SH22033247" read as one paragraph — a stretch can
+    // take a letter or digit of the neighbouring item ("H22033247+",
+    // "3S"). Letters and digits never belong to another run: if any moved,
+    // every item keeps its own characters, in their logical order.
+    let own = |index: usize| -> String {
+        logical
+            .iter()
+            .filter(|v| v.item == Some(index))
+            .map(|v| v.ch)
+            .collect()
+    };
+    let strong_set = |text: &str| -> Vec<char> {
+        let mut set: Vec<char> = text.chars().filter(|c| c.is_alphanumeric()).collect();
+        set.sort_unstable();
+        set
+    };
+    if result
+        .iter()
+        .any(|(index, text)| strong_set(text) != strong_set(&own(*index)))
+    {
+        result = reading.iter().map(|&index| (index, own(index))).collect();
+    }
     result.extend(
         (0..items.len())
             .filter(|&i| counts[i] == 0)
@@ -918,6 +942,38 @@ pub(crate) fn logical_line_order<T>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn letters_and_digits_stay_in_their_own_item() {
+        // Two table cells on one RTL line, stored in visual order: "+3"
+        // and "SH22033247", 5pt apart, then a Hebrew word. Read as one
+        // paragraph, the neutral "+" moves between them; the items must
+        // still keep their own letters and digits.
+        let items = [
+            ("+3", 452.6f32, 8.8f32),
+            ("SH22033247", 466.6, 42.9),
+            ("\u{05D7}\u{05E7}\u{05DC}", 520.0, 12.0),
+        ];
+        let order = logical_line_order(
+            &items,
+            |i| i.0,
+            |i| (i.1, i.2),
+            |_| 8.0,
+            |_| true,
+            None,
+            true,
+        );
+        let text_of = |index: usize| {
+            order
+                .iter()
+                .find(|(i, _)| *i == index)
+                .map(|(_, t)| t.clone())
+                .unwrap()
+        };
+        assert_eq!(text_of(1), "SH22033247");
+        let digits: Vec<char> = text_of(0).chars().filter(|c| c.is_alphanumeric()).collect();
+        assert_eq!(digits, vec!['3']);
+    }
 
     fn visual(text: &str) -> Vec<VisualChar> {
         text.chars()

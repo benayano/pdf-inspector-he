@@ -177,6 +177,107 @@ const CLUSTER_GRID_CELL: f32 = 64.0;
 /// thousands of stacked drawings.
 const MAX_CLUSTER_PAIRS_PER_CELL: usize = 16_384;
 
+/// The rects of the longest run of vertically adjacent cell rows whose
+/// column edges match the cluster's most common row layout (see the call
+/// site). Rects are `(x, y, width, height)`. The input is returned as is
+/// when there is no clear run (fewer than 3 rows) or nothing to drop.
+pub(crate) fn dominant_column_band(rects: &[(f32, f32, f32, f32)]) -> Vec<(f32, f32, f32, f32)> {
+    use std::collections::BTreeMap;
+    /// A row of cells: its (bottom, top) key, its rects, its column edges.
+    type CellRow = ((i32, i32), Vec<usize>, Vec<i32>);
+    let key = |v: f32| (v * 2.0).round() as i32; // half-point buckets
+                                                 // Rows: rects sharing their bottom and top edge.
+    let mut rows: BTreeMap<(i32, i32), Vec<usize>> = BTreeMap::new();
+    for (i, &(_, y, _, h)) in rects.iter().enumerate() {
+        rows.entry((key(y), key(y + h))).or_default().push(i);
+    }
+    if rows.len() < 4 {
+        return rects.to_vec();
+    }
+    let signature = |members: &[usize]| -> Vec<i32> {
+        let mut edges: Vec<i32> = members
+            .iter()
+            .flat_map(|&i| [key(rects[i].0), key(rects[i].0 + rects[i].2)])
+            .collect();
+        edges.sort_unstable();
+        edges.dedup();
+        edges
+    };
+    // Only rows of at least two cells say anything about columns.
+    let row_list: Vec<CellRow> = rows
+        .into_iter()
+        .filter(|(_, members)| members.len() >= 2)
+        .map(|(k, members)| {
+            let sig = signature(&members);
+            (k, members, sig)
+        })
+        .collect();
+    if row_list.len() < 4 {
+        return rects.to_vec();
+    }
+    let mut counts: BTreeMap<&Vec<i32>, usize> = BTreeMap::new();
+    for (_, _, sig) in &row_list {
+        *counts.entry(sig).or_default() += 1;
+    }
+    let Some((best, _)) = counts.iter().max_by_key(|(_, n)| **n) else {
+        return rects.to_vec();
+    };
+    let near = |a: i32, b: i32| (a - b).abs() <= 4; // within 2pt
+    let matches = |sig: &Vec<i32>| {
+        let shared = sig
+            .iter()
+            .filter(|e| best.iter().any(|b| near(**e, *b)))
+            .count();
+        let union = sig.len() + best.len() - shared;
+        union > 0 && shared * 10 >= union * 7
+    };
+    // Rows top to bottom; a run continues while rows match and touch.
+    let mut ordered: Vec<&CellRow> = row_list.iter().collect();
+    ordered.sort_by_key(|(k, _, _)| std::cmp::Reverse(k.1));
+    let mut best_run: (usize, usize) = (0, 0);
+    let mut start = 0;
+    while start < ordered.len() {
+        if !matches(&ordered[start].2) {
+            start += 1;
+            continue;
+        }
+        let mut end = start + 1;
+        while end < ordered.len()
+            && matches(&ordered[end].2)
+            && ordered[end - 1].0 .0 - ordered[end].0 .1 <= 6
+        {
+            end += 1;
+        }
+        if end - start > best_run.1 - best_run.0 {
+            best_run = (start, end);
+        }
+        start = end;
+    }
+    if best_run.1 - best_run.0 < 3 {
+        return rects.to_vec();
+    }
+    let top = ordered[best_run.0].0 .1;
+    let bottom = ordered[best_run.1 - 1].0 .0;
+    // Every rect that lies within the run's vertical extent stays (header
+    // cells spanning two rows, a column of one-cell rows); the rest go.
+    let kept: Vec<(f32, f32, f32, f32)> = rects
+        .iter()
+        .copied()
+        .filter(|&(_, y, _, h)| key(y) >= bottom - 2 && key(y + h) <= top + 2)
+        .collect();
+    if kept.len() >= 6 && kept.len() < rects.len() {
+        debug!(
+            "dominant_column_band: kept {} of {} rects ({} rows)",
+            kept.len(),
+            rects.len(),
+            best_run.1 - best_run.0
+        );
+        kept
+    } else {
+        rects.to_vec()
+    }
+}
+
 /// Cluster rects by spatial overlap using union-find.
 /// Returns groups of rect indices; only groups with ≥ `min_size` rects are returned.
 ///
@@ -754,6 +855,12 @@ pub fn detect_tables_from_rects(
                     continue;
                 }
             }
+            // A cluster can carry a second box drawn flush under the table
+            // (the totals box of an invoice): its cells have other column
+            // edges, which would add phantom columns and pull the box's
+            // text into the last row. Keep the run of rows that share the
+            // table's columns.
+            let group_rects = dominant_column_band(&group_rects);
             if let Some(table) = detect_direct_rect_table(items, &group_rects, page) {
                 tables.push(table);
             } else if let Some((left, right)) = split_wide_cluster(&group_rects, 15.0, 6) {
@@ -3553,6 +3660,30 @@ fn cluster_x_positions(items: &[(usize, &TextItem)], min_threshold: f32) -> Vec<
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn a_totals_box_flush_under_the_table_is_left_out() {
+        // Item table: 6 rows x 3 cells (columns 0-100-300-400), rows 20pt.
+        let mut rects = Vec::new();
+        for r in 0..6 {
+            let y = 500.0 - 20.0 * r as f32;
+            for (x, w) in [(0.0, 100.0), (100.0, 200.0), (300.0, 100.0)] {
+                rects.push((x, y, w, 20.0));
+            }
+        }
+        // Totals box right under it, other column edges: 3 rows x 2 cells.
+        for r in 0..3 {
+            let y = 380.0 - 20.0 * r as f32;
+            for (x, w) in [(250.0, 80.0), (330.0, 70.0)] {
+                rects.push((x, y, w, 20.0));
+            }
+        }
+        let kept = super::dominant_column_band(&rects);
+        assert_eq!(kept.len(), 18);
+        assert!(kept.iter().all(|&(_, y, _, _)| y >= 400.0));
+        // A table alone is left as it is.
+        assert_eq!(super::dominant_column_band(&rects[..18]).len(), 18);
+    }
+
     #[test]
     fn row_stripe_prose_fragments_are_rejected() {
         let prose = vec![

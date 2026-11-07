@@ -2817,3 +2817,205 @@ BT /F1 10 Tf 0 1 -1 0 60 200 Tm [(ABCD)] TJ ET",
         assert_eq!(texts, [expected.as_str()]);
     }
 }
+
+/// The table geometry a Form XObject paints: filled boxes (cell
+/// backgrounds) as rects, and rules — stroked segments and thin filled
+/// strips — as lines, in device space. HTML-to-PDF converters such as
+/// Winnovative put the whole page inside one form, so without this a page
+/// drawn that way reports no rects or lines at all and its tables can only
+/// be guessed from text alignment.
+#[derive(Default)]
+pub(crate) struct FormGeometry {
+    pub fill_rects: Vec<crate::types::PdfRect>,
+    pub lines: Vec<crate::types::PdfLine>,
+}
+
+pub(crate) fn extract_form_xobject_geometry(
+    doc: &Document,
+    form_id: ObjectId,
+    page_num: u32,
+    parent_ctm: &[f32; 6],
+) -> FormGeometry {
+    let mut out = FormGeometry::default();
+    let mut budget = 0usize;
+    form_geometry_inner(doc, form_id, page_num, parent_ctm, 0, &mut budget, &mut out);
+    out
+}
+
+/// Cap on path operators walked across all forms of one page.
+const MAX_FORM_GEOMETRY_OPS: usize = 400_000;
+
+fn form_geometry_inner(
+    doc: &Document,
+    form_id: ObjectId,
+    page_num: u32,
+    parent_ctm: &[f32; 6],
+    depth: u8,
+    budget: &mut usize,
+    out: &mut FormGeometry,
+) {
+    use crate::types::{PdfLine, PdfRect};
+    let Ok(Object::Stream(stream)) = doc.get_object(form_id) else {
+        return;
+    };
+    let Ok(data) =
+        stream.decompressed_content_with_limit(super::content_decode::MAX_PAGE_CONTENT_BYTES)
+    else {
+        return;
+    };
+    let Ok(Some(content)) = super::content_decode::decode_content_bounded(
+        &data,
+        super::content_decode::MAX_PAGE_OPERATIONS,
+    ) else {
+        return;
+    };
+    let form_xobjects = get_form_xobjects(doc, &stream.dict);
+    let mut form_matrix = [1.0f32, 0.0, 0.0, 1.0, 0.0, 0.0];
+    if let Ok(arr) = stream.dict.get(b"Matrix").and_then(|m| m.as_array()) {
+        if arr.len() >= 6 {
+            for (i, v) in arr.iter().take(6).enumerate() {
+                form_matrix[i] = get_number(v).unwrap_or(form_matrix[i]);
+            }
+        }
+    }
+    let mut ctm = multiply_matrices(&form_matrix, parent_ctm);
+    let mut stack: Vec<[f32; 6]> = Vec::new();
+    // Subpaths of the current path, each a list of points in user space.
+    let mut subpaths: Vec<Vec<(f32, f32)>> = Vec::new();
+    let device = |ctm: &[f32; 6], x: f32, y: f32| {
+        (
+            x * ctm[0] + y * ctm[2] + ctm[4],
+            x * ctm[1] + y * ctm[3] + ctm[5],
+        )
+    };
+    for op in &content.operations {
+        *budget += 1;
+        if *budget > MAX_FORM_GEOMETRY_OPS {
+            return;
+        }
+        let num = |i: usize| op.operands.get(i).and_then(get_number);
+        match op.operator.as_str() {
+            "q" => stack.push(ctm),
+            "Q" => {
+                if let Some(saved) = stack.pop() {
+                    ctm = saved;
+                }
+            }
+            "cm" => {
+                if op.operands.len() >= 6 {
+                    let mut m = [0.0f32; 6];
+                    for (i, slot) in m.iter_mut().enumerate() {
+                        *slot = num(i).unwrap_or(0.0);
+                    }
+                    ctm = multiply_matrices(&m, &ctm);
+                }
+            }
+            "m" => {
+                if let (Some(x), Some(y)) = (num(0), num(1)) {
+                    subpaths.push(vec![(x, y)]);
+                }
+            }
+            "l" => {
+                if let (Some(x), Some(y), Some(path)) = (num(0), num(1), subpaths.last_mut()) {
+                    path.push((x, y));
+                }
+            }
+            "re" => {
+                if let (Some(x), Some(y), Some(w), Some(h)) = (num(0), num(1), num(2), num(3)) {
+                    subpaths.push(vec![(x, y), (x + w, y), (x + w, y + h), (x, y + h), (x, y)]);
+                }
+            }
+            "h" => {
+                if let Some(path) = subpaths.last_mut() {
+                    if let Some(&first) = path.first() {
+                        if path.last() != Some(&first) {
+                            path.push(first);
+                        }
+                    }
+                }
+            }
+            "f" | "F" | "f*" | "B" | "B*" | "b" | "b*" => {
+                for path in subpaths.drain(..) {
+                    // Four sides (five points, closed): a box or a strip.
+                    let points: Vec<(f32, f32)> = if path.len() == 4 {
+                        let mut p = path.clone();
+                        p.push(path[0]);
+                        p
+                    } else {
+                        path
+                    };
+                    if points.len() != 5 {
+                        continue;
+                    }
+                    let (mut lo_x, mut lo_y) = (f32::INFINITY, f32::INFINITY);
+                    let (mut hi_x, mut hi_y) = (f32::NEG_INFINITY, f32::NEG_INFINITY);
+                    for &(x, y) in &points {
+                        lo_x = lo_x.min(x);
+                        lo_y = lo_y.min(y);
+                        hi_x = hi_x.max(x);
+                        hi_y = hi_y.max(y);
+                    }
+                    let (w, h) = (hi_x - lo_x, hi_y - lo_y);
+                    if let Some((x1, y1, x2, y2)) =
+                        super::content_stream::filled_rule_centerline(lo_x, lo_y, w, h)
+                    {
+                        let (ax, ay) = device(&ctm, x1, y1);
+                        let (bx, by) = device(&ctm, x2, y2);
+                        out.lines.push(PdfLine {
+                            x1: ax,
+                            y1: ay,
+                            x2: bx,
+                            y2: by,
+                            page: page_num,
+                        });
+                        continue;
+                    }
+                    let eps = 0.5;
+                    let axis_aligned = points.iter().all(|&(x, y)| {
+                        ((x - lo_x).abs() < eps || (x - hi_x).abs() < eps)
+                            && ((y - lo_y).abs() < eps || (y - hi_y).abs() < eps)
+                    });
+                    if axis_aligned && w > 1.0 && h > 1.0 {
+                        let (ax, ay) = device(&ctm, lo_x, lo_y);
+                        let (bx, by) = device(&ctm, hi_x, hi_y);
+                        out.fill_rects.push(PdfRect {
+                            x: ax.min(bx),
+                            y: ay.min(by),
+                            width: (bx - ax).abs(),
+                            height: (by - ay).abs(),
+                            page: page_num,
+                        });
+                    }
+                }
+            }
+            "S" | "s" => {
+                for path in subpaths.drain(..) {
+                    for pair in path.windows(2) {
+                        let (ax, ay) = device(&ctm, pair[0].0, pair[0].1);
+                        let (bx, by) = device(&ctm, pair[1].0, pair[1].1);
+                        out.lines.push(PdfLine {
+                            x1: ax,
+                            y1: ay,
+                            x2: bx,
+                            y2: by,
+                            page: page_num,
+                        });
+                    }
+                }
+            }
+            "n" => subpaths.clear(),
+            "Do" => {
+                let Some(name) = op.operands.first().and_then(|o| o.as_name().ok()) else {
+                    continue;
+                };
+                let name = String::from_utf8_lossy(name).to_string();
+                if let Some(XObjectType::Form(nested)) = form_xobjects.get(&name) {
+                    if depth < MAX_FORM_XOBJECT_DEPTH {
+                        form_geometry_inner(doc, *nested, page_num, &ctm, depth + 1, budget, out);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+}
