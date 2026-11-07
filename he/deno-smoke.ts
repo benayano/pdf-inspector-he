@@ -24,6 +24,20 @@ try {
 }
 if (!invalid) throw new Error("invalid numberGap was accepted");
 
+const knobs = pkg.listKnobs();
+if (!Array.isArray(knobs) || !knobs.some((k: { name: string }) => k.name === "rule_join_gap")) {
+  throw new Error("listKnobs is missing knobs");
+}
+const tuned = pkg.processPdf(data, { tuning: "rule_join_gap=3,short_rule_ratio=auto" });
+if (tuned.pdfType !== "TextBased") throw new Error("tuning broke processing");
+let badKnob = false;
+try {
+  pkg.processPdf(data, { tuning: "no_such_knob=1" });
+} catch {
+  badKnob = true;
+}
+if (!badKnob) throw new Error("unknown knob was accepted");
+
 const found = await findAmbiguousRows(
   (d: Uint8Array, o: { numberGap: number }) => pkg.extractTextWithPositions(d, o),
   data,

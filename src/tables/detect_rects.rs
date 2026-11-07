@@ -1746,6 +1746,16 @@ pub(crate) fn assign_items_to_grid(
     // in reading direction (ascending, or descending for RTL cells — same
     // direction-awareness as the heuristic detector's cell join)
     let mut cells: Vec<Vec<String>> = Vec::with_capacity(num_rows);
+    // A cell with as many Latin letters as Hebrew ones ("אומגה 2\" BANIT")
+    // ties the letter vote; in a right-to-left table it still reads right
+    // to left.
+    let table_rtl = crate::text_utils::is_rtl_text(
+        cell_items
+            .iter()
+            .flatten()
+            .flatten()
+            .map(|(_, item)| &item.text),
+    );
     for row_items in &mut cell_items {
         let mut row_cells = Vec::with_capacity(num_cols);
         for col_items in row_items.iter_mut() {
@@ -1753,7 +1763,11 @@ pub(crate) fn assign_items_to_grid(
             // split across items must not have its number reversed. RTL cells
             // sort right-to-left in baseline bands with embedded LTR phrases
             // kept in screen order.
-            let rtl = crate::text_utils::is_rtl_text(col_items.iter().map(|(_, i)| &i.text));
+            let rtl = crate::text_utils::is_rtl_text(col_items.iter().map(|(_, i)| &i.text))
+                || (table_rtl
+                    && col_items
+                        .iter()
+                        .any(|(_, i)| i.text.chars().any(crate::text_utils::is_rtl_char)));
             if rtl {
                 crate::text_utils::sort_rtl_cell_items(col_items, |(_, i)| *i);
             } else {

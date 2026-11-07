@@ -865,12 +865,63 @@ fn number_gap_arg(value: Option<&Bound<'_, PyAny>>) -> PyResult<Option<crate::Nu
         .ok_or_else(|| PyValueError::new_err("number_gap takes \"auto\" or a non-negative number"))
 }
 
-/// Run `f` under the given number gap, or the process default when `None`.
-fn under_gap<R>(gap: Option<crate::NumberGap>, f: impl FnOnce() -> R) -> R {
-    match gap {
-        Some(gap) => crate::with_number_gap(gap, f),
-        None => f(),
+/// The knobs one call asks for: `tuning` ("knob=value,…") plus the
+/// `number_gap` shortcut, which wins for its own knob.
+fn call_tuning(
+    number_gap: Option<&Bound<'_, PyAny>>,
+    tuning: Option<&str>,
+) -> PyResult<crate::Tuning> {
+    let mut out = match tuning {
+        Some(text) => crate::Tuning::parse(text).map_err(PyValueError::new_err)?,
+        None => crate::Tuning::default(),
+    };
+    if let Some(gap) = number_gap_arg(number_gap)? {
+        out.number_gap = Some(gap.into());
     }
+    Ok(out)
+}
+
+/// Run `f` with this call's knobs over the process settings.
+fn under_tuning<R>(tuning: crate::Tuning, f: impl FnOnce() -> R) -> R {
+    crate::with_tuning(tuning, f)
+}
+
+/// Set the layout knobs for every later call in this process, as
+/// "knob=value,…" (see ``list_knobs()``); ``None`` clears them all.
+/// Knobs not named fall back to ``PDF_INSPECTOR_TUNING`` and then "auto".
+#[pyfunction]
+#[pyo3(signature = (tuning=None))]
+fn set_tuning(tuning: Option<&str>) -> PyResult<()> {
+    let parsed = match tuning {
+        Some(text) => crate::Tuning::parse(text).map_err(PyValueError::new_err)?,
+        None => crate::Tuning::default(),
+    };
+    crate::set_process_tuning(parsed);
+    Ok(())
+}
+
+/// The knobs set (per process or by environment) as "knob=value,…";
+/// knobs not listed are "auto".
+#[pyfunction]
+fn get_tuning() -> String {
+    crate::current_tuning().to_string()
+}
+
+/// Every knob: name, unit, what "auto" does, and what the knob changes —
+/// suitable as the parameter description of an LLM tool.
+#[pyfunction]
+fn list_knobs() -> Vec<(String, String, String, String)> {
+    crate::KNOBS
+        .iter()
+        .map(|k| {
+            (
+                k.name.to_string(),
+                k.unit.to_string(),
+                k.auto.to_string(),
+                k.effect.to_string(),
+            )
+        })
+        .collect()
 }
 
 /// Set the number gap for every later call in this process: the gap, in
@@ -900,17 +951,18 @@ fn get_number_gap(py: Python<'_>) -> PyResult<PyObject> {
 
 /// Process a PDF file: detect type, extract text, and convert to Markdown.
 #[pyfunction]
-#[pyo3(signature = (path, pages=None, number_gap=None))]
+#[pyo3(signature = (path, pages=None, number_gap=None, tuning=None))]
 fn process_pdf(
     path: &str,
     pages: Option<Vec<u32>>,
     number_gap: Option<&Bound<'_, PyAny>>,
+    tuning: Option<&str>,
 ) -> PyResult<PyPdfResult> {
     let mut opts = crate::PdfOptions::new();
     if let Some(p) = pages {
         opts = opts.pages(p);
     }
-    let result = under_gap(number_gap_arg(number_gap)?, || {
+    let result = under_tuning(call_tuning(number_gap, tuning)?, || {
         crate::process_pdf_with_options(path, opts)
     })
     .map_err(to_py_err)?;
@@ -919,17 +971,18 @@ fn process_pdf(
 
 /// Process a PDF from bytes in memory.
 #[pyfunction]
-#[pyo3(signature = (data, pages=None, number_gap=None))]
+#[pyo3(signature = (data, pages=None, number_gap=None, tuning=None))]
 fn process_pdf_bytes(
     data: &[u8],
     pages: Option<Vec<u32>>,
     number_gap: Option<&Bound<'_, PyAny>>,
+    tuning: Option<&str>,
 ) -> PyResult<PyPdfResult> {
     let mut opts = crate::PdfOptions::new();
     if let Some(p) = pages {
         opts = opts.pages(p);
     }
-    let result = under_gap(number_gap_arg(number_gap)?, || {
+    let result = under_tuning(call_tuning(number_gap, tuning)?, || {
         crate::process_pdf_mem_with_options(data, opts)
     })
     .map_err(to_py_err)?;
@@ -1103,13 +1156,14 @@ fn extract_text_bytes(data: &[u8]) -> PyResult<String> {
 ///     corner with y up; extract_text_in_regions reads regions relative to
 ///     the same box from its top-left corner (flip y with the box height).
 #[pyfunction]
-#[pyo3(signature = (path, pages=None, bold_from_weight=false, bold_weight_threshold=DEFAULT_BOLD_WEIGHT_THRESHOLD, number_gap=None))]
+#[pyo3(signature = (path, pages=None, bold_from_weight=false, bold_weight_threshold=DEFAULT_BOLD_WEIGHT_THRESHOLD, number_gap=None, tuning=None))]
 fn extract_text_with_positions(
     path: &str,
     pages: Option<Vec<u32>>,
     bold_from_weight: bool,
     bold_weight_threshold: i64,
     number_gap: Option<&Bound<'_, PyAny>>,
+    tuning: Option<&str>,
 ) -> PyResult<Vec<PyTextItem>> {
     // The threshold is checked whichever path the call takes.
     position_options(bold_from_weight, bold_weight_threshold)?;
@@ -1121,10 +1175,11 @@ fn extract_text_with_positions(
             bold_from_weight,
             bold_weight_threshold,
             number_gap,
+            tuning,
         );
     }
-    let gap = number_gap_arg(number_gap)?;
-    let items = under_gap(gap, || match pages {
+    let call = call_tuning(number_gap, tuning)?;
+    let items = under_tuning(call, || match pages {
         Some(p) => {
             let page_set: HashSet<u32> = p.into_iter().collect();
             crate::extract_text_with_positions_pages(path, Some(&page_set))
@@ -1259,17 +1314,18 @@ fn extract_text_with_positions_and_rotations_bytes(
 ///
 /// See extract_text_with_positions for the arguments and coordinate frame.
 #[pyfunction]
-#[pyo3(signature = (data, pages=None, bold_from_weight=false, bold_weight_threshold=DEFAULT_BOLD_WEIGHT_THRESHOLD, number_gap=None))]
+#[pyo3(signature = (data, pages=None, bold_from_weight=false, bold_weight_threshold=DEFAULT_BOLD_WEIGHT_THRESHOLD, number_gap=None, tuning=None))]
 fn extract_text_with_positions_bytes(
     data: &[u8],
     pages: Option<Vec<u32>>,
     bold_from_weight: bool,
     bold_weight_threshold: i64,
     number_gap: Option<&Bound<'_, PyAny>>,
+    tuning: Option<&str>,
 ) -> PyResult<Vec<PyTextItem>> {
     let page_set: Option<HashSet<u32>> = pages.map(|p| p.into_iter().collect());
     let options = position_options(bold_from_weight, bold_weight_threshold)?;
-    let items = under_gap(number_gap_arg(number_gap)?, || {
+    let items = under_tuning(call_tuning(number_gap, tuning)?, || {
         crate::extract_text_with_positions_mem_with_options(data, page_set.as_ref(), options)
     })
     .map_err(to_py_err)?;
@@ -1442,6 +1498,9 @@ fn pdf_inspector(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyPageRegionTexts>()?;
     m.add_class::<PyPageMarkdown>()?;
     m.add_class::<PyPagesExtractionResult>()?;
+    m.add_function(wrap_pyfunction!(set_tuning, m)?)?;
+    m.add_function(wrap_pyfunction!(get_tuning, m)?)?;
+    m.add_function(wrap_pyfunction!(list_knobs, m)?)?;
     m.add_function(wrap_pyfunction!(set_number_gap, m)?)?;
     m.add_function(wrap_pyfunction!(get_number_gap, m)?)?;
     m.add_function(wrap_pyfunction!(process_pdf, m)?)?;

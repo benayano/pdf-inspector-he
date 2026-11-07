@@ -97,6 +97,26 @@ fn strip_pdf_comments(data: &[u8]) -> Vec<u8> {
     result
 }
 
+/// The centerline of a filled four-sided subpath that draws a rule: its
+/// bounding box (user space) is at most `rule_thickness` (3) units thick and at least four
+/// times as long, so a bevelled border strip (two corners cut at 45°)
+/// qualifies as well as an exact rectangle. `None` for anything wider.
+fn filled_rule_centerline(min_x: f32, min_y: f32, w: f32, h: f32) -> Option<(f32, f32, f32, f32)> {
+    let max_thickness = crate::tuning::knob(|t| t.rule_thickness).or_auto(|| 3.0);
+    if max_thickness <= 0.0 {
+        return None;
+    }
+    if h <= max_thickness && w >= 4.0 * h.max(0.5) && w >= 4.0 {
+        let y = min_y + h / 2.0;
+        Some((min_x, y, min_x + w, y))
+    } else if w <= max_thickness && h >= 4.0 * w.max(0.5) && h >= 4.0 {
+        let x = min_x + w / 2.0;
+        Some((x, min_y, x, min_y + h))
+    } else {
+        None
+    }
+}
+
 fn transform_path_point(x: f32, y: f32, ctm: &[f32; 6]) -> (f32, f32) {
     (
         x * ctm[0] + y * ctm[2] + ctm[4],
@@ -2370,7 +2390,12 @@ pub(crate) fn extract_page_text_items_with_options(
                         }
                     }
                 }
-                for (x1, y1, x2, y2) in pending_lines.drain(..) {
+                // Subpaths closed with `h` moved their segments to
+                // `pending_subpaths`; a stroke paints those too (a cell
+                // border drawn as `m l l l h S`).
+                let closed: Vec<(f32, f32, f32, f32)> =
+                    pending_subpaths.drain(..).flatten().collect();
+                for (x1, y1, x2, y2) in closed.into_iter().chain(pending_lines.drain(..)) {
                     let (x1d, y1d) = transform_path_point(x1, y1, &ctm);
                     let (x2d, y2d) = transform_path_point(x2, y2, &ctm);
                     lines.push(PdfLine {
@@ -2404,7 +2429,12 @@ pub(crate) fn extract_page_text_items_with_options(
                         }
                     }
                 }
-                for (x1, y1, x2, y2) in pending_lines.drain(..) {
+                // Subpaths closed with `h` moved their segments to
+                // `pending_subpaths`; a stroke paints those too (a cell
+                // border drawn as `m l l l h S`).
+                let closed: Vec<(f32, f32, f32, f32)> =
+                    pending_subpaths.drain(..).flatten().collect();
+                for (x1, y1, x2, y2) in closed.into_iter().chain(pending_lines.drain(..)) {
                     let (x1d, y1d) = transform_path_point(x1, y1, &ctm);
                     let (x2d, y2d) = transform_path_point(x2, y2, &ctm);
                     lines.push(PdfLine {
@@ -2466,7 +2496,23 @@ pub(crate) fn extract_page_text_items_with_options(
                             && ys
                                 .iter()
                                 .all(|&y| (y - min_y).abs() < eps || (y - max_y).abs() < eps);
-                        if axis_aligned && w > 1.0 && h > 1.0 {
+                        if let Some((x1, y1, x2, y2)) = filled_rule_centerline(min_x, min_y, w, h) {
+                            // A thin filled strip is a drawn rule: browsers
+                            // and "Print To PDF" paint table borders this way
+                            // (one bevelled quadrilateral per cell edge)
+                            // rather than stroking a line. Report it as the
+                            // line it draws so line-based table detection
+                            // sees the grid.
+                            let (x1d, y1d) = transform_path_point(x1, y1, &ctm);
+                            let (x2d, y2d) = transform_path_point(x2, y2, &ctm);
+                            lines.push(PdfLine {
+                                x1: x1d,
+                                y1: y1d,
+                                x2: x2d,
+                                y2: y2d,
+                                page: page_num,
+                            });
+                        } else if axis_aligned && w > 1.0 && h > 1.0 {
                             let x_dev = min_x * ctm[0] + min_y * ctm[2] + ctm[4];
                             let y_dev = min_x * ctm[1] + min_y * ctm[3] + ctm[5];
                             let w_dev = w * ctm[0];
@@ -2985,6 +3031,34 @@ end";
 #[cfg(test)]
 pub(crate) const SIGNED_WORD: &str =
     "\u{1789}\u{17D2}\u{1789}\u{179C}\u{178F}\u{17D2}\u{1790}\u{17BB}";
+
+#[cfg(test)]
+mod filled_rule_tests {
+    use super::filled_rule_centerline;
+
+    #[test]
+    fn thin_filled_strips_are_rules() {
+        // A bevelled border strip 1.39 thick and 87 long (bounding box).
+        assert_eq!(
+            filled_rule_centerline(88.0, 337.5, 87.5, 1.39),
+            Some((88.0, 337.5 + 0.695, 175.5, 337.5 + 0.695))
+        );
+        // Vertical.
+        assert!(filled_rule_centerline(174.9, 337.5, 1.39, 40.3).is_some());
+        // A filled box is not a rule.
+        assert_eq!(filled_rule_centerline(0.0, 0.0, 80.0, 20.0), None);
+        // Nor a short dash.
+        assert_eq!(filled_rule_centerline(0.0, 0.0, 3.0, 1.0), None);
+    }
+
+    #[test]
+    fn rule_thickness_knob_turns_the_reading_off() {
+        let off = crate::Tuning::parse("rule_thickness=0").unwrap();
+        crate::with_tuning(off, || {
+            assert_eq!(filled_rule_centerline(88.0, 337.5, 87.5, 1.39), None);
+        });
+    }
+}
 
 #[cfg(test)]
 mod tests {

@@ -73,3 +73,52 @@ export function extractWithLlmCheck(
   rows: Row[];
   check: GapChoice & { ambiguousRows: number; rowsChecked: number };
 }>;
+
+export interface KnobDescription {
+  name: string;
+  unit: string;
+  auto: string;
+  effect: string;
+}
+
+export type RunText = (
+  data: Uint8Array,
+  options: { tuning: string },
+) => string | Promise<string>;
+
+export interface TuningComparison {
+  candidates: string[];
+  outputs: string[];
+  /** Per candidate: lines no other candidate produced (capped). */
+  unique: string[][];
+  identical: boolean;
+}
+
+export function compareTunings(
+  run: RunText,
+  data: Uint8Array,
+  candidates: string[],
+  options?: { maxLines?: number },
+): Promise<TuningComparison>;
+
+export function buildTuningPrompt(compared: TuningComparison, options?: { context?: string }): string;
+
+export function chooseTuning(
+  run: RunText,
+  data: Uint8Array,
+  ask: Ask,
+  options: { candidates: string[]; context?: string; maxLines?: number },
+): Promise<{
+  tuning: string | null;
+  reason: "identical-outputs" | "llm-undecided" | "llm-choice";
+  why?: string;
+  output?: string;
+  compared: TuningComparison;
+}>;
+
+/** An Anthropic tool definition for an agent that calls the extractor itself. */
+export function extractionToolDefinition(knobs: KnobDescription[]): {
+  name: "extract_pdf";
+  description: string;
+  input_schema: object;
+};

@@ -1,6 +1,6 @@
 use pdf_inspector::{
-    with_number_gap, FontCMapGaps, LayoutComplexity, MarkdownProfile, NumberGap, PageOcrReasons,
-    PdfOptions, PdfProcessResult, PdfType, ProcessMode,
+    with_tuning, FontCMapGaps, Knob, LayoutComplexity, MarkdownProfile, NumberGap, PageOcrReasons,
+    PdfOptions, PdfProcessResult, PdfType, ProcessMode, Tuning,
 };
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
@@ -27,6 +27,11 @@ export interface ProcessOptions {
    * to take it from the line's own word gaps. Default 0.2.
    */
   numberGap?: number | "auto";
+  /**
+   * Layout knobs as "knob=value,..." (see {@link listKnobs}), e.g.
+   * "rule_join_gap=3,short_rule_ratio=auto". `numberGap` wins for its knob.
+   */
+  tuning?: string;
 }
 
 /** Options for {@link extractTextWithPositions}. */
@@ -35,7 +40,22 @@ export interface PositionOptions {
   pages?: number[];
   /** See {@link ProcessOptions.numberGap}. */
   numberGap?: number | "auto";
+  /** See {@link ProcessOptions.tuning}. */
+  tuning?: string;
 }
+
+/** A tunable layout heuristic. */
+export interface KnobDescription {
+  name: string;
+  unit: string;
+  /** What "auto" does. */
+  auto: string;
+  /** What the knob changes, and which way to turn it. */
+  effect: string;
+}
+
+/** Every knob: for documentation or the parameter schema of an LLM tool. */
+export function listKnobs(): KnobDescription[];
 
 /** A positioned run of text, in PDF points with the origin bottom-left. */
 export interface PositionedText {
@@ -149,6 +169,7 @@ struct WasmProcessOptions {
     include_page_markers: Option<bool>,
     include_images: Option<bool>,
     number_gap: Option<WasmNumberGap>,
+    tuning: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -156,6 +177,23 @@ struct WasmProcessOptions {
 struct WasmPositionOptions {
     pages: Option<Vec<u32>>,
     number_gap: Option<WasmNumberGap>,
+    tuning: Option<String>,
+}
+
+/// The knobs one call asks for: `tuning` plus the `numberGap` shortcut,
+/// which wins for its own knob.
+fn call_tuning(
+    tuning: Option<String>,
+    number_gap: Option<WasmNumberGap>,
+) -> Result<Tuning, JsValue> {
+    let mut out = match tuning {
+        Some(text) => Tuning::parse(&text).map_err(|e| js_error("invalid options", e))?,
+        None => Tuning::default(),
+    };
+    if let Some(gap) = number_gap {
+        out.number_gap = Some(Knob::from(gap.resolve()?));
+    }
+    Ok(out)
 }
 
 /// `numberGap`: a number of em, or the string "auto".
@@ -339,12 +377,9 @@ fn deserialize_options(value: JsValue) -> Result<WasmProcessOptions, JsValue> {
     serde_wasm_bindgen::from_value(value).map_err(|error| js_error("invalid options", error))
 }
 
-fn build_options(value: JsValue, mode: ProcessMode) -> Result<(PdfOptions, NumberGap), JsValue> {
+fn build_options(value: JsValue, mode: ProcessMode) -> Result<(PdfOptions, Tuning), JsValue> {
     let options = deserialize_options(value)?;
-    let number_gap = match options.number_gap {
-        Some(gap) => gap.resolve()?,
-        None => pdf_inspector::current_number_gap(),
-    };
+    let tuning = call_tuning(options.tuning, options.number_gap)?;
     if options
         .pages
         .as_ref()
@@ -375,7 +410,7 @@ fn build_options(value: JsValue, mode: ProcessMode) -> Result<(PdfOptions, Numbe
     if let Some(include_images) = options.include_images {
         result.markdown.include_images = include_images;
     }
-    Ok((result, number_gap))
+    Ok((result, tuning))
 }
 
 fn serialize<T: Serialize>(value: &T) -> Result<JsValue, JsValue> {
@@ -390,9 +425,9 @@ fn initialize() {
 #[wasm_bindgen(js_name = processPdf, skip_typescript)]
 pub fn process_pdf(data: &[u8], options: JsValue) -> Result<JsValue, JsValue> {
     initialize();
-    let (options, number_gap) = build_options(options, ProcessMode::Full)?;
+    let (options, tuning) = build_options(options, ProcessMode::Full)?;
     let started = js_sys::Date::now();
-    let mut result = with_number_gap(number_gap, || {
+    let mut result = with_tuning(tuning, || {
         pdf_inspector::process_pdf_mem_with_options(data, options)
     })
     .map_err(|error| js_error("process PDF", error))?;
@@ -463,11 +498,8 @@ pub fn extract_text_with_positions(data: &[u8], options: JsValue) -> Result<JsVa
             "pages are 1-indexed; page 0 is invalid",
         ));
     }
-    let number_gap = match options.number_gap {
-        Some(gap) => gap.resolve()?,
-        None => pdf_inspector::current_number_gap(),
-    };
-    let items = with_number_gap(number_gap, || match &options.pages {
+    let tuning = call_tuning(options.tuning, options.number_gap)?;
+    let items = with_tuning(tuning, || match &options.pages {
         Some(pages) => pdf_inspector::extractor::extract_text_with_positions_mem_pages(
             data,
             Some(&pages.iter().copied().collect()),
@@ -491,6 +523,29 @@ pub fn extract_text_with_positions(data: &[u8], options: JsValue) -> Result<JsVa
         })
         .collect();
     serialize(&items)
+}
+
+#[derive(Serialize)]
+struct WasmKnob {
+    name: &'static str,
+    unit: &'static str,
+    auto: &'static str,
+    effect: &'static str,
+}
+
+/// Every layout knob, for documentation or an LLM tool schema.
+#[wasm_bindgen(js_name = listKnobs, skip_typescript)]
+pub fn list_knobs() -> Result<JsValue, JsValue> {
+    let knobs: Vec<WasmKnob> = pdf_inspector::KNOBS
+        .iter()
+        .map(|k| WasmKnob {
+            name: k.name,
+            unit: k.unit,
+            auto: k.auto,
+            effect: k.effect,
+        })
+        .collect();
+    serialize(&knobs)
 }
 
 /// Return the WebAssembly package version.

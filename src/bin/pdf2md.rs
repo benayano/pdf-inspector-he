@@ -542,6 +542,7 @@ const VALUE_OPTIONS: &[&str] = &[
     "--ocr-hosted-threshold",
     "--ocr-model-dir",
     "--number-gap",
+    "--tune",
 ];
 
 fn print_usage(argv0: &str) {
@@ -566,6 +567,8 @@ fn print_usage(argv0: &str) {
     eprintln!("  --number-gap V      Gap (em) splitting two numbers on an RTL line,");
     eprintln!("                      or `auto` to take it from the line's own word gaps");
     eprintln!("                      (default 0.2; env PDF_INSPECTOR_NUMBER_GAP_EM)");
+    eprintln!("  --tune K=V,...      Set layout knobs, e.g. rule_join_gap=3,short_rule_ratio=auto");
+    eprintln!("                      (env PDF_INSPECTOR_TUNING); --list-knobs lists them");
     eprintln!("  --detect-only       Only detect PDF type (no extraction)");
     eprintln!("  --analyze           Detect + extract + layout analysis (no markdown)");
     eprintln!("  --ocr MODE          OCR mode: off, auto, or force (requires feature `ocr`)");
@@ -616,20 +619,35 @@ fn positional_args(args: &[String]) -> Result<Vec<String>, ()> {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let gap = argument_value(&args, "--number-gap").unwrap_or_else(|error| {
-        eprintln!("Error: {error}");
-        process::exit(1);
-    });
-    match gap {
-        Some(value) => {
-            let gap = pdf_inspector::NumberGap::parse(value).unwrap_or_else(|| {
-                eprintln!("Error: --number-gap takes `auto` or a non-negative number");
-                process::exit(1);
-            });
-            pdf_inspector::with_number_gap(gap, run)
+    if args.iter().any(|a| a == "--list-knobs") {
+        for knob in pdf_inspector::KNOBS {
+            println!(
+                "{} ({}; auto: {})\n    {}",
+                knob.name, knob.unit, knob.auto, knob.effect
+            );
         }
-        None => run(),
+        return;
     }
+    let value = |name: &str| {
+        argument_value(&args, name).unwrap_or_else(|error| {
+            eprintln!("Error: {error}");
+            process::exit(1);
+        })
+    };
+    let mut tuning = match value("--tune") {
+        Some(text) => pdf_inspector::Tuning::parse(text).unwrap_or_else(|error| {
+            eprintln!("Error: --tune: {error}");
+            process::exit(1);
+        }),
+        None => pdf_inspector::Tuning::default(),
+    };
+    if let Some(gap) = value("--number-gap") {
+        tuning.number_gap = Some(pdf_inspector::Knob::parse(gap).unwrap_or_else(|| {
+            eprintln!("Error: --number-gap takes `auto` or a non-negative number");
+            process::exit(1);
+        }));
+    }
+    pdf_inspector::with_tuning(tuning, run)
 }
 
 fn run() {

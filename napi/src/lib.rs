@@ -734,6 +734,48 @@ pub fn set_number_gap(value: Option<Either<f64, String>>) -> Result<()> {
     Ok(())
 }
 
+/// Set the layout knobs for every later call in this process, as
+/// "knob=value,…" (see `listKnobs()`); `null`/`undefined` clears them.
+#[napi(ts_args_type = "tuning?: string | null")]
+pub fn set_tuning(tuning: Option<String>) -> Result<()> {
+    let parsed = match tuning {
+        Some(text) => pdf_inspector::Tuning::parse(&text)
+            .map_err(|e| Error::new(Status::InvalidArg, e))?,
+        None => pdf_inspector::Tuning::default(),
+    };
+    pdf_inspector::set_process_tuning(parsed);
+    Ok(())
+}
+
+/// The knobs in effect (process or environment) as "knob=value,…".
+#[napi]
+pub fn get_tuning() -> String {
+    pdf_inspector::current_tuning().to_string()
+}
+
+/// A tunable layout heuristic.
+#[napi(object)]
+pub struct KnobDescription {
+    pub name: String,
+    pub unit: String,
+    pub auto: String,
+    pub effect: String,
+}
+
+/// Every knob, for documentation or an LLM tool schema.
+#[napi]
+pub fn list_knobs() -> Vec<KnobDescription> {
+    pdf_inspector::KNOBS
+        .iter()
+        .map(|k| KnobDescription {
+            name: k.name.to_string(),
+            unit: k.unit.to_string(),
+            auto: k.auto.to_string(),
+            effect: k.effect.to_string(),
+        })
+        .collect()
+}
+
 /// The number gap in effect: a number in em, or "auto".
 #[napi(ts_return_type = "number | 'auto'")]
 pub fn get_number_gap() -> Either<f64, String> {

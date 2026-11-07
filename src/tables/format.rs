@@ -18,7 +18,13 @@ pub fn table_to_markdown(table: &Table) -> String {
     }
 
     // Clean up the table: merge continuation rows, extract footnotes, remove empty rows
-    let (cleaned_cells, footnotes) = clean_table_cells(&table.cells);
+    let (mut cleaned_cells, footnotes) = clean_table_cells(&table.cells);
+    // A right-to-left table is emitted in its reading order, rightmost
+    // column first, so "first column" means the same to a reader of the
+    // Markdown as it does on the page.
+    if super::cells_are_rtl(&table.cells) {
+        cleaned_cells = super::cells_in_reading_order(&cleaned_cells);
+    }
 
     if cleaned_cells.is_empty() {
         return String::new();

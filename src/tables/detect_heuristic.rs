@@ -1812,6 +1812,19 @@ fn looks_like_number(s: &str) -> bool {
 ///
 /// Used by format.rs to render TOCs as flat lists instead of markdown tables.
 pub fn is_table_of_contents(cells: &[Vec<String>]) -> bool {
+    // The checks below read a row as "title first, page number last". Cells
+    // are stored in screen order (left to right), which on a right-to-left
+    // table is the reverse of the reading order: an RTL invoice's leftmost
+    // column (a total such as "66.10", which looks like a section number)
+    // and its rightmost column (the line numbers 1, 2, 3 … which look like
+    // ascending page numbers) would otherwise make it a "contents" list.
+    let reading;
+    let cells = if super::cells_are_rtl(cells) {
+        reading = super::cells_in_reading_order(cells);
+        reading.as_slice()
+    } else {
+        cells
+    };
     is_dot_leader_toc(cells) || is_tabular_toc(cells) || is_page_number_toc(cells)
 }
 
@@ -3524,6 +3537,32 @@ mod tests {
             ("Net income before adjustments", "54"),
             ("Gross margin excluding one-offs", "42"),
         ])));
+    }
+
+    #[test]
+    fn rtl_invoice_rows_are_not_a_table_of_contents() {
+        // Screen order (left to right) of a Hebrew invoice: totals such as
+        // "66.10" on the left, line numbers 1, 2, 3 … on the right. Read
+        // left to right they look like section numbers and page numbers.
+        let rows: Vec<Vec<String>> = (1..=8)
+            .map(|n| {
+                vec![
+                    format!("{}.10", 60 + n),
+                    "\u{05E9}\"\u{05D7}".to_string(),
+                    "\u{05DE}\u{05E1}\u{05D9}\u{05DC}\u{05D4} \u{05DC}\u{05E4}\u{05D0}\u{05E0}\u{05DC}"
+                        .to_string(),
+                    format!("SH{n}"),
+                    n.to_string(),
+                ]
+            })
+            .collect();
+        assert!(!is_table_of_contents(&rows));
+        // The same cells in a left-to-right table would read as a
+        // contents list; that verdict is unchanged.
+        let ltr: Vec<Vec<String>> = (1..=8)
+            .map(|n| vec![format!("{}.{} Section title", n, n), (n * 3).to_string()])
+            .collect();
+        assert!(is_table_of_contents(&ltr));
     }
 
     #[test]

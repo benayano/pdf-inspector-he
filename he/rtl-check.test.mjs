@@ -76,3 +76,43 @@ test("extractWithLlmCheck re-extracts the whole document with the chosen gap", a
   assert.equal(result.numberGap, 0.3);
   assert.equal(result.rows[0].cells[1], "מסילה 3 1.2 מטר");
 });
+
+import { compareTunings, buildTuningPrompt, chooseTuning, extractionToolDefinition } from "./rtl-check.mjs";
+
+// A fake engine whose table loses a column unless rule_join_gap is set.
+function fakeMarkdown(_data, { tuning }) {
+  const good = /rule_join_gap=4/.test(tuning);
+  return [
+    "# Invoice",
+    good ? "|1|SH1|מסילה|28.00|" : "|1 SH1 מסילה 28.00|",
+    good ? "|2|SH1|קרש|8.00|" : "|2 SH1 קרש 8.00|",
+    "Total 100",
+  ].join("\n");
+}
+
+test("compareTunings keeps only the differing lines", async () => {
+  const c = await compareTunings(fakeMarkdown, null, ["", "rule_join_gap=4"]);
+  assert.equal(c.identical, false);
+  assert.deepEqual(c.unique[1], ["|1|SH1|מסילה|28.00|", "|2|SH1|קרש|8.00|"]);
+  assert.ok(!buildTuningPrompt(c).includes("Total 100"));
+});
+
+test("chooseTuning returns the candidate the LLM picks", async () => {
+  const r = await chooseTuning(fakeMarkdown, null, async () => '{"choice":"B","reason":"columns"}', {
+    candidates: ["", "rule_join_gap=4"],
+  });
+  assert.equal(r.tuning, "rule_join_gap=4");
+  assert.equal(r.why, "columns");
+  const same = await chooseTuning(() => "x", null, async () => "{}", { candidates: ["", "a=1"] });
+  assert.equal(same.reason, "identical-outputs");
+  const unsure = await chooseTuning(fakeMarkdown, null, async () => '{"choice":"?"}', {
+    candidates: ["", "rule_join_gap=4"],
+  });
+  assert.equal(unsure.tuning, null);
+});
+
+test("extractionToolDefinition lists every knob", () => {
+  const tool = extractionToolDefinition([{ name: "rule_join_gap", unit: "pt", auto: "2.0", effect: "joins" }]);
+  assert.equal(tool.name, "extract_pdf");
+  assert.match(tool.input_schema.properties.tuning.description, /rule_join_gap \(pt; auto: 2\.0\): joins/);
+});

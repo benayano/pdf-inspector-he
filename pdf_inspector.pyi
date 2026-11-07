@@ -304,6 +304,20 @@ class PagesExtractionResult:
     is_complex: bool
     """True if any page has tables or multi-column layout."""
 
+def set_tuning(tuning: Optional[str] = None) -> None:
+    """Set the layout knobs for every later call in this process, as
+    "knob=value,..." (e.g. "rule_join_gap=3,short_rule_ratio=auto"); see
+    :func:`list_knobs`. ``None`` clears them. Per-call ``tuning=`` wins."""
+    ...
+
+def get_tuning() -> str:
+    """The knobs set (process or environment) as "knob=value,..."."""
+    ...
+
+def list_knobs() -> list[tuple[str, str, str, str]]:
+    """Every knob as (name, unit, what "auto" does, what it changes)."""
+    ...
+
 def set_number_gap(value: Union[float, str, None] = None) -> None:
     """Set, for every later call in this process, the gap in em from which two
     numbers that meet on a right-to-left line are read as two numbers
@@ -320,6 +334,7 @@ def process_pdf(
     path: str,
     pages: Optional[list[int]] = None,
     number_gap: Union[float, str, None] = None,
+    tuning: Optional[str] = None,
 ) -> PdfResult:
     """Process a PDF: detect type, extract text, convert to Markdown."""
     ...
@@ -328,6 +343,7 @@ def process_pdf_bytes(
     data: bytes,
     pages: Optional[list[int]] = None,
     number_gap: Union[float, str, None] = None,
+    tuning: Optional[str] = None,
 ) -> PdfResult:
     """Process a PDF from bytes in memory."""
     ...
@@ -395,6 +411,7 @@ def extract_text_with_positions(
     bold_from_weight: bool = False,
     bold_weight_threshold: int = 600,
     number_gap: Union[float, str, None] = None,
+    tuning: Optional[str] = None,
 ) -> list[TextItem]:
     """Extract text with position information.
 
@@ -437,6 +454,7 @@ def extract_text_with_positions_bytes(
     bold_from_weight: bool = False,
     bold_weight_threshold: int = 600,
     number_gap: Union[float, str, None] = None,
+    tuning: Optional[str] = None,
 ) -> list[TextItem]:
     """Extract text with position information from bytes.
 

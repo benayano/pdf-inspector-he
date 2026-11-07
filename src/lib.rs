@@ -71,7 +71,8 @@ pub use markdown::{
 };
 pub use process_mode::ProcessMode;
 pub use tuning::{
-    current_number_gap, set_process_number_gap, with_number_gap, NumberGap, DEFAULT_NUMBER_GAP_EM,
+    current_number_gap, current_tuning, process_tuning, set_process_number_gap, set_process_tuning,
+    with_number_gap, with_tuning, Knob, KnobInfo, NumberGap, Tuning, DEFAULT_NUMBER_GAP_EM, KNOBS,
 };
 pub use types::{BoldSource, LayoutComplexity, PdfLine, PdfRect, TextItem};
 

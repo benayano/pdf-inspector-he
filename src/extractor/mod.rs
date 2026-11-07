@@ -1330,7 +1330,89 @@ fn group_indices_into_lines(items: &[TextItem]) -> Vec<Vec<usize>> {
             }),
         }
     }
-    lines.into_iter().map(|line| line.fragments).collect()
+    lines
+        .into_iter()
+        .flat_map(|line| split_stacked_baselines(items, line.fragments))
+        .collect()
+}
+
+/// Split a grouped line that holds two text lines stacked one over the
+/// other. A table header row sets single-line cells on the middle of the
+/// row and two-line cells ("מחיר ליח'" over "אחרי הנחה") above and below
+/// it, each baseline within the window of the next: grouped by chaining,
+/// the two lines of the tall cell end up on one line and their glyphs
+/// interleave. When the line's baselines span more than an em and fall
+/// into clusters at least half an em apart, each cluster with at least two
+/// fragments becomes its own line; a lone raised or lowered fragment (a
+/// mark, a superscript) stays with the cluster nearest to it.
+fn split_stacked_baselines(items: &[TextItem], fragments: Vec<usize>) -> Vec<Vec<usize>> {
+    if fragments.len() < 4 {
+        return vec![fragments];
+    }
+    let mut ems: Vec<f32> = fragments.iter().map(|&i| line_em(&items[i])).collect();
+    ems.sort_by(|a, b| a.total_cmp(b));
+    let em = ems[ems.len() / 2].max(1.0);
+    let (lo, hi) = fragments
+        .iter()
+        .map(|&i| items[i].y)
+        .fold((f32::INFINITY, f32::NEG_INFINITY), |(lo, hi), y| {
+            (lo.min(y), hi.max(y))
+        });
+    if hi - lo <= em {
+        return vec![fragments];
+    }
+    let stacked_gap = crate::tuning::knob(|t| t.stacked_line_gap).or_auto(|| 0.5);
+    let mut ys: Vec<f32> = fragments.iter().map(|&i| items[i].y).collect();
+    ys.sort_by(|a, b| a.total_cmp(b));
+    // Cluster the baselines on gaps of at least half an em.
+    let mut clusters: Vec<(f32, f32)> = Vec::new(); // (min y, max y)
+    for y in ys {
+        match clusters.last_mut() {
+            Some(last) if y - last.1 < stacked_gap * em => last.1 = y,
+            _ => clusters.push((y, y)),
+        }
+    }
+    let cluster_of = |y: f32, clusters: &[(f32, f32)]| {
+        clusters
+            .iter()
+            .position(|&(a, b)| y >= a && y <= b)
+            .unwrap_or(0)
+    };
+    let mut counts = vec![0usize; clusters.len()];
+    for &i in &fragments {
+        counts[cluster_of(items[i].y, &clusters)] += 1;
+    }
+    let real: Vec<usize> = (0..clusters.len()).filter(|&c| counts[c] >= 2).collect();
+    if real.len() < 2 {
+        return vec![fragments];
+    }
+    let mut out: Vec<Vec<usize>> = vec![Vec::new(); real.len()];
+    for &i in &fragments {
+        let y = items[i].y;
+        let own = cluster_of(y, &clusters);
+        let slot = match real.iter().position(|&c| c == own) {
+            Some(slot) => slot,
+            None => {
+                // The nearest real cluster.
+                let distance = |c: usize| {
+                    let (a, b) = clusters[c];
+                    if y < a {
+                        a - y
+                    } else {
+                        (y - b).max(0.0)
+                    }
+                };
+                (0..real.len())
+                    .min_by(|&x, &z| distance(real[x]).total_cmp(&distance(real[z])))
+                    .unwrap_or(0)
+            }
+        };
+        out[slot].push(i);
+    }
+    // Keep the original order of lines: highest baseline first matches
+    // nothing in particular, so order by each line's first fragment.
+    out.sort_by_key(|line| line[0]);
+    out
 }
 
 /// [`group_indices_into_lines`] as (page, baseline of the first fragment,
@@ -1974,7 +2056,7 @@ fn inside_number(a: &str, b: &str) -> bool {
 }
 
 /// Gaps above this many em stay out of the word-gap sample of
-/// [`glyph_run_word_gap_floor`].
+/// [`glyph_run_word_gap_floor`]: the `auto` of the `word_gap_cap` knob.
 const MAX_WORD_GAP_SAMPLE_EM: f32 = 1.0;
 
 /// Word-gap floor for a line of right-to-left text shown one glyph per
@@ -1998,10 +2080,14 @@ fn glyph_run_word_gap_floor(gaps: &[f32]) -> Option<f32> {
     // Gaps wider than an em are column or cell gaps (a table row is one
     // line): never mid-word, and in the sample they pull the word-gap
     // class up so far that every real word space falls under the floor.
+    let cap = crate::tuning::knob(|t| t.word_gap_cap).or_auto(|| MAX_WORD_GAP_SAMPLE_EM);
     let gaps: Vec<f32> = gaps
         .iter()
         .copied()
-        .filter(|g| *g <= MAX_WORD_GAP_SAMPLE_EM)
+        // Overlaps (negative gaps) come from glyphs of another run laid
+        // over this one — a rotated stamp, a second line — and say nothing
+        // about this line's letter spacing.
+        .filter(|g| *g >= -0.05 && *g <= cap)
         .collect();
     if gaps.len() < 3 {
         return None;
@@ -5883,6 +5969,32 @@ BT /F1 12 Tf 0 1 -1 0 240 100 Tm (WORLD) Tj ET"
         let merged = merge_text_items(items);
         assert_eq!(merged.len(), 1);
         assert_eq!(merged[0].text, "HO\u{0301}\u{0300}W");
+    }
+
+    #[test]
+    fn a_two_line_header_cell_is_not_interleaved_with_its_neighbours() {
+        // Header row: one-line cells on the middle baseline (y=542.4), a
+        // two-line cell above (546.6) and below (538.3) it. Grouped by
+        // chaining, all three were one line.
+        let mut items = Vec::new();
+        for (i, ch) in "\u{05D0}\u{05D1}\u{05D2}".chars().enumerate() {
+            let mut it = make_merge_item(&ch.to_string(), 300.0 + 5.0 * i as f32, 5.0);
+            it.y = 542.4;
+            it.font_size = 7.2;
+            it.height = 7.2;
+            items.push(it);
+        }
+        for (y, x) in [(546.6_f32, 100.0_f32), (538.3, 102.0)] {
+            for (i, ch) in "\u{05D3}\u{05D4}\u{05D5}".chars().enumerate() {
+                let mut it = make_merge_item(&ch.to_string(), x + 5.0 * i as f32, 5.0);
+                it.y = y;
+                it.font_size = 7.2;
+                it.height = 7.2;
+                items.push(it);
+            }
+        }
+        let lines = group_indices_into_lines(&items);
+        assert_eq!(lines.len(), 3, "{lines:?}");
     }
 
     /// An invoice row shown one glyph per item (as "Microsoft: Print To

@@ -227,8 +227,90 @@ pub(crate) fn sort_rtl_cell_items<T: Clone>(items: &mut [T], item_of: impl Fn(&T
             end += 1;
         }
         items[start..end].sort_by(|a, b| item_of(a).x.total_cmp(&item_of(b).x));
-        reorder_bidi_line(&mut items[start..end], &item_of, true);
+        order_rtl_cell_band(&mut items[start..end], &item_of);
         start = end;
+    }
+}
+
+/// Reading order of one baseline band of a right-to-left table cell, given
+/// in screen order. The items of a cell are already merged runs whose text
+/// is in reading order, so each is placed whole: runs holding right-to-left
+/// letters read right to left; a run of items holding Latin letters reads
+/// left to right inside it; an item of neither (a number, a sign) joins a
+/// Latin run it sits inside or directly follows, and otherwise reads with
+/// the right-to-left text. Re-running the bidirectional algorithm over the
+/// runs' characters instead reorders text the merge already put in reading
+/// order: `2" BANIT` would turn into `BANIT "2` and move before the Hebrew
+/// word it follows.
+///
+/// A number between Latin on its left and Hebrew on its right is ambiguous
+/// on the page ("Windows 10 …" and "… 10 Windows" in a Hebrew line look
+/// the same); it is read with the Hebrew, the common case in product
+/// descriptions ("פרופיל 50*50 3.25 מגולוון").
+fn order_rtl_cell_band<T: Clone>(items: &mut [T], item_of: impl Fn(&T) -> &TextItem) {
+    #[derive(Clone, Copy, PartialEq)]
+    enum Dir {
+        Rtl,
+        Ltr,
+        Neutral,
+    }
+    let is_letter =
+        |c: char| c.is_alphabetic() && !unicode_normalization::char::is_combining_mark(c);
+    let dirs: Vec<Dir> = items
+        .iter()
+        .map(|item| {
+            let text = &item_of(item).text;
+            if text.chars().any(|c| is_letter(c) && is_rtl_char(c)) {
+                Dir::Rtl
+            } else if text.chars().any(is_letter) {
+                Dir::Ltr
+            } else {
+                Dir::Neutral
+            }
+        })
+        .collect();
+    if !dirs.contains(&Dir::Ltr) {
+        items.reverse();
+        return;
+    }
+    // Resolve neutrals: Latin on the left (it reads before them in a Latin
+    // run) and Latin or nothing but neutrals up to the next strong item on
+    // the right make them Latin; anything else, right to left.
+    let n = dirs.len();
+    let mut resolved = dirs.clone();
+    for i in 0..n {
+        if dirs[i] != Dir::Neutral {
+            continue;
+        }
+        let left = dirs[..i]
+            .iter()
+            .rev()
+            .find(|d| **d != Dir::Neutral)
+            .copied();
+        let right = dirs[i + 1..].iter().find(|d| **d != Dir::Neutral).copied();
+        resolved[i] = if left == Some(Dir::Ltr) && right != Some(Dir::Rtl) {
+            Dir::Ltr
+        } else {
+            Dir::Rtl
+        };
+    }
+    // Reverse the whole band, then turn each Latin run back round.
+    let source: Vec<T> = items.to_vec();
+    let mut order: Vec<usize> = (0..n).rev().collect();
+    let mut k = 0;
+    while k < n {
+        if resolved[order[k]] == Dir::Ltr {
+            let run_start = k;
+            while k < n && resolved[order[k]] == Dir::Ltr {
+                k += 1;
+            }
+            order[run_start..k].reverse();
+        } else {
+            k += 1;
+        }
+    }
+    for (slot, index) in order.into_iter().enumerate() {
+        items[slot] = source[index].clone();
     }
 }
 
@@ -1931,6 +2013,48 @@ mod tests {
         sort_line_items(&mut items, true);
         assert_eq!(items[0].text, "IBM");
         assert_eq!(items[1].text, "\u{05D4}\u{05D9}\u{05D0}");
+    }
+
+    #[test]
+    fn rtl_cell_keeps_latin_runs_whole_and_numbers_with_hebrew() {
+        // "אומגה 2\" BANIT": the Latin item reads after the Hebrew word to
+        // its right, as written — not turned round into `BANIT "2`.
+        let mut items = vec![
+            make_rtl_item("2\" BANIT", 100.0, 700.0),
+            make_rtl_item("\u{05D0}\u{05D5}\u{05DE}\u{05D2}\u{05D4}", 140.0, 700.0),
+        ];
+        sort_rtl_cell_items(&mut items, |item| item);
+        let texts: Vec<&str> = items.iter().map(|i| i.text.as_str()).collect();
+        assert_eq!(
+            texts,
+            ["\u{05D0}\u{05D5}\u{05DE}\u{05D2}\u{05D4}", "2\" BANIT"]
+        );
+        // Numbers between Hebrew words read right to left with them:
+        // "פרופיל 50*50 3.25 מגולוון".
+        let mut items = vec![
+            make_rtl_item("\u{05DE}\u{05D2}", 100.0, 700.0),
+            make_rtl_item("3.25", 135.0, 700.0),
+            make_rtl_item("50*50", 170.0, 700.0),
+            make_rtl_item("\u{05E4}\u{05E8}", 205.0, 700.0),
+        ];
+        sort_rtl_cell_items(&mut items, |item| item);
+        let texts: Vec<&str> = items.iter().map(|i| i.text.as_str()).collect();
+        assert_eq!(
+            texts,
+            ["\u{05E4}\u{05E8}", "50*50", "3.25", "\u{05DE}\u{05D2}"]
+        );
+        // A Latin phrase of several items, with a number inside it, keeps
+        // its own left-to-right order inside the Hebrew line.
+        let mut items = vec![
+            make_rtl_item("2025", 100.0, 700.0),
+            make_rtl_item("Data", 135.0, 700.0),
+            make_rtl_item("\u{05E9}\u{05DC}", 170.0, 700.0),
+            make_rtl_item("Open", 60.0, 700.0),
+        ];
+        items.sort_by(|a, b| a.x.total_cmp(&b.x));
+        sort_rtl_cell_items(&mut items, |item| item);
+        let texts: Vec<&str> = items.iter().map(|i| i.text.as_str()).collect();
+        assert_eq!(texts, ["\u{05E9}\u{05DC}", "Open", "2025", "Data"]);
     }
 
     #[test]

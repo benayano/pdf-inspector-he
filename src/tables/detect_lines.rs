@@ -1440,6 +1440,67 @@ fn refine_segment_grid_text_rows(
 ///
 /// Lines are classified as horizontal or vertical, snapped into grid edges,
 /// and validated before assigning text items to the resulting grid.
+/// The vertical rules at least `short_rule_ratio` (30%) as long as the longest one; with fewer
+/// than four rules, all of them.
+fn drop_short_column_rules(verticals: Vec<(f32, f32, f32)>) -> Vec<(f32, f32, f32)> {
+    if verticals.len() < 4 {
+        return verticals;
+    }
+    let ratio = crate::tuning::knob(|t| t.short_rule_ratio).or_auto(|| 0.3);
+    let longest = verticals
+        .iter()
+        .map(|(_, lo, hi)| hi - lo)
+        .fold(0.0f32, f32::max);
+    let kept: Vec<(f32, f32, f32)> = verticals
+        .iter()
+        .copied()
+        .filter(|(_, lo, hi)| hi - lo >= ratio * longest)
+        .collect();
+    if kept.len() >= 2 {
+        kept
+    } else {
+        verticals
+    }
+}
+
+/// Join axis-aligned segments `(position, lo, hi)` that lie on one line
+/// (positions within 1pt) and touch or overlap along it (gap ≤ the
+/// `rule_join_gap` knob, 2pt by default).
+fn merge_collinear_segments(mut segments: Vec<(f32, f32, f32)>) -> Vec<(f32, f32, f32)> {
+    const SAME_LINE: f32 = 1.0;
+    let max_gap = crate::tuning::knob(|t| t.rule_join_gap).or_auto(|| 2.0);
+    segments.sort_by(|a, b| a.0.total_cmp(&b.0).then(a.1.total_cmp(&b.1)));
+    let mut merged: Vec<(f32, f32, f32)> = Vec::with_capacity(segments.len());
+    let mut start = 0;
+    while start < segments.len() {
+        // One line: positions chained within SAME_LINE of each other.
+        let mut end = start + 1;
+        while end < segments.len() && segments[end].0 - segments[end - 1].0 <= SAME_LINE {
+            end += 1;
+        }
+        let mut group: Vec<(f32, f32, f32)> = segments[start..end].to_vec();
+        group.sort_by(|a, b| a.1.total_cmp(&b.1));
+        let mut current = group[0];
+        let mut count = 1.0f32;
+        let mut position_sum = current.0;
+        for &(position, lo, hi) in &group[1..] {
+            if lo <= current.2 + max_gap {
+                current.2 = current.2.max(hi);
+                position_sum += position;
+                count += 1.0;
+            } else {
+                merged.push((position_sum / count, current.1, current.2));
+                current = (position, lo, hi);
+                position_sum = position;
+                count = 1.0;
+            }
+        }
+        merged.push((position_sum / count, current.1, current.2));
+        start = end;
+    }
+    merged
+}
+
 pub fn detect_tables_from_lines(items: &[TextItem], lines: &[PdfLine], page: u32) -> Vec<Table> {
     detect_tables_from_lines_inner(items, lines, page, true, true)
 }
@@ -1751,12 +1812,6 @@ fn detect_tables_from_lines_inner(
     for line in &page_lines {
         let dx = (line.x2 - line.x1).abs();
         let dy = (line.y2 - line.y1).abs();
-        let length = (dx * dx + dy * dy).sqrt();
-
-        // Skip very short lines (decorations, tick marks)
-        if length < 20.0 {
-            continue;
-        }
 
         if dx > 0.01 && dy / dx <= angle_tolerance {
             // Horizontal line
@@ -1773,6 +1828,21 @@ fn detect_tables_from_lines_inner(
         }
         // Diagonal lines are ignored
     }
+    // A grid drawn cell by cell (each cell paints its own four edges, as
+    // browsers do for bordered tables) arrives as many short collinear
+    // pieces: one column rule per row. Join the vertical pieces that touch
+    // before judging lengths, so a column rule is seen at its drawn length.
+    // Horizontal pieces stay as drawn: where a row rule breaks is how
+    // `derive_columns_from_horizontal_segments` finds undrawn columns.
+    let mut verticals = merge_collinear_segments(verticals);
+    // Skip very short lines (decorations, tick marks)
+    horizontals.retain(|(_, lo, hi)| hi - lo >= 20.0);
+    verticals.retain(|(_, lo, hi)| hi - lo >= 20.0);
+    // Column rules much shorter than the longest belong to another box —
+    // a totals box under an item table draws its own, short column rules.
+    // Mixing their x positions gives the table phantom columns; leave such
+    // boxes to the other detectors.
+    let verticals = drop_short_column_rules(verticals);
 
     if horizontals.len() < 2 {
         return Vec::new();
@@ -1882,7 +1952,35 @@ fn detect_tables_from_lines_inner(
 
     // Snap Y-values of horizontal lines → row edges
     let h_ys: Vec<f32> = horizontals.iter().map(|(y, _, _)| *y).collect();
-    let row_edges = snap_edges(&h_ys, 3.0);
+    let mut row_edges = snap_edges(&h_ys, 3.0);
+    // With drawn column rules, a horizontal rule above or below every one
+    // of them (a separator under the letterhead, a title underline) bounds
+    // no cell: keep only the row edges the column rules reach, so the text
+    // between such a rule and the grid does not become a first row.
+    if !cols_from_segments && verticals.len() >= 2 {
+        // The extent most column rules share: the second-lowest bottom and
+        // second-highest top, so one outer rule that runs on past the grid
+        // (into a box below that shares its x) does not widen it.
+        let mut los: Vec<f32> = verticals.iter().map(|(_, lo, _)| *lo).collect();
+        let mut his: Vec<f32> = verticals.iter().map(|(_, _, hi)| *hi).collect();
+        los.sort_by(|a, b| a.total_cmp(b));
+        his.sort_by(|a, b| b.total_cmp(a));
+        let v_lo = los[1];
+        let v_hi = his[1];
+        let inside: Vec<f32> = row_edges
+            .iter()
+            .copied()
+            .filter(|y| *y >= v_lo - 3.0 && *y <= v_hi + 3.0)
+            .collect();
+        if inside.len() >= 3 && inside.len() < row_edges.len() {
+            log::debug!(
+                "detect_lines p{}: dropped {} row edges outside the column rules",
+                page,
+                row_edges.len() - inside.len()
+            );
+            row_edges = inside;
+        }
+    }
 
     // Column edges from drawn verticals when present, else from the
     // horizontal-segment endpoints derived above.
@@ -2124,6 +2222,56 @@ fn detect_tables_from_lines_inner(
 mod tests {
     use super::*;
     use crate::types::ItemType;
+
+    #[test]
+    fn collinear_pieces_join_when_they_touch() {
+        let merged = merge_collinear_segments(vec![
+            (100.0, 0.0, 10.0),
+            (100.4, 10.5, 25.0),
+            (100.0, 40.0, 50.0), // 15pt gap: stays apart
+            (200.0, 0.0, 10.0),
+        ]);
+        assert_eq!(merged.len(), 3, "{merged:?}");
+        assert!(merged.iter().any(|&(_, lo, hi)| lo == 0.0 && hi == 25.0));
+    }
+
+    #[test]
+    fn grid_drawn_cell_by_cell_is_found_without_the_box_below() {
+        // Browsers draw a bordered table cell by cell: every cell paints
+        // its own edges, so a column rule arrives as one short piece per
+        // row (here 14pt, under the 20pt line minimum). A totals box under
+        // the table draws short rules of its own at other x positions.
+        let cols = [50.0_f32, 150.0, 350.0, 450.0];
+        // Slightly uneven row heights, so the chart-gridline rejector
+        // (row spacing CV < 0.02) does not fire.
+        let heights = [14.0_f32, 13.0, 15.0, 14.0, 12.5, 14.5, 13.5, 15.5];
+        let mut tops = vec![700.0_f32];
+        for h in heights {
+            tops.push(tops.last().unwrap() - h);
+        }
+        let mut lines = Vec::new();
+        let mut items = Vec::new();
+        for w in tops.windows(2) {
+            let (top, bottom) = (w[0], w[1]);
+            for c in cols.windows(2) {
+                lines.push(make_hline(top, c[0], c[1], 1));
+                lines.push(make_hline(bottom, c[0], c[1], 1));
+                lines.push(make_vline(c[0], bottom, top, 1));
+                lines.push(make_vline(c[1], bottom, top, 1));
+                items.push(make_item("v", (c[0] + c[1]) / 2.0 - 10.0, bottom + 4.0, 1));
+            }
+        }
+        // The totals box: 3 rules 20pt tall, below the table.
+        for &x in &[250.0_f32, 400.0, 450.0] {
+            lines.push(make_vline(x, 560.0, 582.0, 1));
+        }
+        lines.push(make_hline(582.0, 250.0, 450.0, 1));
+        lines.push(make_hline(560.0, 250.0, 450.0, 1));
+        let tables = detect_tables_from_lines(&items, &lines, 1);
+        assert_eq!(tables.len(), 1, "{tables:?}");
+        assert_eq!(tables[0].cells[0].len(), 3, "{:?}", tables[0].cells);
+        assert_eq!(tables[0].cells.len(), 8);
+    }
 
     fn make_item(text: &str, x: f32, y: f32, page: u32) -> TextItem {
         TextItem {

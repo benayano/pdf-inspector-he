@@ -196,3 +196,123 @@ export async function extractWithLlmCheck(extract, data, ask, options = {}) {
     check: { ...choice, ambiguousRows: found.ambiguous.length, rowsChecked: found.rowsChecked },
   };
 }
+
+// ── Any knob: compare whole outputs, let the LLM pick ─────────────────────
+//
+// `findAmbiguousRows` works on positioned rows and one knob. The functions
+// below work on any output (usually the Markdown, where tables appear) and
+// any knob: run the extraction under each candidate tuning
+// ("knob=value,…"), keep only the lines where the outputs differ, and ask
+// the LLM which output reads right. The lines all candidates share never
+// reach the LLM.
+
+/**
+ * Run `run(data, {tuning})` (returns text) under each candidate tuning and
+ * collect the lines each output has that the others do not.
+ *
+ * @param {(data: Uint8Array, options: {tuning: string}) => Promise<string>|string} run
+ * @param {Uint8Array} data
+ * @param {string[]} candidates  e.g. ["", "rule_join_gap=4", "short_rule_ratio=0.1"]
+ * @param {{maxLines?: number}} [options]
+ */
+export async function compareTunings(run, data, candidates, { maxLines = 25 } = {}) {
+  const outputs = [];
+  for (const tuning of candidates) {
+    outputs.push(String(await run(data, { tuning })));
+  }
+  const lineSets = outputs.map((o) => new Set(o.split("\n").map((l) => l.trimEnd()).filter(Boolean)));
+  const distinct = [...new Set(outputs)];
+  const unique = lineSets.map((set, i) =>
+    [...set].filter((line) => lineSets.some((other, j) => j !== i && !other.has(line))).slice(0, maxLines),
+  );
+  return { candidates, outputs, unique, identical: distinct.length === 1 };
+}
+
+/** The prompt asking which output is right; outputs are labelled A, B, C… */
+export function buildTuningPrompt(compared, { context } = {}) {
+  const blocks = compared.candidates.map(
+    (_, i) =>
+      `Output ${String.fromCharCode(65 + i)} — lines only this output has:\n` +
+      (compared.unique[i].length ? compared.unique[i].join("\n") : "(none)"),
+  );
+  return [
+    "The same PDF page(s) were extracted several times with different layout",
+    "settings. Below, for each output, are only the lines where it differs from",
+    "the others (Markdown; tables use | between cells, right-to-left tables are",
+    "written rightmost column first). Pick the output that is most faithful to a",
+    "real document: whole words with normal spacing, numbers not glued or split,",
+    "every table row on its own line with the same columns, no empty phantom",
+    "columns, no text from outside the table inside a cell.",
+    context ? `\nContext: ${context}` : "",
+    "",
+    blocks.join("\n\n"),
+    "",
+    'Answer with JSON only: {"choice":"A","reason":"…"}. Use "?" if they are equally good.',
+  ].join("\n");
+}
+
+/**
+ * Pick the candidate tuning the LLM prefers. Returns `tuning: null` when
+ * all outputs are identical or the LLM cannot tell.
+ *
+ * @param {(data: Uint8Array, options: {tuning: string}) => Promise<string>|string} run
+ * @param {Uint8Array} data
+ * @param {(prompt: string) => Promise<string>} ask
+ * @param {{candidates: string[], context?: string, maxLines?: number}} options
+ */
+export async function chooseTuning(run, data, ask, options) {
+  const compared = await compareTunings(run, data, options.candidates, options);
+  if (compared.identical) {
+    return { tuning: null, reason: "identical-outputs", compared };
+  }
+  const reply = await ask(buildTuningPrompt(compared, options));
+  const match = String(reply).match(/\{[\s\S]*\}/);
+  let choice = "?";
+  let why = "";
+  try {
+    const parsed = match ? JSON.parse(match[0]) : {};
+    choice = typeof parsed.choice === "string" ? parsed.choice.trim() : "?";
+    why = parsed.reason ?? "";
+  } catch {
+    // Unparseable: undecided.
+  }
+  const index = choice.length === 1 ? choice.charCodeAt(0) - 65 : -1;
+  if (index < 0 || index >= compared.candidates.length) {
+    return { tuning: null, reason: "llm-undecided", compared };
+  }
+  return {
+    tuning: compared.candidates[index],
+    reason: "llm-choice",
+    why,
+    output: compared.outputs[index],
+    compared,
+  };
+}
+
+/**
+ * A tool definition (Anthropic tool-use format) that lets an LLM agent call
+ * the extractor with knobs of its choosing and look at the result. Build it
+ * from the engine's own `listKnobs()` so the descriptions match the build.
+ *
+ * @param {{name:string,unit:string,auto:string,effect:string}[]} knobs
+ */
+export function extractionToolDefinition(knobs) {
+  const lines = knobs.map((k) => `- ${k.name} (${k.unit}; auto: ${k.auto}): ${k.effect}`);
+  return {
+    name: "extract_pdf",
+    description:
+      "Extract the PDF as Markdown. Optionally pass layout knobs when the previous output " +
+      "looked wrong (glued words, swapped numbers, merged or split table columns). " +
+      "Unlisted knobs stay auto.",
+    input_schema: {
+      type: "object",
+      properties: {
+        tuning: {
+          type: "string",
+          description: `Comma-separated knob=value pairs, value a number or "auto". Knobs:\n${lines.join("\n")}`,
+        },
+        pages: { type: "array", items: { type: "integer" }, description: "1-indexed pages" },
+      },
+    },
+  };
+}

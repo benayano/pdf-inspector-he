@@ -1517,6 +1517,21 @@ fn is_superscript_marker_cell(value: &str) -> bool {
             .all(|ch| matches!(ch, '*' | '#' | 'o' | 'O' | '°' | 'º' | '†' | '‡'))
 }
 
+/// Whether a table's cells read right to left: strong RTL letters
+/// outnumber left-to-right letters across all cells (digits do not vote).
+pub(crate) fn cells_are_rtl(cells: &[Vec<String>]) -> bool {
+    crate::text_utils::is_rtl_text(cells.iter().flatten())
+}
+
+/// The cells with every row turned round: for a right-to-left table, the
+/// order a reader takes the columns in (rightmost column first).
+pub(crate) fn cells_in_reading_order(cells: &[Vec<String>]) -> Vec<Vec<String>> {
+    cells
+        .iter()
+        .map(|row| row.iter().rev().cloned().collect())
+        .collect()
+}
+
 /// What kind of structure a detected `Table` represents. Classification is
 /// computed once at construction so consumers don't have to re-analyze the
 /// cells (and stay consistent across detection backends).
