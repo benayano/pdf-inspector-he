@@ -70,7 +70,9 @@ pub use markdown::{
     to_markdown_from_items_with_rects_and_page_count, MarkdownOptions, MarkdownProfile,
 };
 pub use process_mode::ProcessMode;
-pub use tuning::{current_number_gap, with_number_gap, NumberGap, DEFAULT_NUMBER_GAP_EM};
+pub use tuning::{
+    current_number_gap, set_process_number_gap, with_number_gap, NumberGap, DEFAULT_NUMBER_GAP_EM,
+};
 pub use types::{BoldSource, LayoutComplexity, PdfLine, PdfRect, TextItem};
 
 use lopdf::Document;

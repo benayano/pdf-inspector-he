@@ -9,11 +9,13 @@
 //! value can be set per call, per process (environment variable), or derived
 //! from the line's own gaps ([`NumberGap::Auto`]).
 //!
-//! Precedence: [`with_number_gap`] scope → `PDF_INSPECTOR_NUMBER_GAP_EM`
+//! Precedence: [`with_number_gap`] scope (this thread) →
+//! [`set_process_number_gap`] (all threads; what the Python and Node
+//! bindings' `set_number_gap` set) → `PDF_INSPECTOR_NUMBER_GAP_EM`
 //! environment variable (`auto` or a number) → [`DEFAULT_NUMBER_GAP_EM`].
 
 use std::cell::Cell;
-use std::sync::OnceLock;
+use std::sync::{Mutex, OnceLock};
 
 /// Default number gap, in em. Below a regular space (≈0.28 em) and well
 /// above the gap a kerned decimal point or thousands separator opens.
@@ -79,9 +81,25 @@ fn from_env() -> Option<NumberGap> {
     })
 }
 
+static PROCESS: Mutex<Option<NumberGap>> = Mutex::new(None);
+
+/// Set (or with `None` clear) the number gap for every thread of the
+/// process. A [`with_number_gap`] scope still takes precedence.
+pub fn set_process_number_gap(gap: Option<NumberGap>) {
+    *PROCESS.lock().unwrap_or_else(|e| e.into_inner()) = gap;
+}
+
+fn from_process() -> Option<NumberGap> {
+    *PROCESS.lock().unwrap_or_else(|e| e.into_inner())
+}
+
 /// The number gap in effect on this thread.
 pub fn current_number_gap() -> NumberGap {
-    SCOPED.with(Cell::get).or_else(from_env).unwrap_or_default()
+    SCOPED
+        .with(Cell::get)
+        .or_else(from_process)
+        .or_else(from_env)
+        .unwrap_or_default()
 }
 
 /// Run `f` with `gap` as the number gap on this thread; the previous value
@@ -121,6 +139,15 @@ mod tests {
             assert_eq!(current_number_gap(), NumberGap::Fixed(0.5));
         });
         assert_eq!(current_number_gap(), outer);
+    }
+
+    #[test]
+    fn scope_beats_process_setting() {
+        with_number_gap(NumberGap::Fixed(0.7), || {
+            set_process_number_gap(Some(NumberGap::Auto));
+            assert_eq!(current_number_gap(), NumberGap::Fixed(0.7));
+            set_process_number_gap(None);
+        });
     }
 
     #[test]

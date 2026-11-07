@@ -1,10 +1,9 @@
 name: CI
 
+# pdf-inspector-he: upstream CI runs on Blacksmith runners this fork does
+# not have, so it only runs on demand. he-build.yml is this fork's CI.
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always

@@ -5885,6 +5885,67 @@ BT /F1 12 Tf 0 1 -1 0 240 100 Tm (WORLD) Tj ET"
         assert_eq!(merged[0].text, "HO\u{0301}\u{0300}W");
     }
 
+    /// An invoice row shown one glyph per item (as "Microsoft: Print To
+    /// PDF" paints Hebrew), in screen order: a total, a price with its
+    /// currency sign set 0.67 em apart, and the description
+    /// "מסילה לפאנל 1.2 3 מטר" whose words and numbers are a regular space
+    /// (0.28 em) apart, with cell gaps of several em between the columns.
+    fn hebrew_invoice_row() -> Vec<TextItem> {
+        const EM: f32 = 12.0;
+        const GLYPH: f32 = 5.0;
+        let space = 0.28 * EM;
+        // Screen order, left to right; Hebrew words are spelled in
+        // logical order and painted reversed.
+        let cells: [&[&str]; 3] = [
+            &["1,210.10"],
+            &["43.22", "\u{05E9}\"\u{05D7}"],
+            &[
+                "\u{05DE}\u{05D8}\u{05E8}",
+                "3",
+                "1.2",
+                "\u{05DC}\u{05E4}\u{05D0}\u{05E0}\u{05DC}",
+                "\u{05DE}\u{05E1}\u{05D9}\u{05DC}\u{05D4}",
+            ],
+        ];
+        let mut items = Vec::new();
+        let mut x = 50.0;
+        for (c, cell) in cells.iter().enumerate() {
+            if c > 0 {
+                x += 6.0 * EM; // cell gap
+            }
+            for (t, token) in cell.iter().enumerate() {
+                if t > 0 {
+                    // The currency sign sits 0.67 em from its amount.
+                    x += if c == 1 { 0.67 * EM } else { space };
+                }
+                if token.chars().any(crate::text_utils::is_rtl_char) {
+                    for ch in token.chars().rev() {
+                        items.push(make_merge_item(&ch.to_string(), x, GLYPH));
+                        x += GLYPH;
+                    }
+                } else {
+                    let width = GLYPH * token.chars().count() as f32;
+                    items.push(make_merge_item(token, x, width));
+                    x += width;
+                }
+            }
+        }
+        items
+    }
+
+    #[test]
+    fn hebrew_invoice_row_keeps_word_spaces_and_both_numbers() {
+        // Before: the word-gap floor came out above the word spaces (the
+        // cell and currency gaps pulled it up) and the number gap was 0.3
+        // em, so this read "מסילהלפאנל31.2מטר".
+        let merged = merge_text_items_with_clips(hebrew_invoice_row(), &[], false, &[]);
+        let texts: Vec<&str> = merged.iter().map(|i| i.text.as_str()).collect();
+        assert!(
+            texts.contains(&"\u{05DE}\u{05E1}\u{05D9}\u{05DC}\u{05D4} \u{05DC}\u{05E4}\u{05D0}\u{05E0}\u{05DC} 1.2 3 \u{05DE}\u{05D8}\u{05E8}"),
+            "{texts:?}"
+        );
+    }
+
     /// A pointed right-to-left word shown one glyph per item by a producer
     /// walking the line right to left: the first letter, then the second
     /// with its vowel sign 0.3 em behind the pen, then the third.

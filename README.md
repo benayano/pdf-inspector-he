@@ -1,3 +1,5 @@
+> **pdf-inspector-he**: a fork with better Hebrew (RTL) table rows, a tunable `number_gap`, and an LLM spot-check layer. See [he/README.md](he/README.md) (Hebrew).
+
 # pdf-inspector
 
 [![Crates.io](https://img.shields.io/crates/v/pdf-inspector.svg)](https://crates.io/crates/pdf-inspector)

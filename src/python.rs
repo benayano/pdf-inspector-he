@@ -844,30 +844,95 @@ fn convert_region_results(results: Vec<crate::PageRegionResult>) -> Vec<PyPageRe
 }
 
 // ---------------------------------------------------------------------------
+// Number gap (right-to-left lines; see `crate::tuning`)
+// ---------------------------------------------------------------------------
+
+/// `0.2`, `"auto"` or `None` from Python.
+fn number_gap_arg(value: Option<&Bound<'_, PyAny>>) -> PyResult<Option<crate::NumberGap>> {
+    let Some(value) = value else {
+        return Ok(None);
+    };
+    if value.is_none() {
+        return Ok(None);
+    }
+    let text = if let Ok(v) = value.extract::<f64>() {
+        v.to_string()
+    } else {
+        value.extract::<String>()?
+    };
+    crate::NumberGap::parse(&text)
+        .map(Some)
+        .ok_or_else(|| PyValueError::new_err("number_gap takes \"auto\" or a non-negative number"))
+}
+
+/// Run `f` under the given number gap, or the process default when `None`.
+fn under_gap<R>(gap: Option<crate::NumberGap>, f: impl FnOnce() -> R) -> R {
+    match gap {
+        Some(gap) => crate::with_number_gap(gap, f),
+        None => f(),
+    }
+}
+
+/// Set the number gap for every later call in this process: the gap, in
+/// em, from which two numbers that meet on a right-to-left line are read as
+/// two numbers ("1.2 3") rather than one ("31.2"), or "auto" to take it from
+/// the line's own word gaps. ``None`` restores the default (0.2, or the
+/// ``PDF_INSPECTOR_NUMBER_GAP_EM`` environment variable).
+#[pyfunction]
+#[pyo3(signature = (value=None))]
+fn set_number_gap(value: Option<&Bound<'_, PyAny>>) -> PyResult<()> {
+    crate::set_process_number_gap(number_gap_arg(value)?);
+    Ok(())
+}
+
+/// The number gap in effect: a float, or "auto".
+#[pyfunction]
+fn get_number_gap(py: Python<'_>) -> PyResult<PyObject> {
+    Ok(match crate::current_number_gap() {
+        crate::NumberGap::Fixed(v) => v.into_pyobject(py)?.into_any().unbind(),
+        crate::NumberGap::Auto => "auto".into_pyobject(py)?.into_any().unbind(),
+    })
+}
+
+// ---------------------------------------------------------------------------
 // Public Python API
 // ---------------------------------------------------------------------------
 
 /// Process a PDF file: detect type, extract text, and convert to Markdown.
 #[pyfunction]
-#[pyo3(signature = (path, pages=None))]
-fn process_pdf(path: &str, pages: Option<Vec<u32>>) -> PyResult<PyPdfResult> {
+#[pyo3(signature = (path, pages=None, number_gap=None))]
+fn process_pdf(
+    path: &str,
+    pages: Option<Vec<u32>>,
+    number_gap: Option<&Bound<'_, PyAny>>,
+) -> PyResult<PyPdfResult> {
     let mut opts = crate::PdfOptions::new();
     if let Some(p) = pages {
         opts = opts.pages(p);
     }
-    let result = crate::process_pdf_with_options(path, opts).map_err(to_py_err)?;
+    let result = under_gap(number_gap_arg(number_gap)?, || {
+        crate::process_pdf_with_options(path, opts)
+    })
+    .map_err(to_py_err)?;
     Ok(to_py_result(result))
 }
 
 /// Process a PDF from bytes in memory.
 #[pyfunction]
-#[pyo3(signature = (data, pages=None))]
-fn process_pdf_bytes(data: &[u8], pages: Option<Vec<u32>>) -> PyResult<PyPdfResult> {
+#[pyo3(signature = (data, pages=None, number_gap=None))]
+fn process_pdf_bytes(
+    data: &[u8],
+    pages: Option<Vec<u32>>,
+    number_gap: Option<&Bound<'_, PyAny>>,
+) -> PyResult<PyPdfResult> {
     let mut opts = crate::PdfOptions::new();
     if let Some(p) = pages {
         opts = opts.pages(p);
     }
-    let result = crate::process_pdf_mem_with_options(data, opts).map_err(to_py_err)?;
+    let result = under_gap(number_gap_arg(number_gap)?, || {
+        crate::process_pdf_mem_with_options(data, opts)
+    })
+    .map_err(to_py_err)?;
     Ok(to_py_result(result))
 }
 
@@ -1038,12 +1103,13 @@ fn extract_text_bytes(data: &[u8]) -> PyResult<String> {
 ///     corner with y up; extract_text_in_regions reads regions relative to
 ///     the same box from its top-left corner (flip y with the box height).
 #[pyfunction]
-#[pyo3(signature = (path, pages=None, bold_from_weight=false, bold_weight_threshold=DEFAULT_BOLD_WEIGHT_THRESHOLD))]
+#[pyo3(signature = (path, pages=None, bold_from_weight=false, bold_weight_threshold=DEFAULT_BOLD_WEIGHT_THRESHOLD, number_gap=None))]
 fn extract_text_with_positions(
     path: &str,
     pages: Option<Vec<u32>>,
     bold_from_weight: bool,
     bold_weight_threshold: i64,
+    number_gap: Option<&Bound<'_, PyAny>>,
 ) -> PyResult<Vec<PyTextItem>> {
     // The threshold is checked whichever path the call takes.
     position_options(bold_from_weight, bold_weight_threshold)?;
@@ -1054,15 +1120,18 @@ fn extract_text_with_positions(
             pages,
             bold_from_weight,
             bold_weight_threshold,
+            number_gap,
         );
     }
-    let items = match pages {
+    let gap = number_gap_arg(number_gap)?;
+    let items = under_gap(gap, || match pages {
         Some(p) => {
             let page_set: HashSet<u32> = p.into_iter().collect();
-            crate::extract_text_with_positions_pages(path, Some(&page_set)).map_err(to_py_err)?
+            crate::extract_text_with_positions_pages(path, Some(&page_set))
         }
-        None => crate::extract_text_with_positions(path).map_err(to_py_err)?,
-    };
+        None => crate::extract_text_with_positions(path),
+    })
+    .map_err(to_py_err)?;
     Ok(convert_text_items(items))
 }
 
@@ -1190,19 +1259,19 @@ fn extract_text_with_positions_and_rotations_bytes(
 ///
 /// See extract_text_with_positions for the arguments and coordinate frame.
 #[pyfunction]
-#[pyo3(signature = (data, pages=None, bold_from_weight=false, bold_weight_threshold=DEFAULT_BOLD_WEIGHT_THRESHOLD))]
+#[pyo3(signature = (data, pages=None, bold_from_weight=false, bold_weight_threshold=DEFAULT_BOLD_WEIGHT_THRESHOLD, number_gap=None))]
 fn extract_text_with_positions_bytes(
     data: &[u8],
     pages: Option<Vec<u32>>,
     bold_from_weight: bool,
     bold_weight_threshold: i64,
+    number_gap: Option<&Bound<'_, PyAny>>,
 ) -> PyResult<Vec<PyTextItem>> {
     let page_set: Option<HashSet<u32>> = pages.map(|p| p.into_iter().collect());
-    let items = crate::extract_text_with_positions_mem_with_options(
-        data,
-        page_set.as_ref(),
-        position_options(bold_from_weight, bold_weight_threshold)?,
-    )
+    let options = position_options(bold_from_weight, bold_weight_threshold)?;
+    let items = under_gap(number_gap_arg(number_gap)?, || {
+        crate::extract_text_with_positions_mem_with_options(data, page_set.as_ref(), options)
+    })
     .map_err(to_py_err)?;
     Ok(convert_text_items(items))
 }
@@ -1373,6 +1442,8 @@ fn pdf_inspector(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyPageRegionTexts>()?;
     m.add_class::<PyPageMarkdown>()?;
     m.add_class::<PyPagesExtractionResult>()?;
+    m.add_function(wrap_pyfunction!(set_number_gap, m)?)?;
+    m.add_function(wrap_pyfunction!(get_number_gap, m)?)?;
     m.add_function(wrap_pyfunction!(process_pdf, m)?)?;
     m.add_function(wrap_pyfunction!(process_pdf_bytes, m)?)?;
     m.add_function(wrap_pyfunction!(process_pdf_with_ocr, m)?)?;

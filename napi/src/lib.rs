@@ -707,6 +707,42 @@ fn classify_pdf_impl(bytes: &[u8]) -> Result<PdfClassification> {
 // Public NAPI API
 // ---------------------------------------------------------------------------
 
+/// Set, for every later call in this process (async calls included), the
+/// gap in em from which two numbers that meet on a right-to-left line are
+/// read as two numbers ("1.2 3") rather than one ("31.2"): a number, or
+/// "auto" to take it from the line's own word gaps. `null`/`undefined`
+/// restores the default (0.2, or the PDF_INSPECTOR_NUMBER_GAP_EM
+/// environment variable).
+#[napi(ts_args_type = "value?: number | 'auto' | null")]
+pub fn set_number_gap(value: Option<Either<f64, String>>) -> Result<()> {
+    let gap = match value {
+        None => None,
+        Some(value) => {
+            let text = match value {
+                Either::A(v) => v.to_string(),
+                Either::B(s) => s,
+            };
+            Some(pdf_inspector::NumberGap::parse(&text).ok_or_else(|| {
+                Error::new(
+                    Status::InvalidArg,
+                    "numberGap takes 'auto' or a non-negative number".to_string(),
+                )
+            })?)
+        }
+    };
+    pdf_inspector::set_process_number_gap(gap);
+    Ok(())
+}
+
+/// The number gap in effect: a number in em, or "auto".
+#[napi(ts_return_type = "number | 'auto'")]
+pub fn get_number_gap() -> Either<f64, String> {
+    match pdf_inspector::current_number_gap() {
+        pdf_inspector::NumberGap::Fixed(v) => Either::A(f64::from(v)),
+        pdf_inspector::NumberGap::Auto => Either::B("auto".to_string()),
+    }
+}
+
 /// Process a PDF from a Buffer: detect type, extract text, and convert to Markdown.
 #[napi]
 pub fn process_pdf(buffer: Buffer, pages: Option<Vec<u32>>) -> Result<PdfResult> {

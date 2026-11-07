@@ -1,6 +1,6 @@
 """Type stubs for pdf_inspector."""
 
-from typing import Literal, Optional
+from typing import Literal, Optional, Union
 
 class PdfResult:
     """Result of processing a PDF file."""
@@ -304,11 +304,31 @@ class PagesExtractionResult:
     is_complex: bool
     """True if any page has tables or multi-column layout."""
 
-def process_pdf(path: str, pages: Optional[list[int]] = None) -> PdfResult:
+def set_number_gap(value: Union[float, str, None] = None) -> None:
+    """Set, for every later call in this process, the gap in em from which two
+    numbers that meet on a right-to-left line are read as two numbers
+    ("1.2 3") rather than one ("31.2"); or "auto" to take it from the line's
+    own word gaps. ``None`` restores the default (0.2, or the
+    ``PDF_INSPECTOR_NUMBER_GAP_EM`` environment variable)."""
+    ...
+
+def get_number_gap() -> Union[float, str]:
+    """The number gap in effect: a float in em, or "auto"."""
+    ...
+
+def process_pdf(
+    path: str,
+    pages: Optional[list[int]] = None,
+    number_gap: Union[float, str, None] = None,
+) -> PdfResult:
     """Process a PDF: detect type, extract text, convert to Markdown."""
     ...
 
-def process_pdf_bytes(data: bytes, pages: Optional[list[int]] = None) -> PdfResult:
+def process_pdf_bytes(
+    data: bytes,
+    pages: Optional[list[int]] = None,
+    number_gap: Union[float, str, None] = None,
+) -> PdfResult:
     """Process a PDF from bytes in memory."""
     ...
 
@@ -374,6 +394,7 @@ def extract_text_with_positions(
     pages: Optional[list[int]] = None,
     bold_from_weight: bool = False,
     bold_weight_threshold: int = 600,
+    number_gap: Union[float, str, None] = None,
 ) -> list[TextItem]:
     """Extract text with position information.
 
@@ -415,6 +436,7 @@ def extract_text_with_positions_bytes(
     pages: Optional[list[int]] = None,
     bold_from_weight: bool = False,
     bold_weight_threshold: int = 600,
+    number_gap: Union[float, str, None] = None,
 ) -> list[TextItem]:
     """Extract text with position information from bytes.
 

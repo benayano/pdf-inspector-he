@@ -1,6 +1,6 @@
 use pdf_inspector::{
-    FontCMapGaps, LayoutComplexity, MarkdownProfile, PageOcrReasons, PdfOptions, PdfProcessResult,
-    PdfType, ProcessMode,
+    with_number_gap, FontCMapGaps, LayoutComplexity, MarkdownProfile, NumberGap, PageOcrReasons,
+    PdfOptions, PdfProcessResult, PdfType, ProcessMode,
 };
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
@@ -21,7 +21,38 @@ export interface ProcessOptions {
   includePageMarkers?: boolean;
   /** Include image placeholders in Markdown output. */
   includeImages?: boolean;
+  /**
+   * Gap, in em, from which two numbers that meet on a right-to-left line
+   * are read as two numbers ("1.2 3") rather than one ("31.2"); or "auto"
+   * to take it from the line's own word gaps. Default 0.2.
+   */
+  numberGap?: number | "auto";
 }
+
+/** Options for {@link extractTextWithPositions}. */
+export interface PositionOptions {
+  /** Restrict extraction to these 1-indexed page numbers. */
+  pages?: number[];
+  /** See {@link ProcessOptions.numberGap}. */
+  numberGap?: number | "auto";
+}
+
+/** A positioned run of text, in PDF points with the origin bottom-left. */
+export interface PositionedText {
+  text: string;
+  /** 1-indexed page number. */
+  page: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  fontSize: number;
+  font: string;
+  isBold: boolean;
+  isItalic: boolean;
+}
+
+export function extractTextWithPositions(data: Uint8Array, options?: PositionOptions): PositionedText[];
 
 export interface PageOcrReasons {
   /** 1-indexed page number. */
@@ -117,6 +148,52 @@ struct WasmProcessOptions {
     profile: Option<WasmMarkdownProfile>,
     include_page_markers: Option<bool>,
     include_images: Option<bool>,
+    number_gap: Option<WasmNumberGap>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(default, rename_all = "camelCase", deny_unknown_fields)]
+struct WasmPositionOptions {
+    pages: Option<Vec<u32>>,
+    number_gap: Option<WasmNumberGap>,
+}
+
+/// `numberGap`: a number of em, or the string "auto".
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+enum WasmNumberGap {
+    Em(f32),
+    Named(String),
+}
+
+impl WasmNumberGap {
+    fn resolve(self) -> Result<NumberGap, JsValue> {
+        let parsed = match self {
+            WasmNumberGap::Em(value) => NumberGap::parse(&value.to_string()),
+            WasmNumberGap::Named(value) => NumberGap::parse(&value),
+        };
+        parsed.ok_or_else(|| {
+            js_error(
+                "invalid options",
+                "numberGap takes \"auto\" or a non-negative number",
+            )
+        })
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct WasmPositionedText {
+    text: String,
+    page: u32,
+    x: f32,
+    y: f32,
+    width: f32,
+    height: f32,
+    font_size: f32,
+    font: String,
+    is_bold: bool,
+    is_italic: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -262,8 +339,12 @@ fn deserialize_options(value: JsValue) -> Result<WasmProcessOptions, JsValue> {
     serde_wasm_bindgen::from_value(value).map_err(|error| js_error("invalid options", error))
 }
 
-fn build_options(value: JsValue, mode: ProcessMode) -> Result<PdfOptions, JsValue> {
+fn build_options(value: JsValue, mode: ProcessMode) -> Result<(PdfOptions, NumberGap), JsValue> {
     let options = deserialize_options(value)?;
+    let number_gap = match options.number_gap {
+        Some(gap) => gap.resolve()?,
+        None => pdf_inspector::current_number_gap(),
+    };
     if options
         .pages
         .as_ref()
@@ -294,7 +375,7 @@ fn build_options(value: JsValue, mode: ProcessMode) -> Result<PdfOptions, JsValu
     if let Some(include_images) = options.include_images {
         result.markdown.include_images = include_images;
     }
-    Ok(result)
+    Ok((result, number_gap))
 }
 
 fn serialize<T: Serialize>(value: &T) -> Result<JsValue, JsValue> {
@@ -309,10 +390,12 @@ fn initialize() {
 #[wasm_bindgen(js_name = processPdf, skip_typescript)]
 pub fn process_pdf(data: &[u8], options: JsValue) -> Result<JsValue, JsValue> {
     initialize();
-    let options = build_options(options, ProcessMode::Full)?;
+    let (options, number_gap) = build_options(options, ProcessMode::Full)?;
     let started = js_sys::Date::now();
-    let mut result = pdf_inspector::process_pdf_mem_with_options(data, options)
-        .map_err(|error| js_error("process PDF", error))?;
+    let mut result = with_number_gap(number_gap, || {
+        pdf_inspector::process_pdf_mem_with_options(data, options)
+    })
+    .map_err(|error| js_error("process PDF", error))?;
     result.processing_time_ms = (js_sys::Date::now() - started).max(0.0) as u64;
     serialize(&WasmPdfProcessResult::from(result))
 }
@@ -321,7 +404,7 @@ pub fn process_pdf(data: &[u8], options: JsValue) -> Result<JsValue, JsValue> {
 #[wasm_bindgen(js_name = detectPdf, skip_typescript)]
 pub fn detect_pdf(data: &[u8], options: JsValue) -> Result<JsValue, JsValue> {
     initialize();
-    let options = build_options(options, ProcessMode::DetectOnly)?;
+    let (options, _) = build_options(options, ProcessMode::DetectOnly)?;
     let started = js_sys::Date::now();
     let mut result = pdf_inspector::process_pdf_mem_with_options(data, options)
         .map_err(|error| js_error("detect PDF", error))?;
@@ -357,6 +440,57 @@ pub fn extract_text(data: &[u8]) -> Result<String, JsValue> {
             .collect::<Vec<_>>()
             .join("\n"),
     )
+}
+
+/// Extract positioned text runs (the items the Markdown is built from):
+/// the input for callers that read tables by column themselves.
+#[wasm_bindgen(js_name = extractTextWithPositions, skip_typescript)]
+pub fn extract_text_with_positions(data: &[u8], options: JsValue) -> Result<JsValue, JsValue> {
+    initialize();
+    let options: WasmPositionOptions = if options.is_undefined() || options.is_null() {
+        WasmPositionOptions::default()
+    } else {
+        serde_wasm_bindgen::from_value(options)
+            .map_err(|error| js_error("invalid options", error))?
+    };
+    if options
+        .pages
+        .as_ref()
+        .is_some_and(|pages| pages.contains(&0))
+    {
+        return Err(js_error(
+            "invalid options",
+            "pages are 1-indexed; page 0 is invalid",
+        ));
+    }
+    let number_gap = match options.number_gap {
+        Some(gap) => gap.resolve()?,
+        None => pdf_inspector::current_number_gap(),
+    };
+    let items = with_number_gap(number_gap, || match &options.pages {
+        Some(pages) => pdf_inspector::extractor::extract_text_with_positions_mem_pages(
+            data,
+            Some(&pages.iter().copied().collect()),
+        ),
+        None => pdf_inspector::extractor::extract_text_with_positions_mem(data),
+    })
+    .map_err(|error| js_error("extract text", error))?;
+    let items: Vec<WasmPositionedText> = items
+        .into_iter()
+        .map(|item| WasmPositionedText {
+            text: item.text,
+            page: item.page,
+            x: item.x,
+            y: item.y,
+            width: item.width,
+            height: item.height,
+            font_size: item.font_size,
+            font: item.font,
+            is_bold: item.is_bold,
+            is_italic: item.is_italic,
+        })
+        .collect();
+    serialize(&items)
 }
 
 /// Return the WebAssembly package version.
