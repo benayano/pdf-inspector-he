@@ -322,7 +322,8 @@ def decide(words, names, page_lines):
 
     describe = ys_of("תאור")
     header = [y for y in ys_of("מוצר") if any(abs(y - d) <= 3 for d in describe)]
-    top = max(header) + 3 if header else None
+    # A header cell can hold two lines, one above the header baseline.
+    top = max(header) + 1.4 * max((w[0].size for w in words), default=10) if header else None
     bottom = None
     if top is not None:
         totals = ys_of("כולל") + ys_of("ברקוד")
@@ -341,7 +342,7 @@ def decide(words, names, page_lines):
     for w in words:
         y = w[0].y
         in_table = top is not None and y <= top and (bottom is None or y > bottom)
-        variants = {stripped(v) for v in text_variants(w)}
+        variants = {stripped(v) for v in text_variants(w)} | text_variants(w)
         if in_table:
             if variants & names:
                 out.append((w, "all"))
