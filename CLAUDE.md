@@ -2,6 +2,9 @@
 
 Fast PDF text extraction to structured Markdown. CLI binary: `pdf2md`. Detection binary: `detect-pdf`.
 
+This is **pdf-inspector-he**, a fork with Hebrew / RTL invoice support. Using the
+library from an LLM agent (features, knobs, tools, partial review): `docs/agent-guide.md`.
+
 ## Build & Test
 
 ```bash
@@ -79,3 +82,22 @@ RUST_LOG=pdf_inspector::detector=debug cargo run --release --bin detect-pdf -- f
 - lopdf quirk: `ParseError` is private — match by string for `InvalidFileHeader`
 - Column limit for tables: 25 (wide statistical tables)
 - `propagate_merged_cells` skipped for >10 columns (spanning rects = background fills)
+
+## Hebrew fork (pdf-inspector-he)
+
+- **Before every commit**, in addition to fmt/clippy/test:
+  `cargo build --release --bin pdf2md && node he/regression.mjs && node --test he/*.test.mjs`.
+  The regression runs the four anonymized invoices in `he/fixtures/invoices/`: item rows,
+  column counts, the full Markdown, and the invoice layer's checks (lines, discount, VAT, totals).
+- `node he/regression.mjs --update` rewrites the expected Markdown. Only after an intended change,
+  and read the diff first. A failing invoice check is fixed in code, never in `expectations.json`.
+- **Knobs** (`src/tuning.rs`): every new layout threshold that could need per-document tuning
+  becomes a knob with an `auto` default, a unit and an effect line (`KNOBS`), exposed through
+  CLI `--tune`, Python, napi and wasm. `auto` must keep the corpus green.
+- **JS layer** (`he/`): `rtl-check.mjs` (partial LLM review), `invoice.mjs` (invoice data, checks,
+  records, CSV). Each has a `.d.ts`; keep them in sync. Both ship in the wasm packages
+  (`.github/workflows/he-build.yml`).
+- **Privacy**: no real supplier/customer names in the repo. New invoices go through
+  `he/tools/anonymize_pdf.py`; the private names list stays outside git.
+- **Toolchain**: if the pinned toolchain is unavailable, `RUSTUP_TOOLCHAIN=stable`; use `-j 2` on small machines.
+- Hebrew notes on each fix: `he/README.md`.

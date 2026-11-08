@@ -2,7 +2,7 @@
 
 פורק של [firecrawl/pdf-inspector](https://github.com/firecrawl/pdf-inspector) (רישיון MIT) עם תמיכה טובה יותר בעברית, בעיקר בשורות טבלה של חשבוניות.
 
-מדריך לשימוש מתוך LLM agent (כל הפיצ׳רים, הפרמטרים, הגדרת tools וביקורת חלקית): [`docs/CLAUDE.md`](../docs/CLAUDE.md).
+מדריך לשימוש מתוך LLM agent (כל הפיצ׳רים, הפרמטרים, הגדרת tools וביקורת חלקית): [`docs/agent-guide.md`](../docs/agent-guide.md).
 
 ## מה תוקן
 
@@ -133,6 +133,8 @@ const invoice = parseInvoice({
 - `grand-total`: אחרי הנחה + מע"מ = סה"כ.
 
 בדיקה שלא הייתה יכולה לרוץ פשוט לא מופיעה. בדיקה שנכשלה מחזירה בכמה.
+
+**ייצוא:** `invoiceInfo(invoice)` מחזיר את פרטי החשבונית (מספר, תאריך ISO, ספק, ח.פ, סיכומים). `toRecords(invoice)` מחזיר שורה שטוחה לכל פריט עם עמודות קבועות, מוכנה ל-`insert` או ל-SQL. `toCsv(records)` מפיק CSV לאקסל (עם BOM לעברית, ותאים שמתחילים ב-`=` מנוטרלים). לייבוא למסד: `toCsv(records, { bom: false, excelSafe: false })`.
 
 **על ארבע החשבוניות בקורפוס (וגם על המקור לפני האנונימיזציה) כל חמש הבדיקות עוברות**: 344 שורות, כל הסכומים, כל ההנחות, המע"מ והסה"כ. הבדיקות רצות כחלק מ-`he/regression.mjs`.
 

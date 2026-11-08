@@ -47,13 +47,18 @@ console.log(`ok: ${items.length} items, ${found.rowsChecked} rows, ${found.ambig
 // The invoice layer, end to end on the wasm build: every check must hold.
 const invoicePath = Deno.args[2];
 if (invoicePath) {
-  const { parseInvoice } = await import(toFileUrl(resolve(pkgDir, "invoice.mjs")).href);
+  const { parseInvoice, toRecords, toCsv } = await import(toFileUrl(resolve(pkgDir, "invoice.mjs")).href);
   const bytes = await Deno.readFile(invoicePath);
   const markdown = pkg.processPdf(bytes, { includePageMarkers: true }).markdown;
   const invoice = parseInvoice({ markdown, items: pkg.extractTextWithPositions(bytes) });
   const failed = invoice.checks.filter((c: { ok: boolean }) => !c.ok);
   if (!invoice.lines || invoice.checks.length < 5 || failed.length) {
     throw new Error(`invoice checks: ${JSON.stringify(invoice.checks)}`);
+  }
+  const records = toRecords(invoice);
+  const csv = toCsv(records);
+  if (records.length !== invoice.lines.rows.length || csv.split("\r\n").length !== records.length + 2) {
+    throw new Error("records/csv do not match the lines");
   }
   console.log(`ok: invoice ${invoice.lines.rows.length} lines, ${invoice.checks.length} checks`);
 }

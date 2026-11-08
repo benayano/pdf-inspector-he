@@ -134,6 +134,8 @@ export function mergeTables(tables) {
 }
 
 const ROLE_PATTERNS = [
+  ["deliveryNote", /^תעודה$|תעודת משלוח|delivery note/i],
+  ["order", /^הזמנה$|^order$|purchase order/i],
   ["netUnitPrice", /(מחיר|price).*(אחרי|after|נטו|net)/i],
   ["unitPrice", /מחיר ל?יח|מחיר יחידה|unit price|^price$/i],
   ["discount", /הנחה|discount/i],
@@ -477,4 +479,141 @@ export function parseInvoice({ markdown, items = [] }) {
     footer: { fields: totalFields },
     checks: totalsChecks(lines, totals),
   };
+}
+
+// ---------------------------------------------------------------- records
+
+/** Column order of {@link toRecords} and {@link toCsv}: stable, snake_case, ready for SQL. */
+export const RECORD_COLUMNS = [
+  "invoice_number",
+  "invoice_date",
+  "supplier_name",
+  "supplier_tax_id",
+  "line_no",
+  "page",
+  "date",
+  "delivery_note",
+  "order_ref",
+  "sku",
+  "description",
+  "quantity",
+  "unit",
+  "unit_price",
+  "discount_pct",
+  "net_unit_price",
+  "line_total",
+  "currency",
+  "check_ok",
+  "check_diff",
+];
+
+/** "31/08/26" or "31.08.2026" -> "2026-08-31"; anything else -> null. */
+export function isoDate(text) {
+  const m = /^(\d{1,2})[/.](\d{1,2})[/.](\d{2}|\d{4})$/.exec(String(text ?? "").trim());
+  if (!m) return null;
+  const [, d, mo, y] = m;
+  const year = y.length === 2 ? 2000 + Number(y) : Number(y);
+  const day = Number(d);
+  const month = Number(mo);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+const firstField = (fields, pattern) => fields.find((f) => pattern.test(f.label) && f.value);
+
+/**
+ * The invoice's own facts, one object: who issued it, its number and date,
+ * and its totals by role. Values not found are null, never guessed.
+ */
+export function invoiceInfo(invoice) {
+  const fields = invoice.header?.fields ?? [];
+  const taxField = firstField(fields, /עוסק מורשה|^ח\.?\s?פ\.?$|^ע\.?\s?מ\.?$|^vat (no|number)|^tax id/i);
+  const supplierBlock = taxField
+    ? invoice.header.blocks.find((b) => b.fields.includes(taxField))
+    : null;
+  const numberField = firstField(fields, /מספר חשבונית|מספר תעודה|invoice (no|number)/i);
+  let invoiceNumber = numberField?.value ?? null;
+  if (!invoiceNumber) {
+    const title = invoice.header?.blocks
+      .flatMap((b) => b.lines)
+      .map((l) => /חשבונית[^\n]*?\s*([A-Z]{0,4}\d{5,})/.exec(l))
+      .find(Boolean);
+    invoiceNumber = title?.[1] ?? null;
+  }
+  const dateField = firstField(fields, /תאריך חשבונית|^תאריך$|invoice date/i);
+  const total = (role) => invoice.totals?.find((t) => t.role === role) ?? null;
+  const currency = invoice.totals?.find((t) => t.currency)?.currency ?? null;
+  return {
+    invoice_number: invoiceNumber,
+    invoice_date: isoDate(dateField?.value),
+    supplier_name: supplierBlock?.lines[0] ?? null,
+    supplier_tax_id: taxField ? taxField.value.replace(/\D/g, "") || null : null,
+    subtotal: total("subtotal")?.value ?? null,
+    discount: total("discount")?.value ?? null,
+    after_discount: total("afterDiscount")?.value ?? null,
+    vat_rate: total("vat")?.percent ?? null,
+    vat: total("vat")?.value ?? null,
+    total: total("total")?.value ?? null,
+    currency,
+    checks_ok: (invoice.checks ?? []).every((c) => c.ok),
+  };
+}
+
+/**
+ * One flat record per item line, with the invoice's own facts repeated on
+ * each: ready for a spreadsheet, `COPY`, or an `insert(records)` call.
+ * Numbers are numbers (a credit stays negative), dates ISO, missing values
+ * null. Columns: {@link RECORD_COLUMNS}.
+ */
+export function toRecords(invoice) {
+  const info = invoiceInfo(invoice);
+  if (!invoice.lines) return [];
+  return invoice.lines.rows.map((row, i) => {
+    const v = row.values;
+    const currencyOf = row.amounts.find((a) => a?.currency)?.currency ?? info.currency;
+    return {
+      invoice_number: info.invoice_number,
+      invoice_date: info.invoice_date,
+      supplier_name: info.supplier_name,
+      supplier_tax_id: info.supplier_tax_id,
+      line_no: v.index ?? i + 1,
+      page: row.page,
+      date: isoDate(v.date) ?? v.date ?? null,
+      delivery_note: v.deliveryNote ?? null,
+      order_ref: v.order ?? null,
+      sku: v.sku ?? null,
+      description: v.description ?? null,
+      quantity: v.quantity ?? null,
+      unit: v.unit ?? null,
+      unit_price: v.unitPrice ?? null,
+      discount_pct: v.discount ?? null,
+      net_unit_price: v.netUnitPrice ?? null,
+      line_total: v.total ?? null,
+      currency: currencyOf ?? null,
+      check_ok: row.check ? row.check.ok : null,
+      check_diff: row.check ? row.check.diff : null,
+    };
+  });
+}
+
+function csvCell(value, excelSafe) {
+  if (value == null) return "";
+  let text = String(value);
+  // Text from a PDF that starts like a formula would run as one in Excel.
+  if (excelSafe && typeof value === "string" && /^[=+\-@\t\r]/.test(text)) text = "'" + text;
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+/**
+ * CSV text: a header row, CRLF line ends, RFC 4180 quoting.
+ * For Excel (default): a BOM so Hebrew opens right, and text cells that
+ * start with = + - @ prefixed with ' so they are not run as formulas.
+ * For a database (`COPY … CSV HEADER`): `{ bom: false, excelSafe: false }`.
+ */
+export function toCsv(records, { columns = RECORD_COLUMNS, bom = true, excelSafe = true } = {}) {
+  const lines = [columns.map((c) => csvCell(c, false)).join(",")];
+  for (const record of records) {
+    lines.push(columns.map((c) => csvCell(record[c], excelSafe)).join(","));
+  }
+  return (bom ? "\ufeff" : "") + lines.join("\r\n") + "\r\n";
 }

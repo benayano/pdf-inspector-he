@@ -11,6 +11,8 @@ Fast Rust library for PDF classification and text extraction. By default it dete
 
 Built by [Firecrawl](https://firecrawl.dev) to handle text-based PDFs locally in under 200ms, skipping expensive OCR services for the ~54% of PDFs that don't need them.
 
+> **pdf-inspector-he**: fork with Hebrew / RTL invoice support — see [`he/README.md`](he/README.md) (Hebrew) and the agent guide [`docs/agent-guide.md`](docs/agent-guide.md).
+
 ## Features
 
 - **Smart classification** — Detect TextBased, Scanned, ImageBased, or Mixed PDFs in ~10-50ms by sampling content streams. Returns a confidence score (0.0-1.0) and per-page OCR routing.

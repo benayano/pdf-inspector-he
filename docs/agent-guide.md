@@ -1,5 +1,8 @@
 # pdf-inspector-he — guide for LLM agents
 
+> Development rules for this repository are in the root `CLAUDE.md`. This
+> file is about **using** the library from an agent.
+
 This file is for an agent (or the developer wiring one up) that uses
 pdf-inspector-he to read PDFs, especially Hebrew / right-to-left invoices.
 It covers what the tool does, every entry point and parameter, how to
@@ -23,6 +26,7 @@ Rust crate: the root `CLAUDE.md`.
 | Tunable layout knobs ("auto" by default) | all bindings | Section 3 |
 | Partial LLM review of ambiguous rows / competing outputs | `he/rtl-check.mjs` | Section 5 |
 | Invoice layer: lines, header blocks, fields, totals, arithmetic checks | `he/invoice.mjs` | Section 4 |
+| Flat records and CSV (Excel / SQL `COPY` / `insert`) | `he/invoice.mjs` | Section 4.2 |
 
 What it does **not** do: OCR in the default build, read scanned invoices,
 or guess silently. A check that cannot run is absent; one that fails says
@@ -153,7 +157,7 @@ Returns (types in `he/invoice.d.ts`):
 | `footer.fields` | Every label/value pair found in the totals zone (including ones with no role) |
 | `checks[]` | Section 4.1 |
 
-Helpers also exported: `parseAmount` (`"461.54-"`, `"101.69 ש"ח"`, `"60.80 מטר"`, `"(0.04%-)"`), `splitField`,
+Helpers also exported: `invoiceInfo`, `toRecords`, `toCsv`, `isoDate` (section 4.2), `parseAmount` (`"461.54-"`, `"101.69 ש"ח"`, `"60.80 מטר"`, `"(0.04%-)"`), `splitField`,
 `markdownTables`, `mergeTables`, `lineItems`, `headerBlocks`.
 
 Without `items` you still get `lines` and row checks, but no header blocks,
@@ -185,6 +189,51 @@ no totals and no totals checks.
 
 On the four corpus invoices (344 rows, Print-To-PDF and Priority/Winnovative)
 all five checks pass; `he/regression.mjs` enforces that.
+
+### 4.2 Records, CSV, database
+
+```js
+import { parseInvoice, invoiceInfo, toRecords, toCsv, RECORD_COLUMNS } from "./invoice.mjs";
+const invoice = parseInvoice({ markdown, items });
+
+invoiceInfo(invoice);
+// { invoice_number, invoice_date (ISO), supplier_name, supplier_tax_id (digits),
+//   subtotal, discount, after_discount, vat_rate, vat, total, currency, checks_ok }
+
+const records = toRecords(invoice);   // one flat object per line, keys = RECORD_COLUMNS:
+// invoice_number, invoice_date, supplier_name, supplier_tax_id, line_no, page, date,
+// delivery_note, order_ref, sku, description, quantity, unit, unit_price, discount_pct,
+// net_unit_price, line_total, currency, check_ok, check_diff
+
+toCsv(records);                                       // for Excel: BOM + formula-safe text
+toCsv(records, { bom: false, excelSafe: false });     // for COPY … CSV HEADER
+```
+
+Numbers are numbers (a credit line stays negative), dates ISO, anything not
+found is `null`, never guessed. `supplier_*` come from the header block that
+holds the tax id ("עוסק מורשה"); the customer's ids are not used.
+
+Into a database, without building SQL text:
+
+```js
+await supabase.from("invoice_lines").insert(records);            // Supabase
+await supabase.from("invoices").insert(invoiceInfo(invoice));
+```
+
+```sql
+-- Postgres: one call with the JSON array as a parameter
+INSERT INTO invoice_lines SELECT * FROM jsonb_populate_recordset(NULL::invoice_lines, $1::jsonb);
+-- or from the CSV
+\copy invoice_lines FROM 'lines.csv' CSV HEADER
+```
+
+Map the columns to your own tables in your application; this library does
+not know your schema and does not write SQL.
+
+**Why the tool should write the file itself:** if the handler writes the CSV
+or inserts the rows, the model sees only a summary ("162 lines, all checks
+passed, saved to …"). Passing 162 rows through the model to have it write
+them again costs tokens and invites copy errors.
 
 ---
 
@@ -315,7 +364,29 @@ async function parseInvoiceTool(bytes, { tuning = "", review = "none" }, ask) {
 }
 ```
 
-### 6.3 What to return to the model
+### 6.3 `export_invoice` (when the result goes to a file or a database)
+
+```json
+{
+  "name": "export_invoice",
+  "description": "Parse an invoice PDF and save its lines. Returns a summary and the checks, not the rows.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "format": { "type": "string", "enum": ["csv", "db"], "description": "csv: a file for Excel; db: insert the rows" },
+      "tuning": { "type": "string", "description": "<same knob text as extract_pdf>" }
+    },
+    "required": ["format"]
+  }
+}
+```
+
+Handler: `parseInvoice` → `toRecords` → write `toCsv(records)` or insert →
+return `{ ...invoiceInfo(invoice), rows: records.length, checks, saved_to }`.
+Refuse or warn (your choice, decide it in the handler, not in the prompt) when
+`checks_ok` is false.
+
+### 6.4 What to return to the model
 
 Tool output costs tokens. Return:
 
@@ -325,7 +396,7 @@ Tool output costs tokens. Return:
 - for a long table (> ~50 rows), the failed rows plus a count, unless the
   task needs every row.
 
-### 6.4 Instructions to put in the agent's system prompt
+### 6.5 Instructions to put in the agent's system prompt
 
 ```
 You can read PDFs with extract_pdf and parse_invoice.
@@ -336,6 +407,7 @@ You can read PDFs with extract_pdf and parse_invoice.
   and never retry more than twice.
 - A failing check after that is a finding, not a bug to hide: report the row or total,
   the expected value and the printed value.
+- To save lines to a file or a database, use export_invoice; don't copy rows yourself.
 - If pdfType is Scanned or ImageBased, say OCR is needed; don't invent text.
 - Hebrew text is already in logical order; don't reverse it.
 ```

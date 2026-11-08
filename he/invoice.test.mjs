@@ -200,3 +200,71 @@ test("parseInvoice says so when the totals do not add up", () => {
   assert.equal(sum.ok, false);
   assert.equal(sum.diff, 5);
 });
+
+import { toRecords, toCsv, invoiceInfo, isoDate, RECORD_COLUMNS } from "./invoice.mjs";
+
+test("isoDate reads short and long years and rejects the rest", () => {
+  assert.equal(isoDate("31/08/26"), "2026-08-31");
+  assert.equal(isoDate("1.9.2026"), "2026-09-01");
+  assert.equal(isoDate("31/13/26"), null);
+  assert.equal(isoDate("SH26000428"), null);
+});
+
+function sampleInvoice() {
+  const markdown = [
+    "||תעודה|הזמנה|תאור מוצר|כמות|מחיר ליחידה|הנחה|סה\"כ מחיר|",
+    "|---|---|---|---|---|---|---|---|",
+    "|1|SH1|SO1|פאנל קיר, \"10\" ס\"מ|60.80 מטר|101.69 ש\"ח|38.00%|3,833.31|",
+    "|2|SH1||=זיכוי|1.00- יח'|461.54 ש\"ח||461.54-|",
+  ].join("\n");
+  const items = [
+    item("ספק בע\"מ", 470, 800, 100),
+    item("עוסק מורשה: 51-726003-0", 470, 790, 100),
+    item("תאריך חשבונית: 31/08/26", 82, 760, 84),
+    item("מספר תעודה: SI266000147", 82, 750, 84),
+    item("תאור מוצר", 330, 700, 40),
+    item("סה\"כ מחיר", 100, 700, 30),
+    item("3,833.31", 100, 690, 30),
+    item("461.54-", 100, 680, 30),
+    item("מחיר כולל", 205, 660, 30),
+    item("3,371.77", 100, 660, 30),
+  ];
+  return parseInvoice({ markdown, items });
+}
+
+test("invoiceInfo finds the supplier, number and date without guessing", () => {
+  const info = invoiceInfo(sampleInvoice());
+  assert.equal(info.invoice_number, "SI266000147");
+  assert.equal(info.invoice_date, "2026-08-31");
+  assert.equal(info.supplier_name, "ספק בע\"מ");
+  assert.equal(info.supplier_tax_id, "517260030");
+  assert.equal(info.subtotal, 3371.77);
+  assert.equal(info.vat, null);
+  assert.equal(info.checks_ok, true);
+});
+
+test("toRecords gives one flat record per line with every column", () => {
+  const records = toRecords(sampleInvoice());
+  assert.equal(records.length, 2);
+  for (const r of records) assert.deepEqual(Object.keys(r), RECORD_COLUMNS);
+  assert.equal(records[0].delivery_note, "SH1");
+  assert.equal(records[0].order_ref, "SO1");
+  assert.equal(records[0].unit, "מטר");
+  assert.equal(records[0].currency, "ILS");
+  assert.equal(records[1].quantity, -1);
+  assert.equal(records[1].line_total, -461.54);
+  assert.equal(records[1].order_ref, null);
+  assert.equal(records[1].check_ok, true);
+});
+
+test("toCsv quotes, keeps Hebrew for Excel and defuses formulas", () => {
+  const csv = toCsv(toRecords(sampleInvoice()));
+  assert.ok(csv.startsWith("\ufeffinvoice_number,invoice_date,"));
+  const lines = csv.split("\r\n");
+  assert.equal(lines.length, 4); // header, 2 rows, trailing empty
+  assert.match(lines[1], /,"פאנל קיר, ""10"" ס""מ",60\.8,מטר,/);
+  assert.match(lines[2], /,'=זיכוי,-1,/);
+  const plain = toCsv(toRecords(sampleInvoice()), { bom: false, excelSafe: false });
+  assert.ok(plain.startsWith("invoice_number,"));
+  assert.match(plain, /,=זיכוי,-1,/);
+});

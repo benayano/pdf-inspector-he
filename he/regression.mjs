@@ -15,7 +15,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseInvoice } from "./invoice.mjs";
+import { parseInvoice, toRecords, invoiceInfo } from "./invoice.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const dir = path.join(here, "fixtures", "invoices");
@@ -87,6 +87,12 @@ for (const [file, expect] of Object.entries(expectations)) {
   for (const [label, value] of Object.entries(expect.fields ?? {})) {
     const got = invoice.header.fields.find((f) => f.label === label)?.value;
     if (got !== value) problems.push(`header field ${label}: ${got ?? "missing"}, expected ${value}`);
+  }
+  const records = toRecords(invoice);
+  if (records.length !== expect.itemRows) problems.push(`records: ${records.length}, expected ${expect.itemRows}`);
+  const info = invoiceInfo(invoice);
+  for (const key of ["invoice_number", "invoice_date", "supplier_name", "supplier_tax_id", "total"]) {
+    if (info[key] == null) problems.push(`invoiceInfo.${key} missing`);
   }
   if (problems.length) {
     failures++;

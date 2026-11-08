@@ -30,6 +30,8 @@ export function mergeTables(
 
 export type ColumnRole =
   | "index"
+  | "deliveryNote"
+  | "order"
   | "description"
   | "sku"
   | "date"
@@ -57,6 +59,8 @@ export interface LineItem {
     description?: string;
     sku?: string;
     date?: string;
+    deliveryNote?: string;
+    order?: string;
     quantity?: number;
     unit?: string;
     unitPrice?: number;
@@ -134,3 +138,61 @@ export function parseInvoice(input: {
   markdown: string;
   items?: PositionedItem[] | { items: PositionedItem[] };
 }): Invoice;
+
+/** "31/08/26" or "31.08.2026" -> "2026-08-31"; anything else -> null. */
+export function isoDate(text: string | null | undefined): string | null;
+
+/** The invoice's own facts; null where not found (never guessed). */
+export interface InvoiceInfo {
+  invoice_number: string | null;
+  /** ISO date. */
+  invoice_date: string | null;
+  supplier_name: string | null;
+  /** Digits only. */
+  supplier_tax_id: string | null;
+  subtotal: number | null;
+  discount: number | null;
+  after_discount: number | null;
+  vat_rate: number | null;
+  vat: number | null;
+  total: number | null;
+  currency: string | null;
+  /** Every check that ran passed. */
+  checks_ok: boolean;
+}
+export function invoiceInfo(invoice: Invoice): InvoiceInfo;
+
+/** One flat record per item line; keys in the order of RECORD_COLUMNS. */
+export interface LineRecord {
+  invoice_number: string | null;
+  invoice_date: string | null;
+  supplier_name: string | null;
+  supplier_tax_id: string | null;
+  line_no: number;
+  page: number;
+  date: string | null;
+  delivery_note: string | null;
+  order_ref: string | null;
+  sku: string | null;
+  description: string | null;
+  quantity: number | null;
+  unit: string | null;
+  unit_price: number | null;
+  discount_pct: number | null;
+  net_unit_price: number | null;
+  line_total: number | null;
+  currency: string | null;
+  check_ok: boolean | null;
+  check_diff: number | null;
+}
+export const RECORD_COLUMNS: (keyof LineRecord)[];
+export function toRecords(invoice: Invoice): LineRecord[];
+
+/**
+ * Defaults are for Excel (BOM, formula-like text prefixed with '). For a
+ * database COPY pass { bom: false, excelSafe: false }.
+ */
+export function toCsv(
+  records: object[],
+  options?: { columns?: string[]; bom?: boolean; excelSafe?: boolean },
+): string;
