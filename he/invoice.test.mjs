@@ -219,9 +219,9 @@ function sampleInvoice() {
   ].join("\n");
   const items = [
     item("ספק בע\"מ", 470, 800, 100),
-    item("עוסק מורשה: 51-726003-0", 470, 790, 100),
+    item("עוסק מורשה: 51-234567-8", 470, 790, 100),
     item("תאריך חשבונית: 31/08/26", 82, 760, 84),
-    item("מספר תעודה: SI266000147", 82, 750, 84),
+    item("מספר תעודה: SI100000001", 82, 750, 84),
     item("תאור מוצר", 330, 700, 40),
     item("סה\"כ מחיר", 100, 700, 30),
     item("3,833.31", 100, 690, 30),
@@ -234,10 +234,10 @@ function sampleInvoice() {
 
 test("invoiceInfo finds the supplier, number and date without guessing", () => {
   const info = invoiceInfo(sampleInvoice());
-  assert.equal(info.invoice_number, "SI266000147");
+  assert.equal(info.invoice_number, "SI100000001");
   assert.equal(info.invoice_date, "2026-08-31");
   assert.equal(info.supplier_name, "ספק בע\"מ");
-  assert.equal(info.supplier_tax_id, "517260030");
+  assert.equal(info.supplier_tax_id, "512345678");
   assert.equal(info.subtotal, 3371.77);
   assert.equal(info.vat, null);
   assert.equal(info.checks_ok, true);
