@@ -2,6 +2,8 @@
 
 פורק של [firecrawl/pdf-inspector](https://github.com/firecrawl/pdf-inspector) (רישיון MIT) עם תמיכה טובה יותר בעברית, בעיקר בשורות טבלה של חשבוניות.
 
+מדריך לשימוש מתוך LLM agent (כל הפיצ׳רים, הפרמטרים, הגדרת tools וביקורת חלקית): [`docs/CLAUDE.md`](../docs/CLAUDE.md).
+
 ## מה תוקן
 
 שתי תקלות בשורות מימין לשמאל, כשכל אות מצוירת בנפרד (כך מדפיס למשל "Microsoft: Print To PDF"):
