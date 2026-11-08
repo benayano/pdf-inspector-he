@@ -54,6 +54,11 @@ unicode-bidi = "0.3"
 # TrueType font parsing (for Identity-H CID font cmap extraction)
 ttf-parser = "0.25"
 
+# Invoice layer (src/invoice/): its data model is JSON in and out, for the
+# CLI, the wasm and the C ABI (Dart) alike.
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+
 # Native builds keep lopdf's parallel parser and CLI logging. Browser WASM is
 # deliberately single-threaded so it works without cross-origin isolation.
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

@@ -38,6 +38,7 @@ pub mod detector;
 pub mod extractor;
 mod form_bbox_repair;
 pub mod glyph_names;
+pub mod invoice;
 mod mac_glyph_order;
 pub mod markdown;
 mod overlong_numerals;
