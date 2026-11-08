@@ -1,4 +1,4 @@
-import type { Check, Invoice } from "./invoice.js";
+import type { Check, Invoice } from "./invoice.d.ts";
 
 export interface Assessment {
   /** ok: every check passed. repairable: a few rows or a total fail. unreadable: no table / no totals / read wrong as a whole. */
