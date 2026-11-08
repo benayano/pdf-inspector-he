@@ -52,3 +52,5 @@ __pycache__/
 /wasm/pkg-edge/
 # Anonymized invoice fixtures are part of the test suite.
 !he/fixtures/**/*.pdf
+/android/
+/native/
