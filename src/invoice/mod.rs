@@ -11,6 +11,7 @@
 //! Nothing here guesses silently: a check that cannot run is absent, a check
 //! that fails says by how much.
 pub mod amount;
+pub mod api;
 pub mod document;
 mod js;
 pub mod layout;

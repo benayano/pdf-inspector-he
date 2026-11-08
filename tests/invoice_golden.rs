@@ -187,3 +187,63 @@ fn apply_repair_keeps_a_fix_only_when_the_row_closes() {
     let outside = apply_repair(&invoice, &right, &[3], false);
     assert_eq!(outside.rejected.len(), 1);
 }
+
+#[test]
+fn json_api_reads_repairs_and_exports() {
+    use pdf_inspector::invoice::api::call;
+    let read = call("read_invoice", "", &bytes(CORPUS[4].0));
+    assert_eq!(read["ok"], true, "{read}");
+    let result = &read["result"];
+    assert_eq!(result["document"]["status"], "repairable");
+    assert_eq!(
+        result["document"]["repair"]["rows"],
+        serde_json::json!((1..=15).collect::<Vec<_>>())
+    );
+    let state = result["state"].clone();
+
+    let answer = |price: f64| serde_json::json!({ "fixes": [{ "row": 11, "quantity": 1, "unit_price": price, "discount_pct": 0, "line_total": price, "why": "first digit" }] });
+    let wrong = call(
+        "apply_repair",
+        &serde_json::json!({ "state": state, "answer": answer(37.35) }).to_string(),
+        &[],
+    );
+    assert_eq!(
+        wrong["result"]["document"]["status"], "repairable",
+        "{wrong}"
+    );
+    let right = call(
+        "apply_repair",
+        &serde_json::json!({ "state": state, "answer": answer(27.35) }).to_string(),
+        &[],
+    );
+    let doc = &right["result"]["document"];
+    assert_eq!(doc["status"], "ok", "{right}");
+    assert_eq!(doc["repaired"], serde_json::json!([11]));
+    assert_eq!(doc["lines"][10]["repaired"], "first digit");
+
+    let csv = call(
+        "invoice_csv",
+        &serde_json::json!({ "state": right["result"]["state"] }).to_string(),
+        &[],
+    );
+    let text = csv["result"]["csv"].as_str().unwrap();
+    assert!(text.lines().nth(11).unwrap().contains(",27.35,"), "{text}");
+
+    // The state survives a JSON round trip unchanged in what it reads.
+    let again = call(
+        "invoice_csv",
+        &serde_json::json!({ "state": state }).to_string(),
+        &[],
+    );
+    assert_eq!(
+        again["result"]["csv"].as_str().unwrap().lines().count(),
+        text.lines().count()
+    );
+
+    let scanned = call("process_pdf", r#"{"pages":[1]}"#, &bytes(CORPUS[1].0));
+    assert_eq!(scanned["result"]["pdf_type"], "TextBased");
+    assert!(scanned["result"]["markdown"]
+        .as_str()
+        .unwrap()
+        .contains("<!-- Page 1 -->"));
+}

@@ -1,6 +1,7 @@
 # Rust build artifacts
 /target/
 /wasm/target/
+/ffi/target/
 /wasm/pkg/
 debug/
 *.pdb
@@ -8,6 +9,7 @@ debug/
 # Cargo lock (optional for libraries)
 Cargo.lock
 !/wasm/Cargo.lock
+!/ffi/Cargo.lock
 
 # IDE
 .idea/
