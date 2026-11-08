@@ -6,7 +6,7 @@
 //!
 //! | method        | bytes | request                                                        | result |
 //! |---------------|-------|----------------------------------------------------------------|--------|
-//! | `read_invoice`| PDF   | `{tuning?, alternatives?, pages?, markdown?, repair_request?, context?}` | `{document, state}` |
+//! | `read_invoice`| PDF   | `{tuning?, alternatives?, pages?, markdown?, repair_request?, context?}` | `{document, state, assessment, auto_fixed, pdf_type}` |
 //! | `apply_repair`| –     | `{state, answer, markdown?, context?}`                         | `{document, state, applied, rejected}` |
 //! | `invoice_csv` | –     | `{state, bom?, excel_safe?}`                                   | `{csv}` |
 //! | `classify`    | PDF   | –                                                              | `{pdf_type, page_count, pages_needing_ocr, confidence}` |
@@ -126,7 +126,15 @@ fn read(request: &str, bytes: &[u8]) -> Result<Value, String> {
         .invoice
         .as_ref()
         .map(|i| state_of(i, result.pdf_type.clone(), &r.context));
-    Ok(json!({ "document": document, "state": state }))
+    // `invoice` + `assessment` + `auto_fixed` + `pdf_type` are readInvoice()'s
+    // result in he/repair.mjs, so the JS layer can hand its read to this one.
+    Ok(json!({
+        "document": document,
+        "state": state,
+        "assessment": result.assessment,
+        "auto_fixed": result.auto_fixed,
+        "pdf_type": result.pdf_type,
+    }))
 }
 
 fn apply(request: &str) -> Result<Value, String> {

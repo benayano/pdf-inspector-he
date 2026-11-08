@@ -6,6 +6,7 @@
 //   extractTextWithPositions(bytes, { tuning, pages, numberGap })     -> items[]
 //   classifyPdf(bytes)                                                -> { pdfType, pageCount }
 //   listKnobs()                                                       -> [{ name, unit, auto, effect }]
+//   invoiceCall(method, requestJson, bytes)                           -> JSON (src/invoice/api.rs)
 //
 // pdfType is always the wasm spelling: TextBased / Scanned / Mixed / ImageBased.
 // Node-only (child_process, fs); not part of the Edge package.
@@ -52,7 +53,7 @@ export function cliEngine(bin = defaultBinary() ?? "pdf2md") {
     return parts.length ? ["--tune", parts.join(",")] : [];
   };
   const pageArgs = ({ pages } = {}) => (pages?.length ? ["--select-pages", pages.join(",")] : []);
-  const run = (args) => execFileSync(bin, args, { maxBuffer: 256 * 1024 * 1024 }).toString();
+  const run = (args, input) => execFileSync(bin, args, { maxBuffer: 256 * 1024 * 1024, input }).toString();
 
   return {
     processPdf(bytes, options = {}) {
@@ -76,6 +77,10 @@ export function cliEngine(bin = defaultBinary() ?? "pdf2md") {
     extractTextWithPositions(bytes, options = {}) {
       const json = JSON.parse(run(["--items-json", ...tuningArgs(options), ...pageArgs(options), fileOf(bytes)]));
       return Array.isArray(json) ? json : json.items ?? [];
+    },
+    /** The Rust invoice layer (pdf2md --invoice-call): readInvoice() uses it. */
+    invoiceCall(method, request, data) {
+      return run(["--invoice-call", method, ...(data?.length ? [fileOf(data)] : [])], request || "{}");
     },
     classifyPdf(bytes) {
       const json = JSON.parse(run(["--detect-only", "--json", fileOf(bytes)]));

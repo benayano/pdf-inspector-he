@@ -398,12 +398,23 @@ const joinTuning = (...parts) => parts.filter(Boolean).join(",");
  * the invoice, and when rows fail try the alternative readings with no
  * model. `pdf` is the pdf-inspector module (wasm or napi) — passed in, so
  * this file runs the same in a browser, Deno, Node or a Supabase function.
- * @param {{processPdf: Function, extractTextWithPositions: Function}} pdf
+ *
+ * An engine with `invoiceCall` (wasm and pdf2md from this version on) does
+ * the whole read in Rust (src/invoice/, the one implementation, also behind
+ * the C ABI for apps); the code below is the JS original it was ported from,
+ * kept for older engines and as the oracle (`js: true`, he/tools/goldens.mjs).
+ * @param {{processPdf: Function, extractTextWithPositions: Function, invoiceCall?: Function}} pdf
  * @param {Uint8Array} bytes
- * @param {{tuning?: string, alternatives?: string[], pages?: number[]}} [options]
+ * @param {{tuning?: string, alternatives?: string[], pages?: number[], js?: boolean}} [options]
  * @returns {{pdfType: string, invoice: object|null, assessment: object, autoFixed: {row: number, tuning: string}[]}}
  */
-export function readInvoice(pdf, bytes, { tuning = "", alternatives = DEFAULT_ALTERNATIVES, pages } = {}) {
+export function readInvoice(pdf, bytes, { tuning = "", alternatives = DEFAULT_ALTERNATIVES, pages, js = false } = {}) {
+  if (!js && typeof pdf.invoiceCall === "function") {
+    const reply = JSON.parse(pdf.invoiceCall("read_invoice", JSON.stringify({ tuning, alternatives, pages, repair_request: false }), bytes));
+    if (!reply.ok) throw new Error(reply.error);
+    const { state, assessment, auto_fixed, pdf_type } = reply.result;
+    return { pdfType: pdf_type, invoice: state?.invoice ?? null, assessment, autoFixed: auto_fixed };
+  }
   const r = pdf.processPdf(bytes, { includePageMarkers: true, tuning: tuning || undefined, pages });
   if (r.pdfType !== "TextBased" && r.pdfType !== "Mixed") {
     return {

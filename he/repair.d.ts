@@ -78,10 +78,12 @@ export const DEFAULT_ALTERNATIVES: string[];
 export interface PdfModule {
   processPdf(bytes: Uint8Array, options?: Record<string, unknown>): { pdfType: string; markdown: string };
   extractTextWithPositions(bytes: Uint8Array, options?: Record<string, unknown>): unknown[];
+  /** The Rust invoice layer (src/invoice/api.rs): JSON in, JSON out. Used when present. */
+  invoiceCall?(method: string, request: string, data: Uint8Array): string;
 }
-/** Extract, parse and auto-repair in one call. */
+/** Extract, parse and auto-repair in one call (in Rust when the engine has `invoiceCall`; `js: true` forces the JS original). */
 export function readInvoice(
   pdf: PdfModule,
   bytes: Uint8Array,
-  options?: { tuning?: string; alternatives?: string[]; pages?: number[] },
+  options?: { tuning?: string; alternatives?: string[]; pages?: number[]; js?: boolean },
 ): { pdfType: string; invoice: Invoice | null; assessment: Assessment; autoFixed: { row: number; tuning: string }[] };

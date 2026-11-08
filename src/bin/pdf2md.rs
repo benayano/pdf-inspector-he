@@ -543,6 +543,7 @@ const VALUE_OPTIONS: &[&str] = &[
     "--ocr-model-dir",
     "--number-gap",
     "--tune",
+    "--invoice-call",
 ];
 
 fn print_usage(argv0: &str) {
@@ -640,6 +641,28 @@ fn main() {
             process::exit(1);
         })
     };
+    if let Some(method) = value("--invoice-call") {
+        // The JSON API (src/invoice/api.rs): request on stdin, the PDF (if
+        // the method takes one) as the positional argument. For engines that
+        // drive this binary (he/engines.mjs).
+        let mut request = String::new();
+        if let Err(e) = std::io::Read::read_to_string(&mut std::io::stdin(), &mut request) {
+            eprintln!("Error: stdin: {e}");
+            process::exit(1);
+        }
+        let bytes = match positional_args(&args).ok().and_then(|p| p.first().cloned()) {
+            Some(path) => std::fs::read(&path).unwrap_or_else(|e| {
+                eprintln!("Error: {path}: {e}");
+                process::exit(1);
+            }),
+            None => Vec::new(),
+        };
+        println!(
+            "{}",
+            pdf_inspector::invoice::api::call(method, &request, &bytes)
+        );
+        return;
+    }
     if args.iter().any(|a| a == "--invoice-json") {
         process::exit(invoice_json(&args, value("--tune").unwrap_or("")));
     }

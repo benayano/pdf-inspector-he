@@ -33,7 +33,8 @@ try {
     const parsed = parseInvoice({ markdown, items });
     // `amounts` are an intermediate of the cell parse; `values` carry the result.
     const invoice = { ...parsed, lines: parsed.lines && { ...parsed.lines, rows: parsed.lines.rows.map(({ amounts, ...r }) => r) } };
-    const read = readInvoice(engine, bytes);
+    // js: the JS original, not the Rust port these files check.
+    const read = readInvoice(engine, bytes, { js: true });
     const out = {
       invoice,
       document: invoiceDocument(read),

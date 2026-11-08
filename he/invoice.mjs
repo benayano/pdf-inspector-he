@@ -560,7 +560,11 @@ export function invoiceInfo(invoice) {
   const fields = invoice.header?.fields ?? [];
   const taxField = firstField(fields, /עוסק מורשה|^ח\.?\s?פ\.?$|^ע\.?\s?מ\.?$|^vat (no|number)|^tax id/i);
   const supplierBlock = taxField
-    ? invoice.header.blocks.find((b) => b.fields.includes(taxField))
+    ? // By value, not identity: an invoice that went through JSON (a Rust read,
+      // a saved state) has separate copies in header.fields and the blocks.
+      invoice.header.blocks.find((b) =>
+        b.fields.some((f) => f.label === taxField.label && f.value === taxField.value && f.page === taxField.page && f.y === taxField.y),
+      )
     : null;
   const numberField = firstField(fields, /מספר חשבונית|מספר תעודה|invoice (no|number)/i);
   let invoiceNumber = numberField?.value ?? null;
