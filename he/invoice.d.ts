@@ -32,6 +32,7 @@ export type ColumnRole =
   | "index"
   | "deliveryNote"
   | "order"
+  | "site"
   | "description"
   | "sku"
   | "date"
@@ -61,6 +62,8 @@ export interface LineItem {
     date?: string;
     deliveryNote?: string;
     order?: string;
+    /** A printed site / project column ("תאור אתר"). */
+    site?: string;
     quantity?: number;
     unit?: string;
     unitPrice?: number;
@@ -144,6 +147,8 @@ export function isoDate(text: string | null | undefined): string | null;
 
 /** The invoice's own facts; null where not found (never guessed). */
 export interface InvoiceInfo {
+  /** "credit" when the header says זיכוי / credit note. */
+  document_type: "invoice" | "credit";
   invoice_number: string | null;
   /** ISO date. */
   invoice_date: string | null;
@@ -184,9 +189,22 @@ export interface LineRecord {
   currency: string | null;
   check_ok: boolean | null;
   check_diff: number | null;
+  /** The printed site column's text, a hint (not an id). */
+  site_text: string | null;
+  /** A note line priced at a cent or less ("לקח …"), not goods. */
+  marker: boolean;
+  /** A negative line inside an ordinary invoice (goods returned). */
+  is_return: boolean;
 }
 export const RECORD_COLUMNS: (keyof LineRecord)[];
 export function toRecords(invoice: Invoice): LineRecord[];
+
+export function checkLine(values: LineItem["values"]): LineCheck | null;
+export function totalsChecks(lines: LineItems | null, totals: Total[]): Check[];
+/** Row checks and totals checks computed again from the rows' values (after a repair). */
+export function recheck(invoice: Invoice): Invoice;
+export function isMarkerLine(values: LineItem["values"]): boolean;
+export function documentType(invoice: Invoice): "invoice" | "credit";
 
 /**
  * Defaults are for Excel (BOM, formula-like text prefixed with '). For a

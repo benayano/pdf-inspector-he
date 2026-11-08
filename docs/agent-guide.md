@@ -123,6 +123,7 @@ Precedence: per-call (`with_tuning` / `tuning` option) → process
 | `rule_join_gap` | pt | 2.0 | A bordered table not found as a table (grid drawn in pieces) → raise (3–4) |
 | `short_rule_ratio` | fraction | 0.3 | A real column lost → lower. Phantom empty columns (from a totals box under the table) → raise |
 | `stacked_line_gap` | em | 0.5 | Two-line header cell letters interleaved → lower. Superscripts split off → raise |
+| `latin_digit_split` | 0/1 | 1 only on an RTL line no Unicode-bidi reading reproduces (word-by-word layout: Priority / Winnovative), else 0 | Numbers jump in front of a Latin product name (`3000 "1.5 HIGH TECH`) → 1. A Latin phrase loses its trailing number → 0 |
 
 `pdf2md --list-knobs` / `listKnobs()` returns the same text; feed it to the
 model rather than hard-coding this table.
@@ -300,6 +301,35 @@ Cap it: at most one 5.1 and one 5.2 per document.
 
 ---
 
+### 5.4 Repair with the model working on the result (`he/repair.mjs`)
+
+When most of an invoice reads right and a few rows or a total do not,
+re-reading the whole PDF with a model throws the right part away. Instead:
+
+```js
+import { readInvoice, repairRequest, applyRepair } from "./repair.mjs";
+const read = readInvoice(pdf, bytes);          // extract + parse + autoRepair (no model)
+// read.assessment.status: "ok" | "repairable" | "unreadable"; .failedRows, .failedChecks, .needsPages, .pages
+if (read.assessment.status === "repairable") {
+  const req = repairRequest(read.invoice, { context: "Hebrew supplier invoice" });
+  // req.prompt: totals line + failed checks + ONLY the failing rows (± a neighbour) as CSV
+  // req.schema: JSON schema of the answer { fixes[], inserts[], unreadable[], notes }
+  // req.needsPages: a row is missing — attach req.pages (PDF pages or images)
+  const fixed = applyRepair(read.invoice, await ask(req.prompt, req.schema), req);
+  // a fix is kept only if its row then closes; an insert only if the sum then closes
+}
+```
+
+- `autoRepair(invoice, alternatives)` runs inside `readInvoice`: a failing
+  row is taken from another reading (`number_gap` 0.1 / 0.3 / auto) only
+  where it closes there. Often no model is needed at all.
+- Send the request **as CSV in, JSON out**: compact rows cost a few hundred
+  tokens (a damaged row of a 162-row invoice: ~1.4k characters); the answer
+  goes through structured output, which CSV cannot.
+- `unreadable` in the answer is for rows whose printed numbers really
+  disagree — a supplier error is a finding, not something to "fix".
+- Short tables (≤ 25 rows) go whole; the neighbours give context for free.
+
 ## 6. Exposing it as tools
 
 Keep the tools few and give the model the knob text at runtime.
@@ -432,7 +462,9 @@ You can read PDFs with extract_pdf and parse_invoice.
 - Scanned invoices: detected and reported; the invoice layer is untested on OCR output.
 - Firecrawl's own regression set (`pdf-evals`) is not available here; the
   in-repo tests and the invoice corpus (`he/fixtures/invoices`) are.
-- The LLM review was tested with mocked answers, not a live model.
+- The LLM review and the repair layer were tested with mocked answers, not a live model.
+- Edge package (`pdf-inspector-he-edge`, wasm embedded as text, `await load()`):
+  tested in Deno locally, not yet inside a deployed Supabase function.
 
 ## 9. Adding a new invoice layout
 

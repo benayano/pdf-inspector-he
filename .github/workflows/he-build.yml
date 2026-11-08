@@ -60,13 +60,18 @@ jobs:
         run: wasm-pack build wasm --target deno --out-dir pkg-deno --out-name pdf_inspector --release
       - name: Copy the JS check layer into both packages
         run: |
-          cp he/rtl-check.mjs he/rtl-check.d.ts he/invoice.mjs he/invoice.d.ts wasm/pkg-web/
-          cp he/rtl-check.mjs he/rtl-check.d.ts he/invoice.mjs he/invoice.d.ts wasm/pkg-deno/
+          for pkg in wasm/pkg-web wasm/pkg-deno; do
+            cp he/rtl-check.mjs he/rtl-check.d.ts he/invoice.mjs he/invoice.d.ts he/repair.mjs he/repair.d.ts "$pkg"/
+          done
+      - name: Build the Edge package (wasm embedded as text)
+        run: node he/tools/build-edge.mjs wasm/pkg-web wasm/pkg-edge
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
       - name: Smoke test on Deno (the Edge Function runtime)
         run: deno run --allow-read he/deno-smoke.ts wasm/pkg-deno tests/fixtures/rtl_hebrew_glyph_by_glyph.pdf he/fixtures/invoices/priority-1p.pdf
+      - name: Smoke test of the Edge package (readInvoice + repair on the corpus)
+        run: deno run --allow-read he/edge-smoke.ts wasm/pkg-edge he/fixtures/invoices/*.pdf
       - uses: actions/upload-artifact@v4
         with:
           name: pdf-inspector-he-wasm-web
@@ -75,6 +80,10 @@ jobs:
         with:
           name: pdf-inspector-he-wasm-deno
           path: wasm/pkg-deno
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pdf-inspector-he-edge
+          path: wasm/pkg-edge
       - name: Release
         if: startsWith(github.ref, 'refs/tags/he-v')
         env:
@@ -82,5 +91,6 @@ jobs:
         run: |
           (cd wasm/pkg-web && zip -r ../../pdf-inspector-he-wasm-web.zip .)
           (cd wasm/pkg-deno && zip -r ../../pdf-inspector-he-wasm-deno.zip .)
+          (cd wasm/pkg-edge && zip -r ../../pdf-inspector-he-edge.zip .)
           gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes \
-            pdf-inspector-he-wasm-web.zip pdf-inspector-he-wasm-deno.zip
+            pdf-inspector-he-wasm-web.zip pdf-inspector-he-wasm-deno.zip pdf-inspector-he-edge.zip

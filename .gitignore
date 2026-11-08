@@ -45,3 +45,6 @@ __pycache__/
 
 # pdf-inspector-he: the anonymized invoice corpus is committed
 !he/fixtures/invoices/*.pdf
+/wasm/pkg-web/
+/wasm/pkg-deno/
+/wasm/pkg-edge/

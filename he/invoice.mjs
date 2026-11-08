@@ -141,6 +141,10 @@ const ROLE_PATTERNS = [
   ["discount", /הנחה|discount/i],
   ["quantity", /כמות|qty|quantity/i],
   ["total", /סה"כ|סה״כ|סכום|total|amount/i],
+  // A printed site / project column ("תאור אתר") must win over the
+  // description pattern (which also matches "תאור"), or the site's text
+  // becomes the item's description on every row that names a site.
+  ["site", /אתר|פרויקט|^site\b|project/i],
   ["description", /תאור|תיאור|description|פריט|item/i],
   ["sku", /מק"ט|מק״ט|sku|catalog/i],
   ["date", /תאריך|date/i],
@@ -157,7 +161,7 @@ function columnRoles(header) {
 }
 
 /** Checks quantity x price = line total, allowing the rounding the price carries. */
-function checkLine(values) {
+export function checkLine(values) {
   const { quantity, unitPrice, netUnitPrice, discount, total } = values;
   if (quantity == null || total == null) return null;
   // Both the price and the quantity may be printed rounded to cents:
@@ -380,7 +384,7 @@ function check(name, expected, actual, tolerance = 0.011) {
   return { name, ok: Math.abs(actual - expected) <= tolerance, expected: round2(expected), actual, diff };
 }
 
-function totalsChecks(lines, totals) {
+export function totalsChecks(lines, totals) {
   const checks = [];
   const byRole = (role) => totals.find((t) => t.role === role);
   const subtotal = byRole("subtotal");
@@ -415,6 +419,18 @@ function totalsChecks(lines, totals) {
 }
 
 // ---------------------------------------------------------------- invoice
+
+/**
+ * The invoice with every row check and every totals check computed again
+ * from the rows' `values` and the totals. For a caller that changed values
+ * (a repair) and wants the same verdict parseInvoice would have given.
+ */
+export function recheck(invoice) {
+  const lines = invoice.lines
+    ? { ...invoice.lines, rows: invoice.lines.rows.map((r) => ({ ...r, check: checkLine(r.values) })) }
+    : null;
+  return { ...invoice, lines, checks: totalsChecks(lines, invoice.totals ?? []) };
+}
 
 /** Where the item table stands on a page: from its header to its last row. */
 function tableSpan(items, lines, page) {
@@ -505,7 +521,22 @@ export const RECORD_COLUMNS = [
   "currency",
   "check_ok",
   "check_diff",
+  "site_text",
+  "marker",
+  "is_return",
 ];
+
+/** A line priced at a shekel cent or less: a printed note ("לקח …"), not goods. */
+export function isMarkerLine(values) {
+  const price = Math.abs(values.unitPrice ?? values.netUnitPrice ?? 0);
+  return values.total != null && Math.abs(values.total) <= 0.01 && price <= 0.01;
+}
+
+/** "חשבונית זיכוי" / "credit note" in the header: the signs mean the other thing. */
+export function documentType(invoice) {
+  const text = (invoice.header?.blocks ?? []).map((b) => b.text).join("\n");
+  return /זיכוי|credit note/i.test(text) ? "credit" : "invoice";
+}
 
 /** "31/08/26" or "31.08.2026" -> "2026-08-31"; anything else -> null. */
 export function isoDate(text) {
@@ -544,6 +575,7 @@ export function invoiceInfo(invoice) {
   const total = (role) => invoice.totals?.find((t) => t.role === role) ?? null;
   const currency = invoice.totals?.find((t) => t.currency)?.currency ?? null;
   return {
+    document_type: documentType(invoice),
     invoice_number: invoiceNumber,
     invoice_date: isoDate(dateField?.value),
     supplier_name: supplierBlock?.lines[0] ?? null,
@@ -568,6 +600,7 @@ export function invoiceInfo(invoice) {
 export function toRecords(invoice) {
   const info = invoiceInfo(invoice);
   if (!invoice.lines) return [];
+  const credit = info.document_type === "credit";
   return invoice.lines.rows.map((row, i) => {
     const v = row.values;
     const currencyOf = row.amounts.find((a) => a?.currency)?.currency ?? info.currency;
@@ -592,6 +625,10 @@ export function toRecords(invoice) {
       currency: currencyOf ?? null,
       check_ok: row.check ? row.check.ok : null,
       check_diff: row.check ? row.check.diff : null,
+      site_text: v.site ?? null,
+      marker: isMarkerLine(v),
+      // A line printed with a minus inside an ordinary invoice: goods returned.
+      is_return: !credit && (v.total ?? 0) < 0,
     };
   });
 }

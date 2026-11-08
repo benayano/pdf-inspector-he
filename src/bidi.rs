@@ -397,6 +397,7 @@ fn analysis_sequence(
     rtl_base: bool,
     replaced: &[(usize, char)],
     phantoms: &[(usize, char)],
+    split_after_latin: bool,
 ) -> Vec<AnalysisChar> {
     let class_at = |k: usize| class_of(chars[read_back[k]]);
     // Number tokens as `(start, end)` ranges of the read-back: European
@@ -456,6 +457,25 @@ fn analysis_sequence(
         })
         .and_then(|q| letter_class(chars[q]))
     };
+    // A word space between the token and the letter before it in the
+    // read-back (only neutrals in between, one of them a space).
+    let gap_before = |prefix: &[usize]| {
+        prefix
+            .iter()
+            .rev()
+            .take_while(|&&q| {
+                paired_bracket(chars[q]).is_none()
+                    && matches!(
+                        class_of(chars[q]),
+                        BidiClass::WS
+                            | BidiClass::ON
+                            | BidiClass::CS
+                            | BidiClass::ES
+                            | BidiClass::ET
+                    )
+            })
+            .any(|&q| class_of(chars[q]) == BidiClass::WS)
+    };
     let mut sequence: Vec<AnalysisChar> = Vec::with_capacity(read_back.len() + 4);
     for (k, &p) in read_back.iter().enumerate() {
         for &(_, mark) in phantoms.iter().filter(|(at, _)| *at == k) {
@@ -474,6 +494,17 @@ fn analysis_sequence(
                 ) {
                     // Displayed right after a Latin word: logically after it.
                     (b, Some(BidiClass::L)) if b != Some(BidiClass::L) => Some('\u{200E}'),
+                    // Displayed right before a Latin word, a word gap
+                    // apart, on a line laid out word by word (see
+                    // `visual_to_logical`): a token of its own in the
+                    // right-to-left flow, not the end of the Latin phrase.
+                    (Some(BidiClass::L), a)
+                        if a != Some(BidiClass::L)
+                            && split_after_latin
+                            && gap_before(&read_back[..k]) =>
+                    {
+                        Some('\u{200F}')
+                    }
                     // Displayed right before a Latin word: the start of that
                     // phrase, which only rule W7 — Latin text before the
                     // number — can put there.
@@ -598,45 +629,64 @@ pub(crate) fn visual_to_logical(visual: &[VisualChar], rtl_base: bool) -> Vec<Vi
         }
     }
 
-    let mut first: Option<(Vec<usize>, Vec<char>)> = None;
-    for mask in readings {
-        // Only a pair the display leaves open needs steering; a pair fixed
-        // by its content resolves by rule N0 as it stands, and a mark ahead
-        // of it would shadow the letter rules W2 and W7 read through it.
-        let mut phantoms: Vec<(usize, char)> = Vec::new();
-        for (i, pair) in pairs.iter().enumerate() {
-            if pair.alternative.is_none() {
-                continue;
+    // Whether a number displayed a word gap before a Latin word is a token
+    // of its own (`latin_digit_split`). A producer that lays a line out by
+    // the UBA never shows a separate number there — rule W7 joins it to the
+    // Latin phrase and displays it after it — so on `auto` the split is
+    // tried only when no standard reading reproduces the display: the line
+    // was laid out word by word, right to left (Priority / Winnovative
+    // invoices: `HIGH TECH 1.5" 3000` shown as `3000 "1.5 HIGH TECH`).
+    let split_knob = crate::tuning::knob(|t| t.latin_digit_split);
+    let passes: &[bool] = match split_knob {
+        crate::tuning::Knob::Auto => &[false, true],
+        crate::tuning::Knob::Fixed(v) if v >= 0.5 => &[true],
+        crate::tuning::Knob::Fixed(_) => &[false],
+    };
+    // A reading the display reproduces wins; failing that, the first
+    // reading of the last pass tried (the word-by-word one on `auto`).
+    let mut found: Option<(Vec<usize>, Vec<char>)> = None;
+    let mut fallback: Option<(Vec<usize>, Vec<char>)> = None;
+    'passes: for &split in passes {
+        let mut pass_first: Option<(Vec<usize>, Vec<char>)> = None;
+        for &mask in &readings {
+            // Only a pair the display leaves open needs steering; a pair fixed
+            // by its content resolves by rule N0 as it stands, and a mark ahead
+            // of it would shadow the letter rules W2 and W7 read through it.
+            let mut phantoms: Vec<(usize, char)> = Vec::new();
+            for (i, pair) in pairs.iter().enumerate() {
+                if pair.alternative.is_none() {
+                    continue;
+                }
+                let flipped = open_pairs
+                    .iter()
+                    .position(|&open| open == i)
+                    .is_some_and(|bit| mask & (1 << bit) != 0);
+                let level = if flipped {
+                    pair.alternative.unwrap_or(pair.level)
+                } else {
+                    pair.level
+                };
+                // The mark goes right before the bracket that opens the pair in
+                // the read-back: the closing glyph in an RTL paragraph.
+                let opener = if rtl_base { pair.close } else { pair.open };
+                phantoms.push((
+                    read_back_index[opener],
+                    phantom_before_pair(&chars, pair, level),
+                ));
             }
-            let flipped = open_pairs
-                .iter()
-                .position(|&open| open == i)
-                .is_some_and(|bit| mask & (1 << bit) != 0);
-            let level = if flipped {
-                pair.alternative.unwrap_or(pair.level)
-            } else {
-                pair.level
-            };
-            // The mark goes right before the bracket that opens the pair in
-            // the read-back: the closing glyph in an RTL paragraph.
-            let opener = if rtl_base { pair.close } else { pair.open };
-            phantoms.push((
-                read_back_index[opener],
-                phantom_before_pair(&chars, pair, level),
-            ));
+            let sequence =
+                analysis_sequence(&chars, &read_back, rtl_base, &replaced, &phantoms, split);
+            let level_at = resolved_levels(&sequence, rtl_base, chars.len());
+            let (logical, out_chars) = undo_reordering(&chars, &level_at);
+            if display_order(&out_chars, rtl_base) == chars {
+                found = Some((logical, out_chars));
+                break 'passes;
+            }
+            pass_first.get_or_insert((logical, out_chars));
         }
-        let sequence = analysis_sequence(&chars, &read_back, rtl_base, &replaced, &phantoms);
-        let level_at = resolved_levels(&sequence, rtl_base, chars.len());
-        let (logical, out_chars) = undo_reordering(&chars, &level_at);
-        if display_order(&out_chars, rtl_base) == chars {
-            first = Some((logical, out_chars));
-            break;
-        }
-        if first.is_none() {
-            first = Some((logical, out_chars));
-        }
+        fallback = pass_first;
     }
-    let (logical, out_chars) = first.unwrap_or_default();
+    let (logical, out_chars) = found.or(fallback).unwrap_or_default();
     logical
         .iter()
         .zip(out_chars)
@@ -986,6 +1036,45 @@ mod tests {
             .into_iter()
             .map(|v| v.ch)
             .collect()
+    }
+
+    #[test]
+    fn word_by_word_line_keeps_numbers_after_their_latin_word() {
+        // A Priority / Winnovative cell, as the screen shows it: each word
+        // laid out right to left on its own, so the numbers sit LEFT of
+        // the Latin product name ("פאר 3000 \"1.5 HIGH TECH צבע מברשת").
+        // No standard reading reproduces that display; read word by word
+        // it is "מברשת צבע HIGH TECH 1.5\" 3000 פאר".
+        let display = "ראפ 3000 \"1.5 HIGH TECH עבצ תשרבמ";
+        assert_eq!(
+            logical_text(display, true),
+            "מברשת צבע HIGH TECH 1.5\" 3000 פאר"
+        );
+        // Forced off: rule W7 joins the numbers to the Latin phrase.
+        let off = crate::tuning::Tuning::parse("latin_digit_split=0").unwrap();
+        assert_eq!(
+            crate::tuning::with_tuning(off, || logical_text(display, true)),
+            "מברשת צבע 3000 \"1.5 HIGH TECH פאר"
+        );
+        // "X5" touches its letter: one token, not split off.
+        assert_eq!(
+            logical_text("רופא 1.5-2.5 X5 ריהמ", true),
+            "מהיר X5 1.5-2.5 אפור"
+        );
+    }
+
+    #[test]
+    fn standard_layout_is_not_split() {
+        // A producer that follows the UBA displays "מחיר HIGH TECH 1.5"
+        // with the number after the Latin phrase; that display round-trips
+        // and stays exactly as it was read before the switch existed.
+        let display = "HIGH TECH 1.5 ריחמ";
+        assert_eq!(logical_text(display, true), "מחיר HIGH TECH 1.5");
+        let on = crate::tuning::Tuning::parse("latin_digit_split=auto").unwrap();
+        assert_eq!(
+            crate::tuning::with_tuning(on, || logical_text(display, true)),
+            "מחיר HIGH TECH 1.5"
+        );
     }
 
     // שלום עולם

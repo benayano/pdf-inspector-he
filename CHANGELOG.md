@@ -9,6 +9,22 @@ version and date. Earlier releases are described in their
 
 ## [Unreleased]
 
+### Added (pdf-inspector-he)
+
+- Knob `latin_digit_split`: on a right-to-left line laid out word by word
+  (Priority / Winnovative invoices), a number shown a word gap before a Latin
+  word is its own token, so `HIGH TECH 1.5" 3000` no longer reads as
+  `3000 "1.5 HIGH TECH`. `auto` applies it only to lines that no Unicode
+  bidi reading reproduces; standard layouts are unchanged.
+- Invoice layer: a `site` column role ("תאור אתר"), `marker` / `is_return` /
+  `site_text` on records, `document_type`, and `recheck()`.
+- `he/repair.mjs`: assess, auto-repair from alternative readings, a compact
+  CSV repair request with a JSON answer schema, and `applyRepair`, which keeps
+  a correction only when the arithmetic then closes. `readInvoice()` runs it
+  all in one call.
+- Edge package (`he/tools/build-edge.mjs`): the wasm embedded as gzip+base64
+  text with `await load()`, for Supabase Edge Functions; Deno smoke test.
+
 ### Fixed
 
 - A TrueType subset with no `cmap`, no glyph names and no ToUnicode that

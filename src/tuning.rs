@@ -81,7 +81,7 @@ pub struct KnobInfo {
 }
 
 /// Every knob, in [`Tuning`] field order.
-pub const KNOBS: [KnobInfo; 6] = [
+pub const KNOBS: [KnobInfo; 7] = [
     KnobInfo {
         name: "number_gap",
         unit: "em",
@@ -129,6 +129,16 @@ pub const KNOBS: [KnobInfo; 6] = [
                  (a two-line header cell beside one-line cells). Lower it if two lines \
                  interleave their letters; raise it if superscripts split off.",
     },
+    KnobInfo {
+        name: "latin_digit_split",
+        unit: "switch (0 or 1)",
+        auto: "1 only on a right-to-left line that no Unicode-bidi reading reproduces \
+               (laid out word by word, as Priority / Winnovative invoices are), else 0",
+        effect: "Whether a number shown a word gap before a Latin word on a right-to-left \
+                 line is a token of its own (1: `HIGH TECH 1.5\" 3000`) or the end of the \
+                 Latin phrase (0: `3000 \"1.5 HIGH TECH`). Set 1 if numbers jump in front of \
+                 Latin product names; 0 if a Latin phrase loses its trailing number.",
+    },
 ];
 
 /// A set of knob settings; `None` means "not set at this level".
@@ -140,10 +150,11 @@ pub struct Tuning {
     pub rule_join_gap: Option<Knob>,
     pub short_rule_ratio: Option<Knob>,
     pub stacked_line_gap: Option<Knob>,
+    pub latin_digit_split: Option<Knob>,
 }
 
 impl Tuning {
-    fn slots(&mut self) -> [&mut Option<Knob>; 6] {
+    fn slots(&mut self) -> [&mut Option<Knob>; 7] {
         [
             &mut self.number_gap,
             &mut self.word_gap_cap,
@@ -151,10 +162,11 @@ impl Tuning {
             &mut self.rule_join_gap,
             &mut self.short_rule_ratio,
             &mut self.stacked_line_gap,
+            &mut self.latin_digit_split,
         ]
     }
 
-    fn values(&self) -> [Option<Knob>; 6] {
+    fn values(&self) -> [Option<Knob>; 7] {
         [
             self.number_gap,
             self.word_gap_cap,
@@ -162,6 +174,7 @@ impl Tuning {
             self.rule_join_gap,
             self.short_rule_ratio,
             self.stacked_line_gap,
+            self.latin_digit_split,
         ]
     }
 
@@ -225,6 +238,7 @@ thread_local! {
             rule_join_gap: None,
             short_rule_ratio: None,
             stacked_line_gap: None,
+            latin_digit_split: None,
         })
     };
 }
@@ -236,6 +250,7 @@ static PROCESS: Mutex<Tuning> = Mutex::new(Tuning {
     rule_join_gap: None,
     short_rule_ratio: None,
     stacked_line_gap: None,
+    latin_digit_split: None,
 });
 
 fn from_env() -> Tuning {

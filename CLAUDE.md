@@ -95,8 +95,10 @@ RUST_LOG=pdf_inspector::detector=debug cargo run --release --bin detect-pdf -- f
   becomes a knob with an `auto` default, a unit and an effect line (`KNOBS`), exposed through
   CLI `--tune`, Python, napi and wasm. `auto` must keep the corpus green.
 - **JS layer** (`he/`): `rtl-check.mjs` (partial LLM review), `invoice.mjs` (invoice data, checks,
-  records, CSV). Each has a `.d.ts`; keep them in sync. Both ship in the wasm packages
-  (`.github/workflows/he-build.yml`).
+  records, CSV), `repair.mjs` (assess, auto-repair, compact repair request, apply + recheck,
+  `readInvoice` one-call entry). Each has a `.d.ts`; keep them in sync. All ship in the wasm
+  packages (`.github/workflows/he-build.yml`), and in the Edge package (wasm embedded as text,
+  `he/tools/build-edge.mjs`, smoke `he/edge-smoke.ts`) that contractor-business-manager vendors.
 - **Privacy**: no real supplier/customer names in the repo. New invoices go through
   `he/tools/anonymize_pdf.py`; the private names list stays outside git.
 - **Toolchain**: if the pinned toolchain is unavailable, `RUSTUP_TOOLCHAIN=stable`; use `-j 2` on small machines.
