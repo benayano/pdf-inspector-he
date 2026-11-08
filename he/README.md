@@ -170,6 +170,49 @@ if (read.assessment.status === "repairable") {
 }
 ```
 
+## חיבור ל-agent, שרת MCP ותשובת JSON
+
+שלוש דרכים לחבר את הכלי, וכולן עוברות דרך אותם כלים (`he/agent.mjs`), כך שהן נותנות אותה תשובה.
+
+**תשובת JSON** (`he/document.mjs`, הסכימה `he/invoice-document.schema.json`): מסמך אחד בגרסה קבועה (`pdf-inspector-he/invoice-document@1`). הוא כולל:
+- הכרעה: `ok`, ‏`repairable` או `unreadable`.
+- פרטי החשבונית, שדות הכותרת, הסיכומים והעמודות.
+- כל השורות. פרטי החשבונית לא חוזרים בכל שורה. לכל שורה יש `check_ok`, ובשורה שתוקנה גם `repaired` עם הסיבה.
+- הבדיקות והשורות שנכשלו.
+- כשצריך תיקון: בקשת התיקון המוכנה (`repair.prompt` + `repair.schema`).
+
+```bash
+node he/cli.mjs invoice.pdf                    # המסמך המלא
+node he/cli.mjs invoice.pdf --format summary   # הכרעה, סיכומים ושורות שנכשלו
+node he/cli.mjs invoice.pdf --format csv       # שורה לכל פריט
+node he/cli.mjs invoice.pdf --format repair    # בקשת התיקון בלבד
+```
+קוד היציאה: ‏0 ‏= ok, ‏2 ‏= צריך תיקון, ‏3 ‏= לא קריא, ‏1 ‏= שגיאה. המנוע הוא `pdf2md` (ברירת המחדל) או חבילת ה-wasm (`--engine wasm:<dir>`).
+
+**כלים ל-agent** (`createInvoiceAgent`): הגדרות tools בפורמט של Anthropic, מדריך ל-system prompt, ו-`call(name, input)`. במצב הזה ה-agent הוא בעצמו המודל שמתקן, כך שאין קריאה למודל שני:
+
+| כלי | מה עושה |
+|---|---|
+| `read_invoice` | קורא ובודק. מחזיר את ההכרעה ואת השורות שנכשלו כ-CSV |
+| `get_rows` | שורות (`failed` / `all` / `5-12,20`) כ-CSV או JSON |
+| `fix_rows` | תיקונים ושורות חסרות. תיקון נשמר רק אם השורה נסגרת בחשבון, ושורה חסרה רק אם הסכום נסגר |
+| `extract_text` | העמוד כ-Markdown, כדי לבדוק שורה |
+| `get_invoice_json` | המסמך המלא |
+| `list_knobs` | הפרמטרים לכוונון |
+| `export_invoice` | שמירה כ-JSON או CSV (רק כשהמארח מאפשר כתיבה) |
+
+הקוד לא נוגע במערכת הקבצים ולא ברשת. המארח מעביר את המנוע ואת הדרך לקרוא ולכתוב קבצים. לכן אותו קוד רץ ב-Node, ב-Deno ובפונקציית Supabase (נכלל בחבילת ה-Edge).
+
+**שרת MCP** (`he/mcp-server.mjs`, בלי תלויות, stdio): מחבר את אותם כלים ישירות ל-Claude Code, ל-Claude Desktop או לכל לקוח MCP:
+```bash
+claude mcp add pdf-inspector-he -- node /path/to/pdf-inspector-he/he/mcp-server.mjs --root ~/invoices
+```
+- קבצים נקראים ונכתבים רק בתוך `--root`.
+- `--no-export` מפעיל את השרת לקריאה בלבד.
+- `--engine wasm:<dir>` מריץ על ה-wasm במקום `pdf2md`.
+
+בדיקות: `he/agent.test.mjs`. הן בודקות שהמסמך תואם את הסכימה על כל הקורפוס, את מסלול התיקון על PDF עם ספרה שגויה (`he/fixtures/repair/`, נוצר ב-`he/tools/misread_pdf.py`), ואת שרת ה-MCP דרך stdio אמיתי (כולל חסימת יציאה מה-root).
+
 ## חבילות npm / Supabase
 
 ה-workflow `he build` (`.github/workflows/he-build.yml`) בונה בכל push:
@@ -179,7 +222,7 @@ if (read.assessment.status === "repairable") {
 
 - `pdf-inspector-he-edge`: ל-Supabase Edge, **בלי קובץ בינארי**. ה-wasm מוטמע כ-gzip+base64 (כ-3.5MB טקסט) ונטען ב-`await load()` (כ-75ms בפעם הראשונה בכל isolate). כך אפשר לפרוס אותה ככל קוד אחר, וגם להעתיק אותה לריפו אחר. `VERSION.json` שומר את ה-commit ואת ה-sha256 של ה-wasm. בנייה מקומית: `node he/tools/build-edge.mjs wasm/pkg-web <dir>`. בדיקה: `deno run --allow-read he/edge-smoke.ts <dir> he/fixtures/invoices/*.pdf`.
 
-כל החבילות כוללות את `rtl-check.mjs`, `invoice.mjs` ו-`repair.mjs`. אפשר להוריד אותן מה-Artifacts של הריצה. tag בצורה `he-v1.0.0` יוצר Release עם קבצי zip.
+כל החבילות כוללות את `rtl-check.mjs`, `invoice.mjs`, `repair.mjs`, `document.mjs`, `agent.mjs` ואת הסכימה `invoice-document.schema.json`. שרת ה-MCP וה-CLI (`mcp-server.mjs`, `cli.mjs`, `engines.mjs`) רצים מהריפו ב-Node. אפשר להוריד אותן מה-Artifacts של הריצה. tag בצורה `he-v1.0.0` יוצר Release עם קבצי zip.
 
 ## מה לא נבדק
 

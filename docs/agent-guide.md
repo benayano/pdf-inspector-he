@@ -332,6 +332,39 @@ if (read.assessment.status === "repairable") {
 
 ## 6. Exposing it as tools
 
+### 6.0 Ready-made: `he/agent.mjs`, the MCP server, the CLI
+
+Everything below is implemented; the later subsections explain the design.
+
+```js
+import { createInvoiceAgent } from "./agent.mjs";
+const agent = createInvoiceAgent({ engine: pdf, readFile: (f) => bytesOf(f), writeFile: (out, text) => save(out, text) });
+// agent.tools (Anthropic), agent.mcpTools (MCP), agent.instructions (system prompt text)
+const { ok, result } = await agent.call("read_invoice", { file: "a.pdf" });
+```
+
+| Tool | Does |
+|---|---|
+| `read_invoice {file, tuning?}` | read + check (+ auto-repair); verdict, facts, totals, checks, failing rows as CSV, `next` |
+| `get_rows {file, rows?, format?}` | rows `failed` / `all` / `5-12,20`, CSV (default) or JSON |
+| `fix_rows {file, fixes[], inserts?}` | corrections kept only when the row's arithmetic closes; inserts only when the sum closes |
+| `extract_text {file, pages?, tuning?}` | Markdown of the pages, for looking at a row |
+| `get_invoice_json {file, markdown?}` | the full JSON document (`invoice-document@1`, `he/invoice-document.schema.json`) |
+| `list_knobs {}` | the knobs |
+| `export_invoice {file, format, out}` | json / csv to a file — only when the host passes `writeFile` |
+
+The agent IS the model that repairs: no second model is called. Session state
+(the invoice as fixed so far) is per file; `read_invoice` resets it.
+
+- **MCP**: `node he/mcp-server.mjs --root DIR [--engine cli|cli:<pdf2md>|wasm:<edge dir>] [--no-export]`,
+  e.g. `claude mcp add pdf-inspector-he -- node he/mcp-server.mjs --root ~/invoices`. Files must stay inside `--root`.
+- **CLI**: `node he/cli.mjs file.pdf [--format json|summary|csv|repair] [--tune …] [--out FILE]`;
+  exit code 0 ok / 2 repairable / 3 unreadable / 1 error.
+- **Engines** (`he/engines.mjs`, Node): `cliEngine()` (the native binary) or `wasmEngine(dir)` (the Edge package),
+  one interface. In Deno / Supabase use `load()` from the Edge package directly.
+
+
+
 Keep the tools few and give the model the knob text at runtime.
 
 ### 6.1 `extract_pdf` (generic)

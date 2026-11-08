@@ -96,7 +96,9 @@ RUST_LOG=pdf_inspector::detector=debug cargo run --release --bin detect-pdf -- f
   CLI `--tune`, Python, napi and wasm. `auto` must keep the corpus green.
 - **JS layer** (`he/`): `rtl-check.mjs` (partial LLM review), `invoice.mjs` (invoice data, checks,
   records, CSV), `repair.mjs` (assess, auto-repair, compact repair request, apply + recheck,
-  `readInvoice` one-call entry). Each has a `.d.ts`; keep them in sync. All ship in the wasm
+  `readInvoice` one-call entry), `document.mjs` (the JSON document, schema `invoice-document.schema.json`),
+  `agent.mjs` (tool definitions + dispatcher, transport-neutral). Node-only: `engines.mjs` (wasm or
+  native engine), `mcp-server.mjs` (stdio MCP), `cli.mjs`. Each module has a `.d.ts`; keep them in sync. All ship in the wasm
   packages (`.github/workflows/he-build.yml`), and in the Edge package (wasm embedded as text,
   `he/tools/build-edge.mjs`, smoke `he/edge-smoke.ts`) that contractor-business-manager vendors.
 - **Privacy**: no real supplier/customer names in the repo. New invoices go through

@@ -61,7 +61,8 @@ jobs:
       - name: Copy the JS check layer into both packages
         run: |
           for pkg in wasm/pkg-web wasm/pkg-deno; do
-            cp he/rtl-check.mjs he/rtl-check.d.ts he/invoice.mjs he/invoice.d.ts he/repair.mjs he/repair.d.ts "$pkg"/
+            cp he/rtl-check.mjs he/rtl-check.d.ts he/invoice.mjs he/invoice.d.ts he/repair.mjs he/repair.d.ts \
+              he/document.mjs he/document.d.ts he/agent.mjs he/agent.d.ts he/invoice-document.schema.json "$pkg"/
           done
       - name: Build the Edge package (wasm embedded as text)
         run: node he/tools/build-edge.mjs wasm/pkg-web wasm/pkg-edge

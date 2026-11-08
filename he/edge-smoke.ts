@@ -36,3 +36,14 @@ for (const path of pdfs) {
   if (fixed.status !== "ok") throw new Error(`${path}: repair did not close: ${JSON.stringify(fixed.rejected)}`);
   console.log(`ok: ${path.split("/").pop()} ${rows.length} rows in ${ms} ms; repair request ${req.prompt.length} chars`);
 }
+
+// The agent tools on the Edge package, as an in-process agent would use them.
+const { createInvoiceAgent } = await mod("agent.mjs");
+const files = new Map(pdfs.map((p) => [p.split("/").pop(), p]));
+const agent = createInvoiceAgent({ engine: pdf, readFile: (f: string) => Deno.readFile(files.get(f) ?? f) });
+const first = [...files.keys()][0];
+const read = await agent.call("read_invoice", { file: first });
+if (!read.ok || read.result.status !== "ok") throw new Error(`agent read_invoice: ${JSON.stringify(read.result)}`);
+const doc = await agent.call("get_invoice_json", { file: first });
+if (doc.result.schema !== "pdf-inspector-he/invoice-document@1") throw new Error("agent get_invoice_json");
+console.log(`ok: agent tools (${agent.tools.length}) on ${first}`);

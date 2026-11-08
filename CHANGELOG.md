@@ -22,6 +22,11 @@ version and date. Earlier releases are described in their
   CSV repair request with a JSON answer schema, and `applyRepair`, which keeps
   a correction only when the arithmetic then closes. `readInvoice()` runs it
   all in one call.
+- Agent and JSON: `he/document.mjs` (one versioned JSON document per invoice, with
+  `he/invoice-document.schema.json`), `he/agent.mjs` (seven tools — read, rows, fix, text, JSON,
+  knobs, export — in Anthropic and MCP form), `he/mcp-server.mjs` (stdio MCP server, files
+  confined to `--root`), `he/cli.mjs` (JSON / CSV / repair request from the command line) and
+  `he/engines.mjs` (native binary or wasm behind one interface).
 - Edge package (`he/tools/build-edge.mjs`): the wasm embedded as gzip+base64
   text with `await load()`, for Supabase Edge Functions; Deno smoke test.
 

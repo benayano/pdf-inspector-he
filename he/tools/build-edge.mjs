@@ -8,7 +8,8 @@
 // - pdf_inspector_wasm.js         the .wasm, gzip + base64 (~3.5 MB of text)
 // - edge.mjs / edge.d.ts          `await load()` -> the ready module; unpacks
 //                                 once per isolate (DecompressionStream)
-// - invoice.mjs, repair.mjs, rtl-check.mjs and their .d.ts
+// - invoice.mjs, repair.mjs, document.mjs, agent.mjs, rtl-check.mjs and their
+//   .d.ts, and invoice-document.schema.json
 // - VERSION.json                  the commit, the build date and the sha-256
 //                                 of the .wasm, so a vendored copy says what it is
 import { createHash } from "node:crypto";
@@ -33,7 +34,7 @@ writeFileSync(
     `export const WASM_GZIP_BASE64 = "${gz.toString("base64")}";\n`,
 );
 for (const f of ["pdf_inspector.js", "pdf_inspector.d.ts"]) copyFileSync(join(pkgWeb, f), join(outDir, f));
-for (const f of ["invoice.mjs", "invoice.d.ts", "repair.mjs", "repair.d.ts", "rtl-check.mjs", "rtl-check.d.ts"]) {
+for (const f of ["invoice.mjs", "invoice.d.ts", "repair.mjs", "repair.d.ts", "document.mjs", "document.d.ts", "agent.mjs", "agent.d.ts", "invoice-document.schema.json", "rtl-check.mjs", "rtl-check.d.ts"]) {
   copyFileSync(join(he, f), join(outDir, f));
 }
 
