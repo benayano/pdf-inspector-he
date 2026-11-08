@@ -77,8 +77,10 @@ export function assess(invoice, { maxFailedShare = 0.4 } = {}) {
 
 /**
  * Fixes failing rows from other readings of the same document, with no
- * model: for each failing row, the same row (same position and printed line
- * number) of an alternative reading that closes there is taken. A typical
+ * model: for each failing row, the same row of an alternative reading that
+ * closes there is taken. "The same row" is the same page and printed line
+ * number (or, without a line-number column, the same position on the page),
+ * so an alternative may read only the pages with failing rows. A typical
  * source: the document read again with `number_gap` 0.1 / 0.3 / auto, where
  * two numbers that ran together ("31.2" for "1.2 3") come out apart.
  * @param {object} invoice parseInvoice() result
@@ -88,15 +90,27 @@ export function assess(invoice, { maxFailedShare = 0.4 } = {}) {
 export function autoRepair(invoice, alternatives) {
   const rows = invoice.lines?.rows;
   if (!rows) return { invoice, fixed: [] };
+  const keyed = (list) => {
+    const seen = new Map();
+    return list.map((r) => {
+      const n = (seen.get(r.page) ?? 0) + 1;
+      seen.set(r.page, n);
+      return r.values.index != null ? `${r.page}#${r.values.index}` : `${r.page}@${n}`;
+    });
+  };
+  const keys = keyed(rows);
+  const altMaps = alternatives.map((alt) => {
+    const list = alt.lines?.rows ?? [];
+    const k = keyed(list);
+    return new Map(list.map((r, i) => [k[i], r]));
+  });
   const fixed = [];
   const next = rows.map((r) => r);
   rows.forEach((row, i) => {
     if (!row.check || row.check.ok) return;
-    for (let a = 0; a < alternatives.length; a++) {
-      const alt = alternatives[a].lines?.rows;
-      if (!alt || alt.length !== rows.length) continue;
-      const candidate = alt[i];
-      if (candidate.values.index !== row.values.index) continue;
+    for (let a = 0; a < altMaps.length; a++) {
+      const candidate = altMaps[a].get(keys[i]);
+      if (!candidate) continue;
       if (candidate.check?.ok) {
         next[i] = candidate;
         fixed.push({ row: i + 1, from: a });
@@ -408,9 +422,15 @@ export function readInvoice(pdf, bytes, { tuning = "", alternatives = DEFAULT_AL
   let assessment = assess(invoice);
   const autoFixed = [];
   if (assessment.status === "repairable" && assessment.failedRows.length) {
+    // Only the pages with failing rows are read again: each reading costs
+    // a full parse of what it reads, and a Supabase Edge Function has a
+    // CPU budget per request.
+    const only = assessment.pages.length ? assessment.pages : pages;
     const others = alternatives.map((alt) => {
       const t = joinTuning(tuning, alt);
-      return { t, inv: parse(t, pdf.processPdf(bytes, { includePageMarkers: true, tuning: t, pages }).markdown) };
+      const markdown = pdf.processPdf(bytes, { includePageMarkers: true, tuning: t, pages: only }).markdown;
+      const items = pdf.extractTextWithPositions(bytes, { tuning: t, pages: only });
+      return { t, inv: parseInvoice({ markdown, items }) };
     });
     const out = autoRepair(invoice, others.map((o) => o.inv));
     if (out.fixed.length) {

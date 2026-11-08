@@ -159,3 +159,14 @@ test("on a real 162-row invoice the request stays a few hundred tokens", { skip:
   const answer = { fixes: [{ row: 41, quantity: real.lines.rows[40].values.quantity, unit_price: real.lines.rows[40].values.unitPrice, discount_pct: real.lines.rows[40].values.discount ?? 0, line_total: real.lines.rows[40].values.total, why: "x10" }], inserts: [], unreadable: [], notes: "" };
   assert.equal(applyRepair(damaged, answer, req).status, "ok");
 });
+
+test("autoRepair matches a reading of the failing page alone", () => {
+  const broken = invoice(MISREAD);
+  const full = invoice();
+  // A reading of page 1 only, with its rows in another order than the table:
+  // matched by page and printed line number, not by position.
+  const onlyRowTwo = { ...full, lines: { ...full.lines, rows: [full.lines.rows[1]] } };
+  const out = autoRepair(broken, [onlyRowTwo]);
+  assert.deepEqual(out.fixed, [{ row: 2, from: 0 }]);
+  assert.equal(assess(out.invoice).status, "ok");
+});
