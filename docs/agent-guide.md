@@ -104,6 +104,20 @@ pi.set_number_gap("auto"); pi.get_number_gap()
 `set_process_tuning` for the process; `Tuning::parse("k=v,…")`,
 `KNOBS` for the descriptions.
 
+The invoice layer itself is Rust (`pdf_inspector::invoice`): `read::read_invoice(bytes, tuning,
+alternatives, pages)` → `document::invoice_document(&read, &options)` (the JSON document), and
+`repair::{assess, repair_request, apply_repair}`. One JSON call for bindings:
+`invoice::api::call(method, request_json, bytes)` — `read_invoice` returns `{document, state, …}`,
+`apply_repair` takes `{state, answer}` back. The JS modules in `he/` run the same read through it
+(`readInvoice` uses the engine's `invoiceCall` when present).
+
+### Apps: C ABI and Dart (`dart:ffi`)
+
+`ffi/` builds `libpdf_inspector_he` (header `ffi/include/pdf_inspector_he.h`): `pdfhe_call(method,
+request, bytes, len)` → JSON, `pdfhe_free`, `pdfhe_abi_version`. `dart/pdf_inspector_he` wraps it:
+`PdfInspectorHe.open().readInvoice(bytes)` → typed `InvoiceDocument` + opaque `InvoiceState`;
+`applyRepair(state, answer)`; `readInvoiceAsync` runs in an isolate. Nothing calls a model.
+
 ---
 
 ## 3. Knobs

@@ -29,8 +29,22 @@ version and date. Earlier releases are described in their
   `he/engines.mjs` (native binary or wasm behind one interface).
 - Edge package (`he/tools/build-edge.mjs`): the wasm embedded as gzip+base64
   text with `await load()`, for Supabase Edge Functions; Deno smoke test.
+- The invoice layer in Rust (`src/invoice/`): one implementation behind every
+  binding, held to the JS original's output on the corpus
+  (`he/fixtures/golden/`, `tests/invoice_golden.rs`, `he/rust-parity.test.mjs`).
+  JSON API `invoice::api::call` (read_invoice, apply_repair, invoice_csv,
+  classify, process_pdf, list_knobs, version); `pdf2md --invoice-json` and
+  `--invoice-call`; wasm `invoiceCall`, which `readInvoice()` uses when present.
+- Apps: a C ABI (`ffi/`, `pdfhe_call` / `pdfhe_free` / `pdfhe_abi_version`;
+  cdylib for Android, staticlib for iOS) and a Dart package over it
+  (`dart/pdf_inspector_he`, `dart:ffi`). CI job `native` builds the Android
+  libraries for arm64-v8a, armeabi-v7a and x86_64.
+- wasm `extractTextWithPositions` items carry `itemType`.
 
 ### Fixed
+
+- `invoiceInfo` found the supplier's header block by object identity, so an
+  invoice that went through JSON lost its supplier name. Now by value.
 
 - A TrueType subset with no `cmap`, no glyph names and no ToUnicode that
   comes from a core Windows font (Arial, Times New Roman, Verdana, ...) is

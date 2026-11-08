@@ -224,11 +224,32 @@ claude mcp add pdf-inspector-he -- node /path/to/pdf-inspector-he/he/mcp-server.
 
 כל החבילות כוללות את `rtl-check.mjs`, `invoice.mjs`, `repair.mjs`, `document.mjs`, `agent.mjs` ואת הסכימה `invoice-document.schema.json`. שרת ה-MCP וה-CLI (`mcp-server.mjs`, `cli.mjs`, `engines.mjs`) רצים מהריפו ב-Node. אפשר להוריד אותן מה-Artifacts של הריצה. tag בצורה `he-v1.0.0` יוצר Release עם קבצי zip.
 
+## שכבת החשבונית ב-Rust, ואפליקציות (`dart:ffi`)
+
+שכבת החשבונית (טבלה, כותרת, סיכומים, בדיקות, תיקון, מסמך JSON) **כתובה פעם אחת, ב-Rust** (`src/invoice/`).
+הגרסה ב-JS (`invoice.mjs`, `repair.mjs`, `document.mjs`) נשארה: היא המקור שממנו הועתק הקוד, ומשמשת אורקל.
+`he/tools/goldens.mjs` שומר את הפלט שלה על הקורפוס (`he/fixtures/golden/`), ו-`tests/invoice_golden.rs` דורש
+שה-Rust ייתן בדיוק אותו דבר (מספרים עד 1e-9, כולל נוסח בקשת התיקון). `he/rust-parity.test.mjs` משווה את שני
+המסלולים דרך `readInvoice`.
+
+- **JSON API אחד**: `invoice::api::call(method, request, bytes)`. מאחוריו: `pdf2md --invoice-json` / `--invoice-call`,
+  `invoiceCall` ב-wasm (ו-`readInvoice()` משתמש בו כשהוא קיים), ו-C ABI.
+- **C ABI** (`ffi/`): `pdfhe_call` / `pdfhe_free` / `pdfhe_abi_version`. נבנה כ-cdylib (אנדרואיד) וכ-staticlib (iOS). שגיאה
+  חוזרת כ-JSON, ו-panic נתפס.
+- **Dart** (`dart/pdf_inspector_he`): מעטפת `dart:ffi` עם טיפוסים, וקריאה ב-isolate. הבדיקות רצות מול ה-.so של המחשב.
+- **CI** (job `native`): בדיקות ה-C ABI וה-Dart, ובנייה לאנדרואיד (arm64-v8a, armeabi-v7a, x86_64) עם cargo-ndk.
+  ה-artifact הוא `pdf-inspector-he-native`.
+
+בדרך תוקנו שני דברים:
+- `invoiceInfo` זיהה את בלוק הספק לפי זהות האובייקט, ולכן חשבונית שעברה JSON איבדה את שם הספק.
+- פריטים מה-wasm לא נשאו סוג, ולכן `[Image: Image1]` נקרא כשדה בכותרת. עכשיו יש `itemType`.
+
 ## מה לא נבדק
 
 - **ה-wasm נבנה ונבדק מקומית ב-Deno** (2026-11-08): כולל חבילת ה-Edge, `readInvoice` על ארבע החשבוניות ותיקון של שורה פגומה. **הרצה בתוך Supabase עצמה עדיין לא נבדקה.**
 - **תיקון עם LLM לא נבדק מול מודל אמיתי**: הבדיקות משתמשות בתשובות שנכתבו ביד. **קריאה ל-Claude לא נבדקה.** לא היה מפתח בסביבה. הלוגיקה סביבה נבדקה עם תשובות מדומות (`he/rtl-check.test.mjs`).
 - **הרצה בתוך Supabase לא נבדקה בפועל.**
+- **הספרייה על טלפון אמיתי**: ה-.so נבנה ב-CI. לא נוסו טעינה מתוך APK, זמן ריצה על מכשיר ו-iOS.
 - **תאים בכמה שורות** (תיאור מוצר שנשבר לשתי שורות בתוך התא): אין דוגמה בקורפוס, ולכן זה לא נבדק.
 - **חשבוניות סרוקות**: אין דוגמה. הכלי מזהה PDF סרוק ומחזיר שצריך OCR (`--ocr` בבנייה עם feature `ocr`), אבל שכבת החשבונית לא נבדקה על פלט OCR.
 - **חבילת הרגרסיה של Firecrawl** (`pdf-evals`, כ-200 PDFs) לא נגישה. יכול להיות שהשינויים (סף המילים, קריאת רצועות מלאות כקווים, חיבור קטעי קו, הפרדת שורות מוערמות) משפיעים על מסמכים אחרים. כל הבדיקות שבריפו עוברות (כ-1,960), כולל צילומי הפלט של כל קבצי הבדיקה. אם משהו נשבר במסמך אחר, הכיוון הראשון הוא ה-knobs.

@@ -43,6 +43,9 @@ src/
     detect_lines.rs             – line-based table detection (H/V line grids)
     grid.rs                     – column/row boundaries, cell assignment
     format.rs                   – table→Markdown formatting, continuation row merging
+  invoice/                      – the invoice layer (one implementation): table, header, totals,
+                                  checks, records/CSV, repair, JSON document, read_invoice, api.rs
+                                  (JSON in/out for every binding). Held to he/fixtures/golden/.
   markdown/
     convert.rs                  – core line→Markdown loop, struct-tree role support
     analysis.rs                 – font stats, heading tiers, paragraph thresholds
@@ -101,6 +104,12 @@ RUST_LOG=pdf_inspector::detector=debug cargo run --release --bin detect-pdf -- f
   native engine), `mcp-server.mjs` (stdio MCP), `cli.mjs`. Each module has a `.d.ts`; keep them in sync. All ship in the wasm
   packages (`.github/workflows/he-build.yml`), and in the Edge package (wasm embedded as text,
   `he/tools/build-edge.mjs`, smoke `he/edge-smoke.ts`) that contractor-business-manager vendors.
+- **Rust invoice layer** (`src/invoice/`) is the implementation; the JS modules keep the original as
+  the oracle. A change to the invoice logic goes in Rust; if the JS changes on purpose, rerun
+  `node he/tools/goldens.mjs` (JS path, `js: true`) and read the diff — `tests/invoice_golden.rs` and
+  `he/rust-parity.test.mjs` hold the two together.
+- **Apps**: `ffi/` (C ABI, own Cargo.lock; `cd ffi && cargo test`) and `dart/pdf_inspector_he`
+  (`dart test` against `ffi/target/release`). contractor-business-manager vendors both (jniLibs + package).
 - **Privacy**: no real supplier/customer names in the repo. New invoices go through
   `he/tools/anonymize_pdf.py`; the private names list stays outside git.
 - **Toolchain**: if the pinned toolchain is unavailable, `RUSTUP_TOOLCHAIN=stable`; use `-j 2` on small machines.
