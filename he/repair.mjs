@@ -405,15 +405,23 @@ const joinTuning = (...parts) => parts.filter(Boolean).join(",");
  * kept for older engines and as the oracle (`js: true`, he/tools/goldens.mjs).
  * @param {{processPdf: Function, extractTextWithPositions: Function, invoiceCall?: Function}} pdf
  * @param {Uint8Array} bytes
- * @param {{tuning?: string, alternatives?: string[], pages?: number[], js?: boolean}} [options]
- * @returns {{pdfType: string, invoice: object|null, assessment: object, autoFixed: {row: number, tuning: string}[]}}
+ * @param {{tuning?: string, alternatives?: string[], pages?: number[], maxPages?: number, firstPage?: boolean, js?: boolean}} [options]
+ *   maxPages: a longer document is answered `unreadable` without being read;
+ *   firstPage: also return page 1's Markdown (no second extraction). Both need invoiceCall.
+ * @returns {{pdfType: string, invoice: object|null, assessment: object, autoFixed: {row: number, tuning: string}[],
+ *   pageCount?: number, engine?: string, readMs?: number|null, firstPage?: string}}
  */
-export function readInvoice(pdf, bytes, { tuning = "", alternatives = DEFAULT_ALTERNATIVES, pages, js = false } = {}) {
+export function readInvoice(pdf, bytes, { tuning = "", alternatives = DEFAULT_ALTERNATIVES, pages, maxPages, firstPage = false, js = false } = {}) {
   if (!js && typeof pdf.invoiceCall === "function") {
-    const reply = JSON.parse(pdf.invoiceCall("read_invoice", JSON.stringify({ tuning, alternatives, pages, repair_request: false }), bytes));
+    const request = { tuning, alternatives, pages, repair_request: false, max_pages: maxPages, first_page: firstPage };
+    const reply = JSON.parse(pdf.invoiceCall("read_invoice", JSON.stringify(request), bytes));
     if (!reply.ok) throw new Error(reply.error);
-    const { state, assessment, auto_fixed, pdf_type } = reply.result;
-    return { pdfType: pdf_type, invoice: state?.invoice ?? null, assessment, autoFixed: auto_fixed };
+    const { state, assessment, auto_fixed, pdf_type, page_count, engine, read_ms, first_page } = reply.result;
+    const out = { pdfType: pdf_type, invoice: state?.invoice ?? null, assessment, autoFixed: auto_fixed };
+    // Newer engines say more; an older engine's reply stays as it was.
+    if (page_count !== undefined) Object.assign(out, { pageCount: page_count, engine, readMs: read_ms ?? null });
+    if (first_page !== undefined) out.firstPage = first_page;
+    return out;
   }
   const r = pdf.processPdf(bytes, { includePageMarkers: true, tuning: tuning || undefined, pages });
   if (r.pdfType !== "TextBased" && r.pdfType !== "Mixed") {

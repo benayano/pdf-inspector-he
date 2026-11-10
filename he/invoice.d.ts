@@ -131,6 +131,25 @@ export interface Invoice {
   totals: Total[];
   footer: { fields: Field[] };
   checks: Check[];
+  /** From the Rust layer (engines with invoiceCall); absent when nothing was printed. */
+  details?: InvoiceDetails;
+}
+
+/** What is printed around the table for whoever pays the invoice; null where not printed, never guessed. */
+export interface InvoiceDetails {
+  /** ISO date printed as "לתשלום עד" / "תאריך פרעון"; terms alone give none. */
+  due_date: string | null;
+  /** As printed: "שוטף + 30". */
+  payment_terms: string | null;
+  supplier_phone: string | null;
+  /** The lines between the supplier's name and its first labelled field. */
+  supplier_address: string | null;
+  /** The bank's number, branch and account for transfers, digits only: all three or none. */
+  bank_code: string | null;
+  bank_branch: string | null;
+  bank_account: string | null;
+  /** מספר הקצאה, digits only. */
+  allocation_number: string | null;
 }
 
 /**

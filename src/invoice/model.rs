@@ -208,6 +208,10 @@ pub struct Invoice {
     pub totals: Vec<Total>,
     pub footer: Footer,
     pub checks: Vec<Check>,
+    /// Due date, the supplier's phone, address and bank, the allocation
+    /// number: absent when none was printed (and in reads of older versions).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub details: Option<super::details::Details>,
 }
 
 /// A positioned text run as the invoice layer reads it. Accepts both the

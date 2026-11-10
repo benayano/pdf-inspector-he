@@ -19,8 +19,11 @@ const PDFS = [
   "./fixtures/repair/priority-1p.misread-row11.pdf",
 ].map(here);
 
-/** JSON without the cell parse's intermediate `amounts`, numbers as JSON prints them. */
-const plain = (v) => JSON.parse(JSON.stringify(v, (k, x) => (k === "amounts" ? undefined : x)));
+/**
+ * JSON without the cell parse's intermediate `amounts` and without `details`
+ * (read only by the Rust layer; held by tests/invoice_golden.rs), numbers as JSON prints them.
+ */
+const plain = (v) => JSON.parse(JSON.stringify(v, (k, x) => (k === "amounts" || k === "details" ? undefined : x)));
 
 test("Rust and JS read the corpus the same way", { skip }, () => {
   const engine = cliEngine();

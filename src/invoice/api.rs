@@ -6,7 +6,7 @@
 //!
 //! | method        | bytes | request                                                        | result |
 //! |---------------|-------|----------------------------------------------------------------|--------|
-//! | `read_invoice`| PDF   | `{tuning?, alternatives?, pages?, markdown?, repair_request?, context?}` | `{document, state, assessment, auto_fixed, pdf_type}` |
+//! | `read_invoice`| PDF   | `{tuning?, alternatives?, pages?, max_pages?, first_page?, markdown?, repair_request?, context?}` | `{document, state, assessment, auto_fixed, pdf_type, page_count, engine, tuning, read_ms, first_page?}` |
 //! | `apply_repair`| –     | `{state, answer, markdown?, context?}`                         | `{document, state, applied, rejected}` |
 //! | `invoice_csv` | –     | `{state, bom?, excel_safe?}`                                   | `{csv}` |
 //! | `classify`    | PDF   | –                                                              | `{pdf_type, page_count, pages_needing_ocr, confidence}` |
@@ -24,7 +24,7 @@ use serde_json::{json, Value};
 
 use super::document::{invoice_document, DocumentOptions, InvoiceRead, DOCUMENT_SCHEMA};
 use super::model::Invoice;
-use super::read::{pdf_type_name, read_invoice, DEFAULT_ALTERNATIVES};
+use super::read::{pdf_type_name, read_invoice_with, ReadOptions};
 use super::records::{to_csv, to_records, RECORD_COLUMNS};
 use super::repair::{apply_repair, assess, repair_request, RequestOptions, Status};
 use crate::tuning::{with_tuning, Tuning, KNOBS};
@@ -50,6 +50,8 @@ struct ReadRequest {
     markdown: bool,
     repair_request: Option<bool>,
     context: String,
+    max_pages: Option<u32>,
+    first_page: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -110,12 +112,20 @@ fn state_of(invoice: &Invoice, pdf_type: Option<String>, context: &str) -> State
 
 fn read(request: &str, bytes: &[u8]) -> Result<Value, String> {
     let r: ReadRequest = parse(request)?;
-    let alternatives: Vec<&str> = match &r.alternatives {
-        Some(a) => a.iter().map(String::as_str).collect(),
-        None => DEFAULT_ALTERNATIVES.to_vec(),
-    };
-    let result = read_invoice(bytes, &r.tuning, &alternatives, r.pages.as_deref())
-        .map_err(|e| e.to_string())?;
+    let alternatives: Option<Vec<&str>> = r
+        .alternatives
+        .as_ref()
+        .map(|a| a.iter().map(String::as_str).collect());
+    let result = read_invoice_with(
+        bytes,
+        &ReadOptions {
+            tuning: &r.tuning,
+            alternatives: alternatives.as_deref(),
+            pages: r.pages.as_deref(),
+            max_pages: r.max_pages,
+        },
+    )
+    .map_err(|e| e.to_string())?;
     let options = DocumentOptions {
         markdown: r.markdown,
         no_repair_request: r.repair_request == Some(false),
@@ -128,13 +138,34 @@ fn read(request: &str, bytes: &[u8]) -> Result<Value, String> {
         .map(|i| state_of(i, result.pdf_type.clone(), &r.context));
     // `invoice` + `assessment` + `auto_fixed` + `pdf_type` are readInvoice()'s
     // result in he/repair.mjs, so the JS layer can hand its read to this one.
-    Ok(json!({
+    let mut out = json!({
         "document": document,
         "state": state,
         "assessment": result.assessment,
         "auto_fixed": result.auto_fixed,
         "pdf_type": result.pdf_type,
-    }))
+        "page_count": result.page_count,
+        "engine": env!("CARGO_PKG_VERSION"),
+        "tuning": r.tuning,
+        "read_ms": result.read_ms,
+    });
+    if r.first_page {
+        // The first page read, up to the next page marker: where a caller
+        // looks for the supplier, with no second extraction.
+        out["first_page"] = json!(first_page_of(result.markdown.as_deref().unwrap_or("")));
+    }
+    Ok(out)
+}
+
+/// The Markdown up to the second page marker.
+fn first_page_of(markdown: &str) -> &str {
+    let body = markdown
+        .find("<!-- Page ")
+        .map_or(0, |at| at + "<!-- Page ".len());
+    match markdown[body..].find("<!-- Page ") {
+        Some(next) => &markdown[..body + next],
+        None => markdown,
+    }
 }
 
 fn apply(request: &str) -> Result<Value, String> {
@@ -151,6 +182,8 @@ fn apply(request: &str) -> Result<Value, String> {
         assessment: None,
         auto_fixed: vec![],
         markdown: None,
+        page_count: 0,
+        read_ms: None,
     };
     let document = invoice_document(
         &read,

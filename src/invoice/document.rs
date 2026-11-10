@@ -56,6 +56,10 @@ pub struct InvoiceRead {
     pub assessment: Option<Assessment>,
     pub auto_fixed: Vec<AutoFix>,
     pub markdown: Option<String>,
+    /// Pages in the document (0 when it was not read, e.g. after a repair).
+    pub page_count: u32,
+    /// Wall time of the read; `None` where there is no clock (wasm).
+    pub read_ms: Option<u64>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -94,6 +98,7 @@ pub fn invoice_document(read: &InvoiceRead, options: &DocumentOptions) -> Value 
     );
     for (k, v) in [
         ("invoice", Value::Null),
+        ("details", Value::Null),
         ("header", json!({ "fields": [], "blocks": [] })),
         ("totals", json!([])),
         ("columns", json!([])),
@@ -120,6 +125,7 @@ pub fn invoice_document(read: &InvoiceRead, options: &DocumentOptions) -> Value 
     };
 
     doc.insert("invoice".into(), json!(invoice_info(invoice)));
+    doc.insert("details".into(), opt(&invoice.details));
     doc.insert(
         "header".into(),
         json!({

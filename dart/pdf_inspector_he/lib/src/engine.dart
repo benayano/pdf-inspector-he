@@ -17,6 +17,8 @@ class ReadOptions {
     this.markdown = false,
     this.repairRequest = true,
     this.context = '',
+    this.maxPages,
+    this.firstPage = false,
   });
 
   /// Layout knobs, `knob=value,...` ([PdfInspectorHe.listKnobs]).
@@ -38,6 +40,14 @@ class ReadOptions {
   /// One line for the model about the document (supplier, its quirks).
   final String context;
 
+  /// A document with more pages (of those selected) is not read: the answer
+  /// is `unreadable` within a millisecond or two.
+  final int? maxPages;
+
+  /// Also return page 1's Markdown ([InvoiceRead.firstPage]) from the same
+  /// extraction, e.g. to find the supplier's tax id on the page.
+  final bool firstPage;
+
   Map<String, Object?> toJson() => {
         'tuning': tuning,
         if (alternatives != null) 'alternatives': alternatives,
@@ -45,6 +55,8 @@ class ReadOptions {
         'markdown': markdown,
         'repair_request': repairRequest,
         'context': context,
+        if (maxPages != null) 'max_pages': maxPages,
+        if (firstPage) 'first_page': true,
       };
 }
 
@@ -93,13 +105,19 @@ class PdfInspectorHe {
     }
   }
 
-  /// Extract, parse, check, and try other readings for failing rows.
+  /// Extract, parse, check, and try other readings for failing rows: the
+  /// whole read in ONE native call (the PDF is classified first, so a scan or
+  /// a document over [ReadOptions.maxPages] costs a millisecond or two).
   InvoiceRead readInvoice(Uint8List pdf, [ReadOptions options = const ReadOptions()]) {
     final out = call('read_invoice', options.toJson(), pdf);
     final state = out['state'];
     return InvoiceRead(
       InvoiceDocument((out['document'] as Map).cast()),
       state is Map ? InvoiceState(state.cast()) : null,
+      pageCount: (out['page_count'] as num?)?.toInt() ?? 0,
+      engineVersion: out['engine'] as String? ?? '',
+      readMs: (out['read_ms'] as num?)?.toInt(),
+      firstPage: out['first_page'] as String?,
     );
   }
 

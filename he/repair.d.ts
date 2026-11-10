@@ -85,5 +85,27 @@ export interface PdfModule {
 export function readInvoice(
   pdf: PdfModule,
   bytes: Uint8Array,
-  options?: { tuning?: string; alternatives?: string[]; pages?: number[]; js?: boolean },
-): { pdfType: string; invoice: Invoice | null; assessment: Assessment; autoFixed: { row: number; tuning: string }[] };
+  options?: {
+    tuning?: string;
+    alternatives?: string[];
+    pages?: number[];
+    /** A document with more pages is answered `unreadable` without being read (needs invoiceCall). */
+    maxPages?: number;
+    /** Also return page 1's Markdown as `firstPage`, from the same extraction (needs invoiceCall). */
+    firstPage?: boolean;
+    js?: boolean;
+  },
+): {
+  pdfType: string;
+  invoice: Invoice | null;
+  assessment: Assessment;
+  autoFixed: { row: number; tuning: string }[];
+  /** Pages in the document (newer engines). */
+  pageCount?: number;
+  /** The engine's version. */
+  engine?: string;
+  /** Wall time of the read in the engine; null where it has no clock (wasm). */
+  readMs?: number | null;
+  /** Page 1's Markdown, with its page marker (asked with `firstPage`). */
+  firstPage?: string;
+};

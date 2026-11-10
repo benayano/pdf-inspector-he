@@ -12,6 +12,7 @@
 //! that fails says by how much.
 pub mod amount;
 pub mod api;
+pub mod details;
 pub mod document;
 mod js;
 pub mod layout;
@@ -25,6 +26,7 @@ pub mod totals;
 use std::collections::BTreeSet;
 
 pub use amount::parse_amount;
+pub use details::Details;
 pub use model::*;
 pub use records::{
     document_type, invoice_info, is_marker_line, iso_date, to_csv, to_records, InvoiceInfo,
@@ -94,6 +96,19 @@ pub fn parse_invoice_items(markdown: &str, positioned: &[Item]) -> Invoice {
 
     let mut header = Header::default();
     let mut total_fields: Vec<Field> = Vec::new();
+    // The text under the table, row by row in reading order.
+    let mut footer_text: Vec<String> = Vec::new();
+    let text_of = |rows: &[layout::ItemRow]| -> Vec<String> {
+        rows.iter()
+            .map(|r| {
+                r.items
+                    .iter()
+                    .map(|i| i.text.trim())
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            })
+            .collect()
+    };
     match &lines {
         Some(l) if !positioned.is_empty() => {
             let first_page = l.pages.first().copied().unwrap_or(1);
@@ -112,10 +127,9 @@ pub fn parse_invoice_items(markdown: &str, positioned: &[Item]) -> Invoice {
                     .into_iter()
                     .filter(|i| i.y < bottom - 1.0)
                     .collect();
-                total_fields = rows_of(&below, rtl)
-                    .iter()
-                    .flat_map(|r| fields_of_row(&r.items))
-                    .collect();
+                let rows = rows_of(&below, rtl);
+                footer_text.extend(text_of(&rows));
+                total_fields = rows.iter().flat_map(|r| fields_of_row(&r.items)).collect();
             }
             // A table that fills its page leaves the totals box for the next one,
             // under that page's repeated header: read it from its first totals row.
@@ -128,6 +142,7 @@ pub fn parse_invoice_items(markdown: &str, positioned: &[Item]) -> Invoice {
                         .any(|f| total_role(&f.label).is_some())
                 });
                 if let Some(start) = start {
+                    footer_text.extend(text_of(&rows[start..]));
                     total_fields.extend(rows[start..].iter().flat_map(|r| fields_of_row(&r.items)));
                 }
             }
@@ -146,7 +161,9 @@ pub fn parse_invoice_items(markdown: &str, positioned: &[Item]) -> Invoice {
     }
     let totals = totals::totals_from(&total_fields);
     let checks = totals_checks(lines.as_ref(), &totals);
+    let details = details::details_from(&header, &total_fields, &footer_text.join("\n"));
     Invoice {
+        details: (!details.is_empty()).then_some(details),
         rtl,
         header,
         lines,

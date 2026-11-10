@@ -36,6 +36,20 @@
         "checks_ok": { "type": "boolean" }
       }
     },
+    "details": {
+      "type": ["object", "null"],
+      "description": "What is printed for whoever pays the invoice; a value that is not printed is null, never guessed. null when nothing was found (and in a JS-only read)",
+      "properties": {
+        "due_date": { "type": ["string", "null"], "description": "ISO date printed as a due date; payment terms alone give none" },
+        "payment_terms": { "type": ["string", "null"] },
+        "supplier_phone": { "type": ["string", "null"] },
+        "supplier_address": { "type": ["string", "null"] },
+        "bank_code": { "type": ["string", "null"], "description": "bank number, digits; bank_code, bank_branch and bank_account come together or not at all" },
+        "bank_branch": { "type": ["string", "null"] },
+        "bank_account": { "type": ["string", "null"] },
+        "allocation_number": { "type": ["string", "null"], "description": "tax authority allocation number, digits" }
+      }
+    },
     "header": {
       "type": "object",
       "required": ["fields", "blocks"],

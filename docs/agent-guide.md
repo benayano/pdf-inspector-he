@@ -111,6 +111,18 @@ alternatives, pages)` → `document::invoice_document(&read, &options)` (the JSO
 `apply_repair` takes `{state, answer}` back. The JS modules in `he/` run the same read through it
 (`readInvoice` uses the engine's `invoiceCall` when present).
 
+`read_invoice` reads the document **once** (the Markdown and the positioned items come from the same
+pass) after classifying it, so a scan costs a millisecond or two. Request options beyond `tuning` /
+`alternatives` / `pages`: `max_pages` (a longer document is answered `unreadable`, unread) and
+`first_page` (page 1's Markdown in the reply, no second extraction). The reply also carries
+`page_count`, `engine` (the version), `tuning` and `read_ms` (null in wasm: no clock).
+
+`document.details` (and `invoice.details` in `state`) is what whoever pays the invoice needs, read
+from the labelled fields around the table and the text under it (`src/invoice/details.rs`):
+`due_date` (ISO, only a printed date), `payment_terms`, `supplier_phone`, `supplier_address`,
+`bank_code` / `bank_branch` / `bank_account` (all three or none, only after "להעברה" / "פרטי בנק"),
+`allocation_number`. A value that is not printed is null.
+
 ### Apps: C ABI and Dart (`dart:ffi`)
 
 `ffi/` builds `libpdf_inspector_he` (header `ffi/include/pdf_inspector_he.h`): `pdfhe_call(method,

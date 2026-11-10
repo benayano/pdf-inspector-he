@@ -11,6 +11,14 @@ version and date. Earlier releases are described in their
 
 ### Added (pdf-inspector-he)
 
+- **Invoice read: one pass, more in the answer.** `read_invoice` takes the positioned items from the
+  same extraction as the Markdown (about a third faster, identical output), classifies first
+  (`max_pages`; a scan is answered unread), and can return page 1's Markdown (`first_page`), with
+  `page_count`, `engine`, `tuning` and `read_ms`. New `details`: due date, payment terms, the
+  supplier's phone and address, bank number / branch / account, allocation number — null where not
+  printed. Dart: `ReadOptions.firstPage` / `maxPages`, `InvoiceRead.pageCount` / `engineVersion` /
+  `readMs` / `firstPage`, `InvoiceDocument.details`. JS: `readInvoice(..., {firstPage, maxPages})`.
+
 - Knob `latin_digit_split`: on a right-to-left line laid out word by word
   (Priority / Winnovative invoices), a number shown a word gap before a Latin
   word is its own token, so `HIGH TECH 1.5" 3000` no longer reads as

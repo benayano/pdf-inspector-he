@@ -54,6 +54,7 @@ export function invoiceDocument(read, { markdown, repairRequest: withRequest = t
     status: assessment?.status ?? "unreadable",
     reasons: assessment?.reasons ?? [],
     invoice: null,
+    details: null,
     header: { fields: [], blocks: [] },
     totals: [],
     columns: [],
@@ -69,6 +70,8 @@ export function invoiceDocument(read, { markdown, repairRequest: withRequest = t
   const info = invoiceInfo(invoice);
   const { checks_ok, ...facts } = info;
   doc.invoice = { ...facts, checks_ok };
+  // Read by the Rust layer (src/invoice/details.rs); absent in a JS-only read.
+  doc.details = invoice.details ?? null;
   doc.header = {
     fields: (invoice.header?.fields ?? []).map(({ label, value }) => ({ label, value })),
     blocks: (invoice.header?.blocks ?? []).map((b) => ({ page: b.page, text: b.text })),

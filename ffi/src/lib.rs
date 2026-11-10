@@ -110,8 +110,17 @@ mod tests {
             Path::new(env!("CARGO_MANIFEST_DIR")).join("../he/fixtures/invoices/priority-1p.pdf"),
         )
         .unwrap();
-        let out = call("read_invoice", "{}", &pdf);
+        let out = call(
+            "read_invoice",
+            r#"{"first_page":true,"max_pages":40}"#,
+            &pdf,
+        );
         assert_eq!(out["ok"], true, "{out}");
+        assert_eq!(out["result"]["page_count"], 1);
+        assert!(out["result"]["first_page"]
+            .as_str()
+            .is_some_and(|p| p.starts_with("<!-- Page 1 -->")));
+        assert_eq!(out["result"]["document"]["details"]["bank_code"], "31");
         assert_eq!(out["result"]["document"]["status"], "ok");
         assert_eq!(
             out["result"]["document"]["lines"].as_array().unwrap().len(),

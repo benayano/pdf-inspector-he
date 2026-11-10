@@ -1,7 +1,8 @@
 //! The Rust invoice layer against what the JS layer produced on the corpus
 //! (he/fixtures/golden/, written by he/tools/goldens.mjs). Numbers within
 //! 1e-9, objects compared key by key, `amounts` (an intermediate the
-//! goldens leave out) ignored.
+//! goldens leave out) and `details` (added after the JS layer; held by
+//! `details_of_the_corpus` below) ignored.
 use std::path::Path;
 
 use pdf_inspector::invoice::{
@@ -46,7 +47,10 @@ pub fn same(actual: &Value, expected: &Value, path: &str, out: &mut Vec<String>)
                     None => out.push(format!("{path}.{k}: missing")),
                 }
             }
-            for k in a.keys().filter(|k| !b.contains_key(*k) && *k != "amounts") {
+            for k in a
+                .keys()
+                .filter(|k| !b.contains_key(*k) && *k != "amounts" && *k != "details")
+            {
                 out.push(format!("{path}.{k}: extra"));
             }
         }
@@ -246,4 +250,87 @@ fn json_api_reads_repairs_and_exports() {
         .as_str()
         .unwrap()
         .contains("<!-- Page 1 -->"));
+}
+
+/// Due date, supplier contact and bank on the corpus (anonymized values).
+#[test]
+fn details_of_the_corpus() {
+    let expected = [
+        (
+            "print-to-pdf-5p",
+            "2026-08-31",
+            "שוטף",
+            "20",
+            "483",
+            "064061",
+        ),
+        ("priority-1p", "2022-12-31", "ת23", "31", "034", "743847"),
+        ("priority-2p", "2022-11-30", "ת84", "31", "034", "760768"),
+        ("priority-4p", "2022-10-31", "ת54", "31", "034", "275261"),
+    ];
+    for ((pdf, name), want) in CORPUS.iter().zip(expected) {
+        assert_eq!(*name, want.0);
+        let x = read(pdf);
+        let d = parse_invoice_items(&x.markdown, &x.items)
+            .details
+            .unwrap_or_else(|| panic!("{name}: no details"));
+        assert_eq!(d.due_date.as_deref(), Some(want.1), "{name}");
+        assert_eq!(d.payment_terms.as_deref(), Some(want.2), "{name}");
+        assert_eq!(
+            (
+                d.bank_code.as_deref(),
+                d.bank_branch.as_deref(),
+                d.bank_account.as_deref()
+            ),
+            (Some(want.3), Some(want.4), Some(want.5)),
+            "{name}"
+        );
+        assert!(d.supplier_phone.is_some_and(|p| p.len() >= 9), "{name}");
+        assert!(d.supplier_address.is_some(), "{name}");
+        assert_eq!(d.allocation_number, None, "{name}");
+    }
+}
+
+/// One call answers what an app needs: the first page, the page count, the
+/// time it took; a document over the page limit is not read at all.
+#[test]
+fn read_invoice_call_says_more_and_stops_early() {
+    use pdf_inspector::invoice::api::call;
+    let bytes = std::fs::read(
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("he/fixtures/invoices/priority-4p.pdf"),
+    )
+    .unwrap();
+    let out = call(
+        "read_invoice",
+        r#"{"first_page":true,"max_pages":40}"#,
+        &bytes,
+    );
+    let r = &out["result"];
+    assert_eq!(out["ok"], true, "{out}");
+    assert_eq!(r["page_count"], 4);
+    assert_eq!(r["engine"], env!("CARGO_PKG_VERSION"));
+    assert!(r["read_ms"].is_u64());
+    let first = r["first_page"].as_str().unwrap();
+    assert!(first.starts_with("<!-- Page 1 -->") && !first.contains("<!-- Page 2 -->"));
+    assert!(first.contains("עוסק מורשה"));
+    assert_eq!(r["document"]["details"]["bank_code"], "31");
+    assert_eq!(r["document"]["lines"].as_array().unwrap().len(), 129);
+
+    let out = call("read_invoice", r#"{"max_pages":3}"#, &bytes);
+    let r = &out["result"];
+    assert_eq!(r["document"]["status"], "unreadable");
+    assert!(r["document"]["reasons"][0]
+        .as_str()
+        .unwrap()
+        .starts_with("too many pages (4"));
+    assert_eq!(r["page_count"], 4);
+    assert!(r["state"].is_null());
+    // The limit counts the pages asked for.
+    let out = call("read_invoice", r#"{"max_pages":3,"pages":[1,2]}"#, &bytes);
+    let reasons = out["result"]["document"]["reasons"].to_string();
+    assert!(!reasons.contains("too many pages"), "{reasons}");
+    assert_eq!(
+        out["result"]["document"]["pdf"]["pages"],
+        serde_json::json!([1, 2])
+    );
 }

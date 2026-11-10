@@ -17,6 +17,18 @@ if (doc.status == InvoiceStatus.repairable) {
 
 Nothing here calls a model or the network.
 
+One native call does the whole read. For an app that uploads the read to a server:
+
+```dart
+final read = engine.readInvoice(bytes, const ReadOptions(firstPage: true, maxPages: 40));
+read.pageCount; read.engineVersion; read.readMs;   // what was read, by what, how long
+read.firstPage;                                    // page 1's Markdown (supplier lookup)
+read.document.details?.dueDate;                    // + supplier phone/address, bank, allocation number
+```
+
+A scan (no text layer) or a document over `maxPages` comes back `unreadable`
+in a millisecond or two, with `state == null`: no `classify` call is needed first.
+
 ## The native library
 
 One C ABI (`ffi/include/pdf_inspector_he.h`): `pdfhe_call(method, request_json,

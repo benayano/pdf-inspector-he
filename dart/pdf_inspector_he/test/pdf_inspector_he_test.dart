@@ -50,6 +50,27 @@ void main() {
     expect(doc.lines.first.description, contains(RegExp(r'[֐-׿]')));
   });
 
+  test('one call: first page, page count, details, and a page limit', () {
+    final read = engine.readInvoice(
+        _pdf('he/fixtures/invoices/priority-4p.pdf'), const ReadOptions(firstPage: true, maxPages: 40));
+    expect(read.pageCount, 4);
+    expect(read.engineVersion, engine.version);
+    expect(read.readMs, isNotNull);
+    expect(read.firstPage, startsWith('<!-- Page 1 -->'));
+    expect(read.firstPage, isNot(contains('<!-- Page 2 -->')));
+    final details = read.document.details!;
+    expect(details.dueDate, '2022-10-31');
+    expect([details.bankCode, details.bankBranch, details.bankAccount], ['31', '034', '275261']);
+    expect(details.supplierPhone, isNotEmpty);
+    expect(details.supplierAddress, isNotEmpty);
+
+    final long = engine.readInvoice(_pdf('he/fixtures/invoices/priority-4p.pdf'), const ReadOptions(maxPages: 3));
+    expect(long.document.status, InvoiceStatus.unreadable);
+    expect(long.document.reasons.single, startsWith('too many pages'));
+    expect(long.state, isNull);
+    expect(long.pageCount, 4);
+  });
+
   test('a misread row: the request, a wrong fix refused, the right one closes', () {
     final read = engine.readInvoice(_pdf('he/fixtures/repair/priority-1p.misread-row11.pdf'));
     final doc = read.document;

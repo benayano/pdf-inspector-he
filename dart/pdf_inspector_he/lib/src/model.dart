@@ -49,6 +49,30 @@ class InvoiceFacts {
   bool get checksOk => json['checks_ok'] == true;
 }
 
+/// What is printed for whoever pays the invoice; null where not printed,
+/// never guessed.
+class InvoiceDetails {
+  InvoiceDetails(this.json);
+  final Map<String, dynamic> json;
+
+  /// ISO date printed as a due date; payment terms alone give none.
+  String? get dueDate => _str(json['due_date']);
+
+  /// As printed: "שוטף + 30".
+  String? get paymentTerms => _str(json['payment_terms']);
+  String? get supplierPhone => _str(json['supplier_phone']);
+  String? get supplierAddress => _str(json['supplier_address']);
+
+  /// Bank number, branch and account for transfers, digits only: all three
+  /// or none.
+  String? get bankCode => _str(json['bank_code']);
+  String? get bankBranch => _str(json['bank_branch']);
+  String? get bankAccount => _str(json['bank_account']);
+
+  /// מספר הקצאה, digits only.
+  String? get allocationNumber => _str(json['allocation_number']);
+}
+
 /// One item line, as printed (Hebrew already in reading order).
 class InvoiceLine {
   InvoiceLine(this.json);
@@ -136,6 +160,7 @@ class InvoiceDocument {
   /// TextBased / Mixed / Scanned / ImageBased.
   String? get pdfType => _str((json['pdf'] as Map?)?['type']);
   InvoiceFacts? get invoice => json['invoice'] is Map ? InvoiceFacts((json['invoice'] as Map).cast()) : null;
+  InvoiceDetails? get details => json['details'] is Map ? InvoiceDetails((json['details'] as Map).cast()) : null;
   List<InvoiceLine> get lines => _maps(json['lines']).map(InvoiceLine.new).toList();
   List<InvoiceTotal> get totals => _maps(json['totals']).map(InvoiceTotal.new).toList();
   List<InvoiceCheck> get checks => _maps(json['checks']).map(InvoiceCheck.new).toList();
@@ -159,11 +184,24 @@ class InvoiceState {
 }
 
 class InvoiceRead {
-  InvoiceRead(this.document, this.state);
+  InvoiceRead(this.document, this.state,
+      {this.pageCount = 0, this.engineVersion = '', this.readMs, this.firstPage});
   final InvoiceDocument document;
 
-  /// Null when there is no invoice (no text layer).
+  /// Null when there is no invoice (no text layer, or over the page limit).
   final InvoiceState? state;
+
+  /// Pages in the document.
+  final int pageCount;
+
+  /// The native library's version.
+  final String engineVersion;
+
+  /// Wall time of the read inside the library, in milliseconds.
+  final int? readMs;
+
+  /// Page 1's Markdown, when asked with [ReadOptions.firstPage].
+  final String? firstPage;
 }
 
 class RepairResult {

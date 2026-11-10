@@ -37,6 +37,8 @@ export interface InvoiceDocument {
   status: "ok" | "repairable" | "unreadable";
   reasons: string[];
   invoice: (import("./invoice.d.ts").InvoiceInfo) | null;
+  /** Due date, the supplier's phone, address and bank, the allocation number; null when none is printed. */
+  details: (import("./invoice.d.ts").InvoiceDetails) | null;
   header: { fields: { label: string; value: string }[]; blocks: { page: number; text: string }[] };
   totals: { label: string; role: string; value: number; percent: number | null; currency: string | null }[];
   columns: { name: string; role: string | null }[];
