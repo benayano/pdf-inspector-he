@@ -219,9 +219,9 @@ function sampleInvoice() {
   ].join("\n");
   const items = [
     item("ספק בע\"מ", 470, 800, 100),
-    item("עוסק מורשה: 51-726003-0", 470, 790, 100),
+    item("עוסק מורשה: 51-234567-8", 470, 790, 100),
     item("תאריך חשבונית: 31/08/26", 82, 760, 84),
-    item("מספר תעודה: SI266000147", 82, 750, 84),
+    item("מספר תעודה: SI100000001", 82, 750, 84),
     item("תאור מוצר", 330, 700, 40),
     item("סה\"כ מחיר", 100, 700, 30),
     item("3,833.31", 100, 690, 30),
@@ -234,10 +234,10 @@ function sampleInvoice() {
 
 test("invoiceInfo finds the supplier, number and date without guessing", () => {
   const info = invoiceInfo(sampleInvoice());
-  assert.equal(info.invoice_number, "SI266000147");
+  assert.equal(info.invoice_number, "SI100000001");
   assert.equal(info.invoice_date, "2026-08-31");
   assert.equal(info.supplier_name, "ספק בע\"מ");
-  assert.equal(info.supplier_tax_id, "517260030");
+  assert.equal(info.supplier_tax_id, "512345678");
   assert.equal(info.subtotal, 3371.77);
   assert.equal(info.vat, null);
   assert.equal(info.checks_ok, true);
@@ -267,4 +267,47 @@ test("toCsv quotes, keeps Hebrew for Excel and defuses formulas", () => {
   const plain = toCsv(toRecords(sampleInvoice()), { bom: false, excelSafe: false });
   assert.ok(plain.startsWith("invoice_number,"));
   assert.match(plain, /,=זיכוי,-1,/);
+});
+
+import { recheck, documentType, isMarkerLine } from "./invoice.mjs";
+
+test("a printed site column is the site, not the description", () => {
+  const markdown = [
+    "|ש.|תאור אתר|תעודה|תאור מוצר|כמות|מחיר ליחידה|הנחה|סה\"כ מחיר|",
+    "|---|---|---|---|---|---|---|---|",
+    "|1||SH1|לקח משה|1.00 יח'|0.01 ש\"ח||0.01|",
+    "|2|רחוב הגפן|SH2|בלה ריקה|50.00 יח'|10.26 ש\"ח|8.00%|471.96|",
+  ].join("\n");
+  const lines = lineItems(markdown);
+  assert.deepEqual(lines.columns.map((c) => c.role).slice(0, 4), ["index", "site", "deliveryNote", "description"]);
+  const records = toRecords({ header: { blocks: [], fields: [] }, lines, totals: [], checks: [] });
+  assert.equal(records[1].description, "בלה ריקה");
+  assert.equal(records[1].site_text, "רחוב הגפן");
+  assert.equal(records[0].site_text, null);
+  assert.equal(records[0].marker, true, "a 0.01 line is a note, not goods");
+  assert.equal(records[1].marker, false);
+});
+
+test("a negative line in an invoice is a return; in a credit note it is not", () => {
+  const records = toRecords(sampleInvoice());
+  assert.equal(records[1].is_return, true);
+  assert.equal(records[0].is_return, false);
+  const credit = sampleInvoice();
+  credit.header.blocks.push({ text: "חשבונית זיכוי 12", lines: ["חשבונית זיכוי 12"], fields: [] });
+  assert.equal(documentType(credit), "credit");
+  assert.equal(toRecords(credit)[1].is_return, false);
+  assert.equal(isMarkerLine({ total: 0, unitPrice: 0 }), true);
+  assert.equal(isMarkerLine({ total: 0.01, unitPrice: 5 }), false);
+});
+
+test("recheck gives the verdict again after a value is changed", () => {
+  const invoice = sampleInvoice();
+  const rows = invoice.lines.rows.map((r) => ({ ...r, values: { ...r.values } }));
+  rows[0].values.total = 3800;
+  const broken = recheck({ ...invoice, lines: { ...invoice.lines, rows } });
+  assert.equal(broken.lines.rows[0].check.ok, false);
+  assert.equal(broken.checks.find((c) => c.name === "lines-sum").ok, false);
+  rows[0].values.total = 3833.31;
+  const fixed = recheck({ ...invoice, lines: { ...invoice.lines, rows } });
+  assert.ok(fixed.checks.every((c) => c.ok));
 });

@@ -104,6 +104,32 @@ pi.set_number_gap("auto"); pi.get_number_gap()
 `set_process_tuning` for the process; `Tuning::parse("k=v,…")`,
 `KNOBS` for the descriptions.
 
+The invoice layer itself is Rust (`pdf_inspector::invoice`): `read::read_invoice(bytes, tuning,
+alternatives, pages)` → `document::invoice_document(&read, &options)` (the JSON document), and
+`repair::{assess, repair_request, apply_repair}`. One JSON call for bindings:
+`invoice::api::call(method, request_json, bytes)` — `read_invoice` returns `{document, state, …}`,
+`apply_repair` takes `{state, answer}` back. The JS modules in `he/` run the same read through it
+(`readInvoice` uses the engine's `invoiceCall` when present).
+
+`read_invoice` reads the document **once** (the Markdown and the positioned items come from the same
+pass) after classifying it, so a scan costs a millisecond or two. Request options beyond `tuning` /
+`alternatives` / `pages`: `max_pages` (a longer document is answered `unreadable`, unread) and
+`first_page` (page 1's Markdown in the reply, no second extraction). The reply also carries
+`page_count`, `engine` (the version), `tuning` and `read_ms` (null in wasm: no clock).
+
+`document.details` (and `invoice.details` in `state`) is what whoever pays the invoice needs, read
+from the labelled fields around the table and the text under it (`src/invoice/details.rs`):
+`due_date` (ISO, only a printed date), `payment_terms`, `supplier_phone`, `supplier_address`,
+`bank_code` / `bank_branch` / `bank_account` (all three or none, only after "להעברה" / "פרטי בנק"),
+`allocation_number`. A value that is not printed is null.
+
+### Apps: C ABI and Dart (`dart:ffi`)
+
+`ffi/` builds `libpdf_inspector_he` (header `ffi/include/pdf_inspector_he.h`): `pdfhe_call(method,
+request, bytes, len)` → JSON, `pdfhe_free`, `pdfhe_abi_version`. `dart/pdf_inspector_he` wraps it:
+`PdfInspectorHe.open().readInvoice(bytes)` → typed `InvoiceDocument` + opaque `InvoiceState`;
+`applyRepair(state, answer)`; `readInvoiceAsync` runs in an isolate. Nothing calls a model.
+
 ---
 
 ## 3. Knobs
@@ -123,6 +149,7 @@ Precedence: per-call (`with_tuning` / `tuning` option) → process
 | `rule_join_gap` | pt | 2.0 | A bordered table not found as a table (grid drawn in pieces) → raise (3–4) |
 | `short_rule_ratio` | fraction | 0.3 | A real column lost → lower. Phantom empty columns (from a totals box under the table) → raise |
 | `stacked_line_gap` | em | 0.5 | Two-line header cell letters interleaved → lower. Superscripts split off → raise |
+| `latin_digit_split` | 0/1 | 1 only on an RTL line no Unicode-bidi reading reproduces (word-by-word layout: Priority / Winnovative), else 0 | Numbers jump in front of a Latin product name (`3000 "1.5 HIGH TECH`) → 1. A Latin phrase loses its trailing number → 0 |
 
 `pdf2md --list-knobs` / `listKnobs()` returns the same text; feed it to the
 model rather than hard-coding this table.
@@ -300,7 +327,69 @@ Cap it: at most one 5.1 and one 5.2 per document.
 
 ---
 
+### 5.4 Repair with the model working on the result (`he/repair.mjs`)
+
+When most of an invoice reads right and a few rows or a total do not,
+re-reading the whole PDF with a model throws the right part away. Instead:
+
+```js
+import { readInvoice, repairRequest, applyRepair } from "./repair.mjs";
+const read = readInvoice(pdf, bytes);          // extract + parse + autoRepair (no model)
+// read.assessment.status: "ok" | "repairable" | "unreadable"; .failedRows, .failedChecks, .needsPages, .pages
+if (read.assessment.status === "repairable") {
+  const req = repairRequest(read.invoice, { context: "Hebrew supplier invoice" });
+  // req.prompt: totals line + failed checks + ONLY the failing rows (± a neighbour) as CSV
+  // req.schema: JSON schema of the answer { fixes[], inserts[], unreadable[], notes }
+  // req.needsPages: a row is missing — attach req.pages (PDF pages or images)
+  const fixed = applyRepair(read.invoice, await ask(req.prompt, req.schema), req);
+  // a fix is kept only if its row then closes; an insert only if the sum then closes
+}
+```
+
+- `autoRepair(invoice, alternatives)` runs inside `readInvoice`: a failing
+  row is taken from another reading (`number_gap` 0.1 / 0.3 / auto) only
+  where it closes there. Often no model is needed at all.
+- Send the request **as CSV in, JSON out**: compact rows cost a few hundred
+  tokens (a damaged row of a 162-row invoice: ~1.4k characters); the answer
+  goes through structured output, which CSV cannot.
+- `unreadable` in the answer is for rows whose printed numbers really
+  disagree — a supplier error is a finding, not something to "fix".
+- Short tables (≤ 25 rows) go whole; the neighbours give context for free.
+
 ## 6. Exposing it as tools
+
+### 6.0 Ready-made: `he/agent.mjs`, the MCP server, the CLI
+
+Everything below is implemented; the later subsections explain the design.
+
+```js
+import { createInvoiceAgent } from "./agent.mjs";
+const agent = createInvoiceAgent({ engine: pdf, readFile: (f) => bytesOf(f), writeFile: (out, text) => save(out, text) });
+// agent.tools (Anthropic), agent.mcpTools (MCP), agent.instructions (system prompt text)
+const { ok, result } = await agent.call("read_invoice", { file: "a.pdf" });
+```
+
+| Tool | Does |
+|---|---|
+| `read_invoice {file, tuning?}` | read + check (+ auto-repair); verdict, facts, totals, checks, failing rows as CSV, `next` |
+| `get_rows {file, rows?, format?}` | rows `failed` / `all` / `5-12,20`, CSV (default) or JSON |
+| `fix_rows {file, fixes[], inserts?}` | corrections kept only when the row's arithmetic closes; inserts only when the sum closes |
+| `extract_text {file, pages?, tuning?}` | Markdown of the pages, for looking at a row |
+| `get_invoice_json {file, markdown?}` | the full JSON document (`invoice-document@1`, `he/invoice-document.schema.json`) |
+| `list_knobs {}` | the knobs |
+| `export_invoice {file, format, out}` | json / csv to a file — only when the host passes `writeFile` |
+
+The agent IS the model that repairs: no second model is called. Session state
+(the invoice as fixed so far) is per file; `read_invoice` resets it.
+
+- **MCP**: `node he/mcp-server.mjs --root DIR [--engine cli|cli:<pdf2md>|wasm:<edge dir>] [--no-export]`,
+  e.g. `claude mcp add pdf-inspector-he -- node he/mcp-server.mjs --root ~/invoices`. Files must stay inside `--root`.
+- **CLI**: `node he/cli.mjs file.pdf [--format json|summary|csv|repair] [--tune …] [--out FILE]`;
+  exit code 0 ok / 2 repairable / 3 unreadable / 1 error.
+- **Engines** (`he/engines.mjs`, Node): `cliEngine()` (the native binary) or `wasmEngine(dir)` (the Edge package),
+  one interface. In Deno / Supabase use `load()` from the Edge package directly.
+
+
 
 Keep the tools few and give the model the knob text at runtime.
 
@@ -432,7 +521,9 @@ You can read PDFs with extract_pdf and parse_invoice.
 - Scanned invoices: detected and reported; the invoice layer is untested on OCR output.
 - Firecrawl's own regression set (`pdf-evals`) is not available here; the
   in-repo tests and the invoice corpus (`he/fixtures/invoices`) are.
-- The LLM review was tested with mocked answers, not a live model.
+- The LLM review and the repair layer were tested with mocked answers, not a live model.
+- Edge package (`pdf-inspector-he-edge`, wasm embedded as text, `await load()`):
+  tested in Deno locally, not yet inside a deployed Supabase function.
 
 ## 9. Adding a new invoice layout
 

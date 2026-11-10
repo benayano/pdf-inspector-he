@@ -543,6 +543,7 @@ const VALUE_OPTIONS: &[&str] = &[
     "--ocr-model-dir",
     "--number-gap",
     "--tune",
+    "--invoice-call",
 ];
 
 fn print_usage(argv0: &str) {
@@ -559,6 +560,12 @@ fn print_usage(argv0: &str) {
     eprintln!("Options:");
     eprintln!("  --json              Output result as JSON");
     eprintln!("  --items-json        Output positioned TextItem JSON");
+    eprintln!(
+        "  --invoice-json      Output the invoice as one JSON document (invoice-document@1);"
+    );
+    eprintln!(
+        "                      exit 0 ok, 2 repairable, 3 unreadable (--with-markdown adds it)"
+    );
     eprintln!("  --raw               Output only markdown (no headers)");
     eprintln!("  --compact           Collapse token-heavy source formatting such as dot leaders");
     eprintln!("  --pages             Insert page break markers (<!-- Page N -->)");
@@ -634,6 +641,31 @@ fn main() {
             process::exit(1);
         })
     };
+    if let Some(method) = value("--invoice-call") {
+        // The JSON API (src/invoice/api.rs): request on stdin, the PDF (if
+        // the method takes one) as the positional argument. For engines that
+        // drive this binary (he/engines.mjs).
+        let mut request = String::new();
+        if let Err(e) = std::io::Read::read_to_string(&mut std::io::stdin(), &mut request) {
+            eprintln!("Error: stdin: {e}");
+            process::exit(1);
+        }
+        let bytes = match positional_args(&args).ok().and_then(|p| p.first().cloned()) {
+            Some(path) => std::fs::read(&path).unwrap_or_else(|e| {
+                eprintln!("Error: {path}: {e}");
+                process::exit(1);
+            }),
+            None => Vec::new(),
+        };
+        println!(
+            "{}",
+            pdf_inspector::invoice::api::call(method, &request, &bytes)
+        );
+        return;
+    }
+    if args.iter().any(|a| a == "--invoice-json") {
+        process::exit(invoice_json(&args, value("--tune").unwrap_or("")));
+    }
     let mut tuning = match value("--tune") {
         Some(text) => pdf_inspector::Tuning::parse(text).unwrap_or_else(|error| {
             eprintln!("Error: --tune: {error}");
@@ -648,6 +680,69 @@ fn main() {
         }));
     }
     pdf_inspector::with_tuning(tuning, run)
+}
+
+/// `--invoice-json`: the invoice document (invoice-document@1) on stdout.
+/// Exit code 0 ok, 2 repairable, 3 unreadable, 1 error.
+fn invoice_json(args: &[String], tuning: &str) -> i32 {
+    use pdf_inspector::invoice::document::{invoice_document, DocumentOptions};
+    use pdf_inspector::invoice::read::{read_invoice, DEFAULT_ALTERNATIVES};
+    let Ok(positionals) = positional_args(args) else {
+        print_usage(&args[0]);
+        return 1;
+    };
+    let pages: Option<Vec<u32>> = match argument_value(args, "--select-pages") {
+        Ok(Some(spec)) => match parse_page_spec(spec) {
+            Ok(set) => {
+                let mut v: Vec<u32> = set.into_iter().collect();
+                v.sort_unstable();
+                Some(v)
+            }
+            Err(e) => {
+                eprintln!("Error: invalid --select-pages value: {e}");
+                return 1;
+            }
+        },
+        Ok(None) => None,
+        Err(e) => {
+            eprintln!("Error: {e}");
+            return 1;
+        }
+    };
+    let bytes = match std::fs::read(&positionals[0]) {
+        Ok(b) => b,
+        Err(e) => {
+            eprintln!("Error: {}: {e}", positionals[0]);
+            return 1;
+        }
+    };
+    let read = match read_invoice(&bytes, tuning, &DEFAULT_ALTERNATIVES, pages.as_deref()) {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("Error: {e}");
+            return 1;
+        }
+    };
+    let options = DocumentOptions {
+        markdown: args.iter().any(|a| a == "--with-markdown"),
+        ..Default::default()
+    };
+    let doc = invoice_document(&read, &options);
+    let text = serde_json::to_string_pretty(&doc).unwrap_or_default();
+    match positionals.get(1) {
+        Some(out) => {
+            if let Err(e) = std::fs::write(out, text + "\n") {
+                eprintln!("Error: {out}: {e}");
+                return 1;
+            }
+        }
+        None => println!("{text}"),
+    }
+    match doc["status"].as_str() {
+        Some("ok") => 0,
+        Some("repairable") => 2,
+        _ => 3,
+    }
 }
 
 fn run() {

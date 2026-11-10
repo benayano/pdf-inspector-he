@@ -1,11 +1,12 @@
-# pdf-inspector-he CI: Rust tests, the JS check layer, and the WebAssembly
+# pdf-inspector-he CI: Rust tests, the JS check layer, the WebAssembly
 # packages for the browser (`web`) and for Deno / Supabase Edge Functions
-# (`deno`). A tag `he-v*` attaches both packages to a GitHub Release.
+# (`deno`, `edge`), and the native library for apps (C ABI, Dart package,
+# Android .so). A tag `he-v*` attaches the packages to a GitHub Release.
 name: he build
 
 on:
   push:
-    branches: [main, hebrew-support]
+    branches: [main, hebrew-support, 'claude/**']
     tags: ['he-v*']
   pull_request:
     branches: [main]
@@ -60,13 +61,19 @@ jobs:
         run: wasm-pack build wasm --target deno --out-dir pkg-deno --out-name pdf_inspector --release
       - name: Copy the JS check layer into both packages
         run: |
-          cp he/rtl-check.mjs he/rtl-check.d.ts he/invoice.mjs he/invoice.d.ts wasm/pkg-web/
-          cp he/rtl-check.mjs he/rtl-check.d.ts he/invoice.mjs he/invoice.d.ts wasm/pkg-deno/
+          for pkg in wasm/pkg-web wasm/pkg-deno; do
+            cp he/rtl-check.mjs he/rtl-check.d.ts he/invoice.mjs he/invoice.d.ts he/repair.mjs he/repair.d.ts \
+              he/document.mjs he/document.d.ts he/agent.mjs he/agent.d.ts he/invoice-document.schema.json "$pkg"/
+          done
+      - name: Build the Edge package (wasm embedded as text)
+        run: node he/tools/build-edge.mjs wasm/pkg-web wasm/pkg-edge
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
       - name: Smoke test on Deno (the Edge Function runtime)
         run: deno run --allow-read he/deno-smoke.ts wasm/pkg-deno tests/fixtures/rtl_hebrew_glyph_by_glyph.pdf he/fixtures/invoices/priority-1p.pdf
+      - name: Smoke test of the Edge package (readInvoice + repair on the corpus)
+        run: deno run --allow-read he/edge-smoke.ts wasm/pkg-edge he/fixtures/invoices/*.pdf
       - uses: actions/upload-artifact@v4
         with:
           name: pdf-inspector-he-wasm-web
@@ -75,6 +82,10 @@ jobs:
         with:
           name: pdf-inspector-he-wasm-deno
           path: wasm/pkg-deno
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pdf-inspector-he-edge
+          path: wasm/pkg-edge
       - name: Release
         if: startsWith(github.ref, 'refs/tags/he-v')
         env:
@@ -82,5 +93,63 @@ jobs:
         run: |
           (cd wasm/pkg-web && zip -r ../../pdf-inspector-he-wasm-web.zip .)
           (cd wasm/pkg-deno && zip -r ../../pdf-inspector-he-wasm-deno.zip .)
+          (cd wasm/pkg-edge && zip -r ../../pdf-inspector-he-edge.zip .)
           gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes \
-            pdf-inspector-he-wasm-web.zip pdf-inspector-he-wasm-deno.zip
+            pdf-inspector-he-wasm-web.zip pdf-inspector-he-wasm-deno.zip pdf-inspector-he-edge.zip
+
+  native:
+    # The C ABI (ffi/) and the Dart package on the host, then the Android
+    # libraries for the app's jniLibs. Same Rust as everything above.
+    needs: wasm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.98.0"
+          targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ffi -> target
+      - name: C ABI tests
+        run: cd ffi && cargo test --release
+      - name: Host library (for the Dart tests)
+        run: cd ffi && cargo build --release
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: "3.7.2"
+      - name: Dart package
+        working-directory: dart/pdf_inspector_he
+        run: |
+          dart pub get
+          dart analyze --fatal-infos
+          dart test
+      - name: Android libraries (arm64-v8a, armeabi-v7a, x86_64)
+        run: |
+          cargo install cargo-ndk --version 3.5.4 --locked
+          export ANDROID_NDK_HOME="$ANDROID_NDK_LATEST_HOME"
+          cd ffi
+          cargo ndk -t arm64-v8a -t armeabi-v7a -t x86_64 -o ../android/jniLibs build --release
+          cd ..
+          for abi in arm64-v8a armeabi-v7a x86_64; do
+            test -s "android/jniLibs/$abi/libpdf_inspector_he.so" || { echo "missing $abi"; exit 1; }
+          done
+          ls -la android/jniLibs/*
+      - name: Package (jniLibs + header + Dart package)
+        run: |
+          mkdir -p native/dart
+          cp -r android/jniLibs native/jniLibs
+          cp ffi/include/pdf_inspector_he.h native/
+          cp -r dart/pdf_inspector_he/lib dart/pdf_inspector_he/pubspec.yaml dart/pdf_inspector_he/README.md native/dart/
+          git rev-parse HEAD > native/COMMIT
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pdf-inspector-he-native
+          path: native
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/he-v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          (cd native && zip -r ../pdf-inspector-he-native.zip .)
+          gh release upload "$GITHUB_REF_NAME" pdf-inspector-he-native.zip

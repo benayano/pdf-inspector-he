@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/benayano/pdf-inspector-he/he/invoice-document.schema.json",
+  "title": "pdf-inspector-he invoice document",
+  "description": "One invoice read from a PDF: verdict, invoice facts, header, totals, item lines with per-line arithmetic, checks, and (when a few rows fail) the compact repair request. Built by invoiceDocument() in he/document.mjs.",
+  "type": "object",
+  "required": ["schema", "pdf", "status", "reasons", "invoice", "header", "totals", "columns", "lines", "checks", "failed_rows", "auto_fixed", "repaired", "repair"],
+  "properties": {
+    "schema": { "const": "pdf-inspector-he/invoice-document@1" },
+    "pdf": {
+      "type": "object",
+      "required": ["type", "pages"],
+      "properties": {
+        "type": { "type": ["string", "null"], "description": "TextBased | Scanned | Mixed | ImageBased" },
+        "pages": { "type": "array", "items": { "type": "integer" }, "description": "pages the item table spans" }
+      }
+    },
+    "status": { "enum": ["ok", "repairable", "unreadable"], "description": "ok: every check passed. repairable: a few rows or a total do not close. unreadable: no table, no totals, or read wrong as a whole" },
+    "reasons": { "type": "array", "items": { "type": "string" } },
+    "invoice": {
+      "type": ["object", "null"],
+      "required": ["document_type", "invoice_number", "invoice_date", "supplier_name", "supplier_tax_id", "subtotal", "discount", "after_discount", "vat_rate", "vat", "total", "currency", "checks_ok"],
+      "properties": {
+        "document_type": { "enum": ["invoice", "credit"] },
+        "invoice_number": { "type": ["string", "null"] },
+        "invoice_date": { "type": ["string", "null"], "description": "ISO date" },
+        "supplier_name": { "type": ["string", "null"] },
+        "supplier_tax_id": { "type": ["string", "null"], "description": "digits only" },
+        "subtotal": { "type": ["number", "null"] },
+        "discount": { "type": ["number", "null"], "description": "as printed; negative = a rounding that adds" },
+        "after_discount": { "type": ["number", "null"] },
+        "vat_rate": { "type": ["number", "null"] },
+        "vat": { "type": ["number", "null"] },
+        "total": { "type": ["number", "null"] },
+        "currency": { "type": ["string", "null"] },
+        "checks_ok": { "type": "boolean" }
+      }
+    },
+    "details": {
+      "type": ["object", "null"],
+      "description": "What is printed for whoever pays the invoice; a value that is not printed is null, never guessed. null when nothing was found (and in a JS-only read)",
+      "properties": {
+        "due_date": { "type": ["string", "null"], "description": "ISO date printed as a due date; payment terms alone give none" },
+        "payment_terms": { "type": ["string", "null"] },
+        "supplier_phone": { "type": ["string", "null"] },
+        "supplier_address": { "type": ["string", "null"] },
+        "bank_code": { "type": ["string", "null"], "description": "bank number, digits; bank_code, bank_branch and bank_account come together or not at all" },
+        "bank_branch": { "type": ["string", "null"] },
+        "bank_account": { "type": ["string", "null"] },
+        "allocation_number": { "type": ["string", "null"], "description": "tax authority allocation number, digits" }
+      }
+    },
+    "header": {
+      "type": "object",
+      "required": ["fields", "blocks"],
+      "properties": {
+        "fields": {
+          "type": "array",
+          "items": { "type": "object", "required": ["label", "value"], "properties": { "label": { "type": "string" }, "value": { "type": "string" } } }
+        },
+        "blocks": {
+          "type": "array",
+          "items": { "type": "object", "required": ["page", "text"], "properties": { "page": { "type": "integer" }, "text": { "type": "string" } } }
+        }
+      }
+    },
+    "totals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["label", "role", "value", "percent", "currency"],
+        "properties": {
+          "label": { "type": "string" },
+          "role": { "enum": ["subtotal", "discount", "afterDiscount", "vat", "total", "balance"] },
+          "value": { "type": "number" },
+          "percent": { "type": ["number", "null"] },
+          "currency": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "columns": {
+      "type": "array",
+      "items": { "type": "object", "required": ["name", "role"], "properties": { "name": { "type": "string" }, "role": { "type": ["string", "null"] } } }
+    },
+    "lines": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["row", "line_no", "page", "date", "delivery_note", "order_ref", "sku", "description", "site_text", "quantity", "unit", "unit_price", "discount_pct", "net_unit_price", "line_total", "currency", "marker", "is_return", "check_ok", "check_diff"],
+        "properties": {
+          "row": { "type": "integer", "description": "position in the table, 1-based; the id repairs use" },
+          "line_no": { "type": ["integer", "null"], "description": "printed line number" },
+          "page": { "type": ["integer", "null"] },
+          "date": { "type": ["string", "null"] },
+          "delivery_note": { "type": ["string", "null"] },
+          "order_ref": { "type": ["string", "null"] },
+          "sku": { "type": ["string", "null"] },
+          "description": { "type": ["string", "null"], "description": "as printed, Hebrew in reading order" },
+          "site_text": { "type": ["string", "null"], "description": "a printed site / project column (a hint, not an id)" },
+          "quantity": { "type": ["number", "null"], "description": "negative when printed negative (a return)" },
+          "unit": { "type": ["string", "null"] },
+          "unit_price": { "type": ["number", "null"] },
+          "discount_pct": { "type": ["number", "null"] },
+          "net_unit_price": { "type": ["number", "null"] },
+          "line_total": { "type": ["number", "null"] },
+          "currency": { "type": ["string", "null"] },
+          "marker": { "type": "boolean", "description": "a note line priced at a cent or less, not goods" },
+          "is_return": { "type": "boolean", "description": "a negative line in an ordinary invoice" },
+          "check_ok": { "type": ["boolean", "null"], "description": "quantity x price = total; null when the row has no price" },
+          "check_diff": { "type": ["number", "null"] },
+          "repaired": { "type": ["string", "boolean"], "description": "present when a repair changed the row: why" },
+          "inserted": { "const": true, "description": "present when a repair added the row" }
+        }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "ok"],
+        "properties": {
+          "name": { "enum": ["lines-sum", "line-arithmetic", "discount", "vat", "grand-total"] },
+          "ok": { "type": "boolean" },
+          "expected": { "type": "number" },
+          "actual": { "type": "number" },
+          "diff": { "type": "number" },
+          "label": { "type": "string" },
+          "sign": { "enum": ["minus", "plus"] }
+        }
+      }
+    },
+    "failed_rows": { "type": "array", "items": { "type": "integer" }, "description": "rows whose arithmetic does not close (1-based)" },
+    "auto_fixed": {
+      "type": "array",
+      "items": { "type": "object", "required": ["row", "tuning"], "properties": { "row": { "type": "integer" }, "tuning": { "type": "string" } } },
+      "description": "rows taken from another reading of the document, with no model"
+    },
+    "repaired": { "type": "array", "items": { "type": "integer" }, "description": "rows a repair changed or added" },
+    "repair": {
+      "type": ["object", "null"],
+      "description": "status repairable only: the request to send to a model",
+      "required": ["needs_pages", "pages", "rows", "prompt", "schema"],
+      "properties": {
+        "needs_pages": { "type": "boolean", "description": "a row is missing: attach `pages`" },
+        "pages": { "type": "array", "items": { "type": "integer" } },
+        "rows": { "type": "array", "items": { "type": "integer" } },
+        "prompt": { "type": "string", "description": "totals + failed checks + only the failing rows as CSV" },
+        "schema": { "type": "object", "description": "JSON schema of the model's answer (REPAIR_SCHEMA)" }
+      }
+    },
+    "markdown": { "type": "string", "description": "the extracted Markdown, when asked for" }
+  }
+}

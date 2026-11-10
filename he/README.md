@@ -43,6 +43,7 @@
 | `rule_join_gap` | pt | 2.0 | קטעי קו אנכי במרחק כזה מתחברים |
 | `short_rule_ratio` | חלק מהקו הארוך | 0.3 | קווים קצרים מזה שייכים לתיבה אחרת (סיכומים) |
 | `stacked_line_gap` | em | 0.5 | מאיזה מרחק שורות מוערמות מופרדות |
+| `latin_digit_split` | מתג 0/1 | 1 רק בשורה שאף קריאה תקנית לא משחזרת | מספר שמוצג ברווח לפני מילה לטינית בשורה מימין לשמאל: מילה בפני עצמה (1) או סוף הצירוף הלטיני (0) |
 
 הצורה בכל מקום: `"rule_join_gap=3,short_rule_ratio=auto"`.
 
@@ -104,6 +105,10 @@ const result = await extractWithLlmCheck(
 
 9. **חותמת שמצוירת אות-אות.** "הופק באמצעות Zoom - פריוריטי סופטוור בע"מ" מצויר מסובב ב-270°, כל אות לחוד. כל אות נשארה פריט נפרד, והקיבוץ לשורות שיבץ אותה בשורת הכותרת שבאותו גובה (`**לכבוד: ...**ס יר`). עכשיו אותיות אנכיות נקראות במסגרת שלהן (כאילו השורה אופקית), עוברות את אותו מיזוג של שורה רגילה (רווחים וסדר מימין לשמאל), ומתחברות לריצה אחת בכל עמודה. ריצה אנכית ארוכה (16 תווים ומעלה) יוצאת כשורה נפרדת בסוף העמוד. תוויות קצרות מסובבות (כותרת ציר בגרף) נשארות במקומן.
 
+### מספרים ליד מילים לטיניות (Priority / Winnovative)
+
+10. **מספרים קפצו לפני שם מוצר לטיני.** בתא כמו `מברשת צבע HIGH TECH 1.5" 3000 פאר` יצא `מברשת צבע 3000 "1.5 HIGH TECH פאר`. הממיר הזה פורש את השורה **מילה-מילה מימין לשמאל**, ולא לפי האלגוריתם הדו-כיווני של Unicode. לכן `3000` ו-`"1.5` מוצגים **משמאל** ל-`HIGH TECH`. לפי כלל W7 של האלגוריתם, מספר שמוצג שם הוא סוף הצירוף הלטיני, וכך נקרא. אבל ממיר שפועל לפי האלגוריתם אף פעם לא מציג מספר נפרד במקום הזה. מכאן הכלל: אם אף קריאה תקנית לא משחזרת את השורה כפי שהיא מוצגת, השורה נקראת מילה-מילה. ממירים תקניים (למשל Print To PDF) לא מושפעים. הפרמטר `latin_digit_split` מאפשר לכפות את ההתנהגות לכאן או לכאן. על הקורפוס כל התיאורים זהים עכשיו לקריאה של pdf.js, כולל `X5 1.5-2.5` ו-`T 110/110/110`.
+
 ## שכבת החשבונית (`he/invoice.mjs`)
 
 מקבלת את ה-Markdown ואת הפריטים עם המיקומים, ומחזירה את החשבונית כנתונים:
@@ -134,9 +139,79 @@ const invoice = parseInvoice({
 
 בדיקה שלא הייתה יכולה לרוץ פשוט לא מופיעה. בדיקה שנכשלה מחזירה בכמה.
 
+**תפקידי עמודות שנוספו:** `site` לעמודת אתר מודפסת ("תאור אתר"). בלעדיו, שם האתר נלקח כתיאור המוצר בכל שורה שהוא מופיע בה. ברשומות נוספו `site_text`, `marker` (שורת הערה במחיר אגורה אחת או פחות, למשל "לקח …") ו-`is_return` (שורה שלילית בחשבונית רגילה). `invoiceInfo` מחזיר גם `document_type` (`invoice` או `credit`), ו-`recheck(invoice)` מריץ שוב את כל הבדיקות אחרי שינוי ערכים.
+
 **ייצוא:** `invoiceInfo(invoice)` מחזיר את פרטי החשבונית (מספר, תאריך ISO, ספק, ח.פ, סיכומים). `toRecords(invoice)` מחזיר שורה שטוחה לכל פריט עם עמודות קבועות, מוכנה ל-`insert` או ל-SQL. `toCsv(records)` מפיק CSV לאקסל (עם BOM לעברית, ותאים שמתחילים ב-`=` מנוטרלים). לייבוא למסד: `toCsv(records, { bom: false, excelSafe: false })`.
 
 **על ארבע החשבוניות בקורפוס (וגם על המקור לפני האנונימיזציה) כל חמש הבדיקות עוברות**: 344 שורות, כל הסכומים, כל ההנחות, המע"מ והסה"כ. הבדיקות רצות כחלק מ-`he/regression.mjs`.
+
+## תיקון עם LLM: ה-LLM עובד עם הפלט, לא במקומו (`he/repair.mjs`)
+
+כשרוב החשבונית נקראה נכון ורק כמה שורות או סיכום לא נסגרים, לשלוח את כל ה-PDF למודל זה לזרוק את מה שנקרא נכון. במקום זה:
+
+| שלב | פונקציה | מה עושה |
+|---|---|---|
+| 1 | `readInvoice(pdf, bytes)` | חילוץ, ניתוח ותיקון אוטומטי בלי מודל, בקריאה אחת. מחזיר `assessment.status`: ‏`ok`, ‏`repairable` או `unreadable` |
+| 2 | `autoRepair(invoice, alternatives)` | (רץ בתוך 1) שורה שלא נסגרת נלקחת מקריאה אחרת של אותו מסמך (`number_gap` 0.1/0.3/auto), רק אם היא נסגרת שם |
+| 3 | `repairRequest(invoice)` | בקשה קומפקטית: שורת סיכומים, הבדיקות שנכשלו עם ההפרש, ו**רק השורות הבעייתיות** (ושכנה מכל צד) כ-CSV. מחזירה גם סכימת JSON לתשובה. `needsPages` מסמן שחסרה שורה, ואז צריך לצרף את העמוד |
+| 4 | `applyRepair(invoice, answer, request)` | מחיל את התשובה שורה-שורה. תיקון נשמר רק אם השורה נסגרת אחריו, ושורה שנוספה רק אם הסכום נסגר. אחר כך הכל נבדק שוב: ההחלטה האחרונה היא של החשבון, לא של המודל |
+
+גודל הבקשה: 1,300–2,200 תווים, במקום PDF של אלפי טוקנים לעמוד. הספרייה לא קוראת למודל: את הבקשה שולח הקורא.
+
+```js
+import { load } from "./pdf-inspector-he-edge/edge.mjs";
+import { readInvoice, repairRequest, applyRepair } from "./pdf-inspector-he-edge/repair.mjs";
+const pdf = await load();
+const read = readInvoice(pdf, bytes);
+if (read.assessment.status === "repairable") {
+  const req = repairRequest(read.invoice, { context: "Hebrew supplier invoice" });
+  const answer = await askModelForJson(req.prompt, req.schema /*, pages if req.needsPages */);
+  const fixed = applyRepair(read.invoice, answer, req); // fixed.status === "ok" -> use it
+}
+```
+
+## חיבור ל-agent, שרת MCP ותשובת JSON
+
+שלוש דרכים לחבר את הכלי, וכולן עוברות דרך אותם כלים (`he/agent.mjs`), כך שהן נותנות אותה תשובה.
+
+**תשובת JSON** (`he/document.mjs`, הסכימה `he/invoice-document.schema.json`): מסמך אחד בגרסה קבועה (`pdf-inspector-he/invoice-document@1`). הוא כולל:
+- הכרעה: `ok`, ‏`repairable` או `unreadable`.
+- פרטי החשבונית, שדות הכותרת, הסיכומים והעמודות.
+- כל השורות. פרטי החשבונית לא חוזרים בכל שורה. לכל שורה יש `check_ok`, ובשורה שתוקנה גם `repaired` עם הסיבה.
+- הבדיקות והשורות שנכשלו.
+- כשצריך תיקון: בקשת התיקון המוכנה (`repair.prompt` + `repair.schema`).
+
+```bash
+node he/cli.mjs invoice.pdf                    # המסמך המלא
+node he/cli.mjs invoice.pdf --format summary   # הכרעה, סיכומים ושורות שנכשלו
+node he/cli.mjs invoice.pdf --format csv       # שורה לכל פריט
+node he/cli.mjs invoice.pdf --format repair    # בקשת התיקון בלבד
+```
+קוד היציאה: ‏0 ‏= ok, ‏2 ‏= צריך תיקון, ‏3 ‏= לא קריא, ‏1 ‏= שגיאה. המנוע הוא `pdf2md` (ברירת המחדל) או חבילת ה-wasm (`--engine wasm:<dir>`).
+
+**כלים ל-agent** (`createInvoiceAgent`): הגדרות tools בפורמט של Anthropic, מדריך ל-system prompt, ו-`call(name, input)`. במצב הזה ה-agent הוא בעצמו המודל שמתקן, כך שאין קריאה למודל שני:
+
+| כלי | מה עושה |
+|---|---|
+| `read_invoice` | קורא ובודק. מחזיר את ההכרעה ואת השורות שנכשלו כ-CSV |
+| `get_rows` | שורות (`failed` / `all` / `5-12,20`) כ-CSV או JSON |
+| `fix_rows` | תיקונים ושורות חסרות. תיקון נשמר רק אם השורה נסגרת בחשבון, ושורה חסרה רק אם הסכום נסגר |
+| `extract_text` | העמוד כ-Markdown, כדי לבדוק שורה |
+| `get_invoice_json` | המסמך המלא |
+| `list_knobs` | הפרמטרים לכוונון |
+| `export_invoice` | שמירה כ-JSON או CSV (רק כשהמארח מאפשר כתיבה) |
+
+הקוד לא נוגע במערכת הקבצים ולא ברשת. המארח מעביר את המנוע ואת הדרך לקרוא ולכתוב קבצים. לכן אותו קוד רץ ב-Node, ב-Deno ובפונקציית Supabase (נכלל בחבילת ה-Edge).
+
+**שרת MCP** (`he/mcp-server.mjs`, בלי תלויות, stdio): מחבר את אותם כלים ישירות ל-Claude Code, ל-Claude Desktop או לכל לקוח MCP:
+```bash
+claude mcp add pdf-inspector-he -- node /path/to/pdf-inspector-he/he/mcp-server.mjs --root ~/invoices
+```
+- קבצים נקראים ונכתבים רק בתוך `--root`.
+- `--no-export` מפעיל את השרת לקריאה בלבד.
+- `--engine wasm:<dir>` מריץ על ה-wasm במקום `pdf2md`.
+
+בדיקות: `he/agent.test.mjs`. הן בודקות שהמסמך תואם את הסכימה על כל הקורפוס, את מסלול התיקון על PDF עם ספרה שגויה (`he/fixtures/repair/`, נוצר ב-`he/tools/misread_pdf.py`), ואת שרת ה-MCP דרך stdio אמיתי (כולל חסימת יציאה מה-root).
 
 ## חבילות npm / Supabase
 
@@ -145,13 +220,54 @@ const invoice = parseInvoice({
 - `pdf-inspector-he-wasm-web`: לדפדפן (React).
 - `pdf-inspector-he-wasm-deno`: ל-Deno ול-Supabase Edge Functions. בדיקת עשן רצה עליה ב-Deno.
 
-שתיהן כוללות את `rtl-check.mjs` ואת `invoice.mjs`. אפשר להוריד אותן מה-Artifacts של הריצה. tag בצורה `he-v1.0.0` יוצר Release עם קבצי zip.
+- `pdf-inspector-he-edge`: ל-Supabase Edge, **בלי קובץ בינארי**. ה-wasm מוטמע כ-gzip+base64 (כ-3.5MB טקסט) ונטען ב-`await load()` (כ-75ms בפעם הראשונה בכל isolate). כך אפשר לפרוס אותה ככל קוד אחר, וגם להעתיק אותה לריפו אחר. `VERSION.json` שומר את ה-commit ואת ה-sha256 של ה-wasm. בנייה מקומית: `node he/tools/build-edge.mjs wasm/pkg-web <dir>`. בדיקה: `deno run --allow-read he/edge-smoke.ts <dir> he/fixtures/invoices/*.pdf`.
+
+כל החבילות כוללות את `rtl-check.mjs`, `invoice.mjs`, `repair.mjs`, `document.mjs`, `agent.mjs` ואת הסכימה `invoice-document.schema.json`. שרת ה-MCP וה-CLI (`mcp-server.mjs`, `cli.mjs`, `engines.mjs`) רצים מהריפו ב-Node. אפשר להוריד אותן מה-Artifacts של הריצה. tag בצורה `he-v1.0.0` יוצר Release עם קבצי zip.
+
+## שכבת החשבונית ב-Rust, ואפליקציות (`dart:ffi`)
+
+שכבת החשבונית (טבלה, כותרת, סיכומים, בדיקות, תיקון, מסמך JSON) **כתובה פעם אחת, ב-Rust** (`src/invoice/`).
+הגרסה ב-JS (`invoice.mjs`, `repair.mjs`, `document.mjs`) נשארה: היא המקור שממנו הועתק הקוד, ומשמשת אורקל.
+`he/tools/goldens.mjs` שומר את הפלט שלה על הקורפוס (`he/fixtures/golden/`), ו-`tests/invoice_golden.rs` דורש
+שה-Rust ייתן בדיוק אותו דבר (מספרים עד 1e-9, כולל נוסח בקשת התיקון). `he/rust-parity.test.mjs` משווה את שני
+המסלולים דרך `readInvoice`.
+
+- **JSON API אחד**: `invoice::api::call(method, request, bytes)`. מאחוריו: `pdf2md --invoice-json` / `--invoice-call`,
+  `invoiceCall` ב-wasm (ו-`readInvoice()` משתמש בו כשהוא קיים), ו-C ABI.
+- **C ABI** (`ffi/`): `pdfhe_call` / `pdfhe_free` / `pdfhe_abi_version`. נבנה כ-cdylib (אנדרואיד) וכ-staticlib (iOS). שגיאה
+  חוזרת כ-JSON, ו-panic נתפס.
+- **Dart** (`dart/pdf_inspector_he`): מעטפת `dart:ffi` עם טיפוסים, וקריאה ב-isolate. הבדיקות רצות מול ה-.so של המחשב.
+- **CI** (job `native`): בדיקות ה-C ABI וה-Dart, ובנייה לאנדרואיד (arm64-v8a, armeabi-v7a, x86_64) עם cargo-ndk.
+  ה-artifact הוא `pdf-inspector-he-native`.
+
+בדרך תוקנו שני דברים:
+- `invoiceInfo` זיהה את בלוק הספק לפי זהות האובייקט, ולכן חשבונית שעברה JSON איבדה את שם הספק.
+- פריטים מה-wasm לא נשאו סוג, ולכן `[Image: Image1]` נקרא כשדה בכותרת. עכשיו יש `itemType`.
+
+## קריאה אחת, מהירה יותר, ועם פרטי התשלום (2026-11-10)
+
+- **ה-PDF מפוענח פעם אחת.** עד כאן `read_invoice` הריץ את החילוץ פעמיים (Markdown, ואז פריטים עם מיקום).
+  עכשיו הפריטים נלקחים מאותו מעבר (`process_pdf_mem_with_items`). הפלט זהה בייט-בייט על הקורפוס; הזמן ירד
+  בכשליש (5 עמודים / 162 שורות: ‎256 → 160 מילי-שניות; 4 עמודים / 129 שורות: ‎248 → 154; שורה שגויה עם שלוש
+  קריאות חלופיות: ‎152 → 105).
+- **סיווג לפני קריאה.** `read_invoice` מסווג קודם (1–2 מילי-שניות): סריקה בלי שכבת טקסט, או מסמך ארוך מ-`max_pages`,
+  נענים `unreadable` בלי לחלץ כלום. אפליקציה לא צריכה לקרוא ל-`classify` לפני.
+- **`first_page`**: ה-Markdown של עמוד 1 חוזר באותה קריאה. קודם אפליקציה קראה ל-`process_pdf` בנפרד — עוד פענוח מלא.
+  יחד: בטלפון שלוש קריאות נייטיביות וארבעה פענוחים הפכו לקריאה אחת ופענוח אחד.
+- **בתשובה**: `page_count`, `engine` (הגרסה), `tuning`, `read_ms`.
+- **`details`** (`src/invoice/details.rs`) — מה שמי שמשלם את החשבונית צריך, ושעד כאן רק מודל שקרא את ה-PDF החזיר:
+  `due_date` ("לתשלום עד" / "תאריך פרעון" — רק תאריך מודפס; "שוטף" לבדו אינו תאריך), `payment_terms`,
+  `supplier_phone` ו-`supplier_address` (מהבלוק של מספר העוסק), `bank_code` / `bank_branch` / `bank_account`
+  (שלושתם או אף אחד, ורק אחרי "להעברה" / "פרטי בנק" — "סניף: סניף צפון" של חנות אינו סניף בנק), ו-`allocation_number`.
+  מה שלא מודפס הוא null. על ארבע החשבוניות בקורפוס: כל הפרטים נקראים (`details_of_the_corpus`).
+  ה-`details` נכתב ב-Rust בלבד; קריאה בשכבת ה-JS הישנה (`js: true`) לא מחזירה אותו.
 
 ## מה לא נבדק
 
-- **ה-wasm לא נבנה מקומית.** בסביבה שבה זה נכתב אין יעד `wasm32`. הבנייה הראשונה והבדיקה ב-Deno יקרו ב-GitHub Actions.
-- **קריאה ל-Claude לא נבדקה.** לא היה מפתח בסביבה. הלוגיקה סביבה נבדקה עם תשובות מדומות (`he/rtl-check.test.mjs`).
+- **ה-wasm נבנה ונבדק מקומית ב-Deno** (2026-11-08): כולל חבילת ה-Edge, `readInvoice` על ארבע החשבוניות ותיקון של שורה פגומה. **הרצה בתוך Supabase עצמה עדיין לא נבדקה.**
+- **תיקון עם LLM לא נבדק מול מודל אמיתי**: הבדיקות משתמשות בתשובות שנכתבו ביד. **קריאה ל-Claude לא נבדקה.** לא היה מפתח בסביבה. הלוגיקה סביבה נבדקה עם תשובות מדומות (`he/rtl-check.test.mjs`).
 - **הרצה בתוך Supabase לא נבדקה בפועל.**
+- **הספרייה על טלפון אמיתי**: ה-.so נבנה ב-CI. לא נוסו טעינה מתוך APK, זמן ריצה על מכשיר ו-iOS.
 - **תאים בכמה שורות** (תיאור מוצר שנשבר לשתי שורות בתוך התא): אין דוגמה בקורפוס, ולכן זה לא נבדק.
 - **חשבוניות סרוקות**: אין דוגמה. הכלי מזהה PDF סרוק ומחזיר שצריך OCR (`--ocr` בבנייה עם feature `ocr`), אבל שכבת החשבונית לא נבדקה על פלט OCR.
 - **חבילת הרגרסיה של Firecrawl** (`pdf-evals`, כ-200 PDFs) לא נגישה. יכול להיות שהשינויים (סף המילים, קריאת רצועות מלאות כקווים, חיבור קטעי קו, הפרדת שורות מוערמות) משפיעים על מסמכים אחרים. כל הבדיקות שבריפו עוברות (כ-1,960), כולל צילומי הפלט של כל קבצי הבדיקה. אם משהו נשבר במסמך אחר, הכיוון הראשון הוא ה-knobs.

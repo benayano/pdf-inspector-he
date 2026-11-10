@@ -57,6 +57,15 @@ export interface KnobDescription {
 /** Every knob: for documentation or the parameter schema of an LLM tool. */
 export function listKnobs(): KnobDescription[];
 
+/**
+ * The invoice layer (Rust, src/invoice/api.rs) behind one call: `method`
+ * read_invoice | apply_repair | invoice_csv | classify | process_pdf |
+ * list_knobs | version, `request` as JSON, `data` the PDF (or empty).
+ * Returns JSON: {"ok": true, "result": ...} or {"ok": false, "error": "..."}.
+ * he/repair.mjs readInvoice() uses it when present.
+ */
+export function invoiceCall(method: string, request: string, data: Uint8Array): string;
+
 /** A positioned run of text, in PDF points with the origin bottom-left. */
 export interface PositionedText {
   text: string;
@@ -72,6 +81,8 @@ export interface PositionedText {
   isItalic: boolean;
   /** Degrees counter-clockwise from +x: 0 upright, 90/270 vertical runs. */
   rotation: number;
+  /** "text", or a placeholder: "image" ("[Image: …]"), "link", "form_field". */
+  itemType: "text" | "image" | "link" | "form_field";
 }
 
 export function extractTextWithPositions(data: Uint8Array, options?: PositionOptions): PositionedText[];
@@ -235,6 +246,8 @@ struct WasmPositionedText {
     is_bold: bool,
     is_italic: bool,
     rotation: f32,
+    /// "text" | "image" | "link" | "form_field" (pdf2md --items-json: `item_type`).
+    item_type: &'static str,
 }
 
 #[derive(Debug, Deserialize)]
@@ -524,6 +537,12 @@ pub fn extract_text_with_positions(data: &[u8], options: JsValue) -> Result<JsVa
             is_bold: item.is_bold,
             is_italic: item.is_italic,
             rotation: item.rotation,
+            item_type: match item.item_type {
+                pdf_inspector::types::ItemType::Text => "text",
+                pdf_inspector::types::ItemType::Image => "image",
+                pdf_inspector::types::ItemType::Link(_) => "link",
+                pdf_inspector::types::ItemType::FormField => "form_field",
+            },
         })
         .collect();
     serialize(&items)
@@ -553,6 +572,11 @@ pub fn list_knobs() -> Result<JsValue, JsValue> {
 }
 
 /// Return the WebAssembly package version.
+#[wasm_bindgen(js_name = invoiceCall, skip_typescript)]
+pub fn invoice_call(method: &str, request: &str, data: &[u8]) -> String {
+    pdf_inspector::invoice::api::call(method, request, data).to_string()
+}
+
 #[wasm_bindgen(skip_typescript)]
 pub fn version() -> String {
     env!("CARGO_PKG_VERSION").to_string()

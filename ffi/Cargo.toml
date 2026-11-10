@@ -1,0 +1,24 @@
+[package]
+name = "pdf-inspector-ffi"
+version = "1.25.2"
+edition = "2021"
+description = "C ABI for pdf-inspector-he: one JSON call (Dart dart:ffi, Kotlin JNI, Swift)"
+license = "MIT"
+publish = false
+
+[lib]
+# cdylib: Android .so / desktop; staticlib: iOS.
+name = "pdf_inspector_he"
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[dependencies]
+pdf-inspector = { path = ".." }
+serde_json = "1"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
+# Never abort across the boundary: panics are caught and returned as errors.
+panic = "unwind"

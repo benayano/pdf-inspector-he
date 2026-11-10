@@ -9,7 +9,50 @@ version and date. Earlier releases are described in their
 
 ## [Unreleased]
 
+### Added (pdf-inspector-he)
+
+- **Invoice read: one pass, more in the answer.** `read_invoice` takes the positioned items from the
+  same extraction as the Markdown (about a third faster, identical output), classifies first
+  (`max_pages`; a scan is answered unread), and can return page 1's Markdown (`first_page`), with
+  `page_count`, `engine`, `tuning` and `read_ms`. New `details`: due date, payment terms, the
+  supplier's phone and address, bank number / branch / account, allocation number — null where not
+  printed. Dart: `ReadOptions.firstPage` / `maxPages`, `InvoiceRead.pageCount` / `engineVersion` /
+  `readMs` / `firstPage`, `InvoiceDocument.details`. JS: `readInvoice(..., {firstPage, maxPages})`.
+
+- Knob `latin_digit_split`: on a right-to-left line laid out word by word
+  (Priority / Winnovative invoices), a number shown a word gap before a Latin
+  word is its own token, so `HIGH TECH 1.5" 3000` no longer reads as
+  `3000 "1.5 HIGH TECH`. `auto` applies it only to lines that no Unicode
+  bidi reading reproduces; standard layouts are unchanged.
+- Invoice layer: a `site` column role ("תאור אתר"), `marker` / `is_return` /
+  `site_text` on records, `document_type`, and `recheck()`.
+- `he/repair.mjs`: assess, auto-repair from alternative readings, a compact
+  CSV repair request with a JSON answer schema, and `applyRepair`, which keeps
+  a correction only when the arithmetic then closes. `readInvoice()` runs it
+  all in one call.
+- Agent and JSON: `he/document.mjs` (one versioned JSON document per invoice, with
+  `he/invoice-document.schema.json`), `he/agent.mjs` (seven tools — read, rows, fix, text, JSON,
+  knobs, export — in Anthropic and MCP form), `he/mcp-server.mjs` (stdio MCP server, files
+  confined to `--root`), `he/cli.mjs` (JSON / CSV / repair request from the command line) and
+  `he/engines.mjs` (native binary or wasm behind one interface).
+- Edge package (`he/tools/build-edge.mjs`): the wasm embedded as gzip+base64
+  text with `await load()`, for Supabase Edge Functions; Deno smoke test.
+- The invoice layer in Rust (`src/invoice/`): one implementation behind every
+  binding, held to the JS original's output on the corpus
+  (`he/fixtures/golden/`, `tests/invoice_golden.rs`, `he/rust-parity.test.mjs`).
+  JSON API `invoice::api::call` (read_invoice, apply_repair, invoice_csv,
+  classify, process_pdf, list_knobs, version); `pdf2md --invoice-json` and
+  `--invoice-call`; wasm `invoiceCall`, which `readInvoice()` uses when present.
+- Apps: a C ABI (`ffi/`, `pdfhe_call` / `pdfhe_free` / `pdfhe_abi_version`;
+  cdylib for Android, staticlib for iOS) and a Dart package over it
+  (`dart/pdf_inspector_he`, `dart:ffi`). CI job `native` builds the Android
+  libraries for arm64-v8a, armeabi-v7a and x86_64.
+- wasm `extractTextWithPositions` items carry `itemType`.
+
 ### Fixed
+
+- `invoiceInfo` found the supplier's header block by object identity, so an
+  invoice that went through JSON lost its supplier name. Now by value.
 
 - A TrueType subset with no `cmap`, no glyph names and no ToUnicode that
   comes from a core Windows font (Arial, Times New Roman, Verdana, ...) is

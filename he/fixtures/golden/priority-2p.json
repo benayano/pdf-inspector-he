@@ -1,0 +1,2659 @@
+{
+ "invoice": {
+  "rtl": true,
+  "header": {
+   "blocks": [
+    {
+     "page": 1,
+     "top": 835.0300000000001,
+     "left": 459.61,
+     "right": 588.69,
+     "lines": [
+      "ס.ת. קלבזוף איחכו פזווך דא\"א",
+      "פפו עד",
+      "תחיש לאר 26558",
+      "טלפון: 608473448 , פקס: 94637836056",
+      "עוסק מורשה: 089697773",
+      "מס. תיק ניכויים: 774602716"
+     ],
+     "text": "ס.ת. קלבזוף איחכו פזווך דא\"א\nפפו עד\nתחיש לאר 26558\nטלפון: 608473448 , פקס: 94637836056\nעוסק מורשה: 089697773\nמס. תיק ניכויים: 774602716",
+     "fields": [
+      {
+       "label": "טלפון",
+       "value": "608473448",
+       "page": 1,
+       "y": 792.61
+      },
+      {
+       "label": "פקס",
+       "value": "94637836056",
+       "page": 1,
+       "y": 792.61
+      },
+      {
+       "label": "עוסק מורשה",
+       "value": "089697773",
+       "page": 1,
+       "y": 782.73
+      },
+      {
+       "label": "מס. תיק ניכויים",
+       "value": "774602716",
+       "page": 1,
+       "y": 773.44
+      }
+     ]
+    },
+    {
+     "page": 1,
+     "top": 754.26,
+     "left": 521.21,
+     "right": 588.25,
+     "lines": [
+      "לכבוד:",
+      "טזך עינזטך",
+      "טלפון: 9102760280"
+     ],
+     "text": "לכבוד:\nטזך עינזטך\nטלפון: 9102760280",
+     "fields": [
+      {
+       "label": "טלפון",
+       "value": "9102760280",
+       "page": 1,
+       "y": 728.11
+      }
+     ]
+    },
+    {
+     "page": 1,
+     "top": 754.26,
+     "left": 76.12,
+     "right": 165.75,
+     "lines": [
+      "תאריך חשבונית: 30/09/22",
+      "תאריך הדפסה: 06/10/22",
+      "שעת הדפסה: 15:52",
+      "מספר תעודה: IS782235329",
+      "פרטים: חש. מרכזת החפ-95"
+     ],
+     "text": "תאריך חשבונית: 30/09/22\nתאריך הדפסה: 06/10/22\nשעת הדפסה: 15:52\nמספר תעודה: IS782235329\nפרטים: חש. מרכזת החפ-95",
+     "fields": [
+      {
+       "label": "תאריך חשבונית",
+       "value": "30/09/22",
+       "page": 1,
+       "y": 746.71
+      },
+      {
+       "label": "תאריך הדפסה",
+       "value": "06/10/22",
+       "page": 1,
+       "y": 737.41
+      },
+      {
+       "label": "שעת הדפסה",
+       "value": "15:52",
+       "page": 1,
+       "y": 728.11
+      },
+      {
+       "label": "מספר תעודה",
+       "value": "IS782235329",
+       "page": 1,
+       "y": 718.82
+      },
+      {
+       "label": "פרטים",
+       "value": "חש. מרכזת החפ-95",
+       "page": 1,
+       "y": 709.52
+      }
+     ]
+    },
+    {
+     "page": 1,
+     "top": 625.27,
+     "left": 174.9,
+     "right": 420.12,
+     "lines": [
+      "חשבונית מס מרכזת AL044333092 - מקור (מסמך ממוחשב)"
+     ],
+     "text": "חשבונית מס מרכזת AL044333092 - מקור (מסמך ממוחשב)",
+     "fields": []
+    }
+   ],
+   "fields": [
+    {
+     "label": "טלפון",
+     "value": "608473448",
+     "page": 1,
+     "y": 792.61
+    },
+    {
+     "label": "פקס",
+     "value": "94637836056",
+     "page": 1,
+     "y": 792.61
+    },
+    {
+     "label": "עוסק מורשה",
+     "value": "089697773",
+     "page": 1,
+     "y": 782.73
+    },
+    {
+     "label": "מס. תיק ניכויים",
+     "value": "774602716",
+     "page": 1,
+     "y": 773.44
+    },
+    {
+     "label": "טלפון",
+     "value": "9102760280",
+     "page": 1,
+     "y": 728.11
+    },
+    {
+     "label": "תאריך חשבונית",
+     "value": "30/09/22",
+     "page": 1,
+     "y": 746.71
+    },
+    {
+     "label": "תאריך הדפסה",
+     "value": "06/10/22",
+     "page": 1,
+     "y": 737.41
+    },
+    {
+     "label": "שעת הדפסה",
+     "value": "15:52",
+     "page": 1,
+     "y": 728.11
+    },
+    {
+     "label": "מספר תעודה",
+     "value": "IS782235329",
+     "page": 1,
+     "y": 718.82
+    },
+    {
+     "label": "פרטים",
+     "value": "חש. מרכזת החפ-95",
+     "page": 1,
+     "y": 709.52
+    }
+   ]
+  },
+  "lines": {
+   "columns": [
+    {
+     "name": "ש.",
+     "role": "index"
+    },
+    {
+     "name": "תאור אתר",
+     "role": "site"
+    },
+    {
+     "name": "תאריך התעודה",
+     "role": "date"
+    },
+    {
+     "name": "תעודה",
+     "role": "deliveryNote"
+    },
+    {
+     "name": "מק\"ט",
+     "role": "sku"
+    },
+    {
+     "name": "תאור מוצר",
+     "role": "description"
+    },
+    {
+     "name": "כמות",
+     "role": "quantity"
+    },
+    {
+     "name": "מחיר ליחידה",
+     "role": "unitPrice"
+    },
+    {
+     "name": "הנחה",
+     "role": "discount"
+    },
+    {
+     "name": "סה\"כ מחיר",
+     "role": "total"
+    }
+   ],
+   "rows": [
+    {
+     "page": 1,
+     "cells": [
+      "1",
+      "",
+      "05/09/22",
+      "SH22033247",
+      "BAR-S1821716450",
+      "בורג איסכורית \"1. קודח. (350 בחבילה) ברסיס",
+      "1.00 חב",
+      "166.67 ש\"ח",
+      "25.00%",
+      "125.00"
+     ],
+     "values": {
+      "index": 1,
+      "date": "05/09/22",
+      "deliveryNote": "SH22033247",
+      "sku": "BAR-S1821716450",
+      "description": "בורג איסכורית \"1. קודח. (350 בחבילה) ברסיס",
+      "quantity": 1,
+      "unit": "חב",
+      "unitPrice": 166.67,
+      "discount": 25,
+      "total": 125
+     },
+     "check": {
+      "ok": true,
+      "expected": 125,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "2",
+      "",
+      "05/09/22",
+      "SH22033247",
+      "NOA-127-12",
+      "עוגן גמבו 3/8 (כ 9 ממ) רגיל. מחיר ליחידה",
+      "50.00 יח'",
+      "2.99 ש\"ח",
+      "28.00%",
+      "107.64"
+     ],
+     "values": {
+      "index": 2,
+      "date": "05/09/22",
+      "deliveryNote": "SH22033247",
+      "sku": "NOA-127-12",
+      "description": "עוגן גמבו 3/8 (כ 9 ממ) רגיל. מחיר ליחידה",
+      "quantity": 50,
+      "unit": "יח'",
+      "unitPrice": 2.99,
+      "discount": 28,
+      "total": 107.64
+     },
+     "check": {
+      "ok": true,
+      "expected": 107.64,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "3",
+      "",
+      "05/09/22",
+      "SH22033247",
+      "3+",
+      "לקח פיפו זיוהץ",
+      "1.00 יח'",
+      "0.01 ש\"ח",
+      "",
+      "0.01"
+     ],
+     "values": {
+      "index": 3,
+      "date": "05/09/22",
+      "deliveryNote": "SH22033247",
+      "sku": "3+",
+      "description": "לקח פיפו זיוהץ",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 0.01,
+      "total": 0.01
+     },
+     "check": {
+      "ok": true,
+      "expected": 0.01,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "4",
+      "צמכוף",
+      "08/09/22",
+      "SH22033994",
+      "APO-101025",
+      "בלה ריקה רגילה 60\\60\\80",
+      "50.00 יח'",
+      "10.26 ש\"ח",
+      "8.00%",
+      "471.96"
+     ],
+     "values": {
+      "index": 4,
+      "site": "צמכוף",
+      "date": "08/09/22",
+      "deliveryNote": "SH22033994",
+      "sku": "APO-101025",
+      "description": "בלה ריקה רגילה 60\\60\\80",
+      "quantity": 50,
+      "unit": "יח'",
+      "unitPrice": 10.26,
+      "discount": 8,
+      "total": 471.96
+     },
+     "check": {
+      "ok": true,
+      "expected": 471.96,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "5",
+      "פהכוף",
+      "08/09/22",
+      "SH22033994",
+      "2.",
+      "לקח ויתמו",
+      "1.00 יח'",
+      "0.01 ש\"ח",
+      "",
+      "0.01"
+     ],
+     "values": {
+      "index": 5,
+      "site": "פהכוף",
+      "date": "08/09/22",
+      "deliveryNote": "SH22033994",
+      "sku": "2.",
+      "description": "לקח ויתמו",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 0.01,
+      "total": 0.01
+     },
+     "check": {
+      "ok": true,
+      "expected": 0.01,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "6",
+      "",
+      "11/09/22",
+      "SH22034280",
+      "NOA-5905.1",
+      "ציר ספר כנף לריתוך 10 ממ שחור פתוח/סגור",
+      "2.00 יח'",
+      "6.84 ש\"ח",
+      "10.00%",
+      "12.31"
+     ],
+     "values": {
+      "index": 6,
+      "date": "11/09/22",
+      "deliveryNote": "SH22034280",
+      "sku": "NOA-5905.1",
+      "description": "ציר ספר כנף לריתוך 10 ממ שחור פתוח/סגור",
+      "quantity": 2,
+      "unit": "יח'",
+      "unitPrice": 6.84,
+      "discount": 10,
+      "total": 12.31
+     },
+     "check": {
+      "ok": true,
+      "expected": 12.31,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "7",
+      "",
+      "11/09/22",
+      "SH22034280",
+      "3+",
+      "לקח טיצו זיוסץ",
+      "1.00 יח'",
+      "0.01 ש\"ח",
+      "",
+      "0.01"
+     ],
+     "values": {
+      "index": 7,
+      "date": "11/09/22",
+      "deliveryNote": "SH22034280",
+      "sku": "3+",
+      "description": "לקח טיצו זיוסץ",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 0.01,
+      "total": 0.01
+     },
+     "check": {
+      "ok": true,
+      "expected": 0.01,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "8",
+      "",
+      "13/09/22",
+      "SH22034802",
+      "miko-1113",
+      "קצף פוליאורטן דאן בראוון 825 מל להדבקת קלקר",
+      "72.00 יח'",
+      "44.44 ש\"ח",
+      "16.00%",
+      "2,687.73"
+     ],
+     "values": {
+      "index": 8,
+      "date": "13/09/22",
+      "deliveryNote": "SH22034802",
+      "sku": "miko-1113",
+      "description": "קצף פוליאורטן דאן בראוון 825 מל להדבקת קלקר",
+      "quantity": 72,
+      "unit": "יח'",
+      "unitPrice": 44.44,
+      "discount": 16,
+      "total": 2687.73
+     },
+     "check": {
+      "ok": true,
+      "expected": 2687.73,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "9",
+      "",
+      "13/09/22",
+      "SH22034802",
+      "7.",
+      "לקח ביזו",
+      "1.00 יח'",
+      "0.01 ש\"ח",
+      "",
+      "0.01"
+     ],
+     "values": {
+      "index": 9,
+      "date": "13/09/22",
+      "deliveryNote": "SH22034802",
+      "sku": "7.",
+      "description": "לקח ביזו",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 0.01,
+      "total": 0.01
+     },
+     "check": {
+      "ok": true,
+      "expected": 0.01,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "10",
+      "",
+      "18/09/22",
+      "SH22035486",
+      "ZAN-174",
+      "ספוג כחול פשוט לרובה ועוד",
+      "6.00 יח'",
+      "5.13 ש\"ח",
+      "15.00%",
+      "26.16"
+     ],
+     "values": {
+      "index": 10,
+      "date": "18/09/22",
+      "deliveryNote": "SH22035486",
+      "sku": "ZAN-174",
+      "description": "ספוג כחול פשוט לרובה ועוד",
+      "quantity": 6,
+      "unit": "יח'",
+      "unitPrice": 5.13,
+      "discount": 15,
+      "total": 26.16
+     },
+     "check": {
+      "ok": true,
+      "expected": 26.16,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "11",
+      "",
+      "18/09/22",
+      "SH22035486",
+      "VIN-3518",
+      "חורץ רובה האיכותי גראאט נק",
+      "1.00 יח'",
+      "29.91 ש\"ח",
+      "",
+      "29.91"
+     ],
+     "values": {
+      "index": 11,
+      "date": "18/09/22",
+      "deliveryNote": "SH22035486",
+      "sku": "VIN-3518",
+      "description": "חורץ רובה האיכותי גראאט נק",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 29.91,
+      "total": 29.91
+     },
+     "check": {
+      "ok": true,
+      "expected": 29.91,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "12",
+      "",
+      "18/09/22",
+      "SH22035486",
+      "26",
+      "לקח זוצ",
+      "1.00 יח'",
+      "0.01 ש\"ח",
+      "",
+      "0.01"
+     ],
+     "values": {
+      "index": 12,
+      "date": "18/09/22",
+      "deliveryNote": "SH22035486",
+      "sku": "26",
+      "description": "לקח זוצ",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 0.01,
+      "total": 0.01
+     },
+     "check": {
+      "ok": true,
+      "expected": 0.01,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "13",
+      "",
+      "18/09/22",
+      "SH22035511",
+      "ROC-121000948",
+      "חומצת מלח 32 אחוז 4 ליטר",
+      "1.00 יח'",
+      "25.64 ש\"ח",
+      "",
+      "25.64"
+     ],
+     "values": {
+      "index": 13,
+      "date": "18/09/22",
+      "deliveryNote": "SH22035511",
+      "sku": "ROC-121000948",
+      "description": "חומצת מלח 32 אחוז 4 ליטר",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 25.64,
+      "total": 25.64
+     },
+     "check": {
+      "ok": true,
+      "expected": 25.64,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "14",
+      "",
+      "18/09/22",
+      "SH22035511",
+      "2.",
+      "לקח זוצ",
+      "1.00 יח'",
+      "0.01 ש\"ח",
+      "",
+      "0.01"
+     ],
+     "values": {
+      "index": 14,
+      "date": "18/09/22",
+      "deliveryNote": "SH22035511",
+      "sku": "2.",
+      "description": "לקח זוצ",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 0.01,
+      "total": 0.01
+     },
+     "check": {
+      "ok": true,
+      "expected": 0.01,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "15",
+      "",
+      "19/09/22",
+      "SH22035678",
+      "TIA-2",
+      "שליכט צבעוני T150 בסיס W טיח הארץ",
+      "1.00 יח'",
+      "226.50 ש\"ח",
+      "10.00%",
+      "203.85"
+     ],
+     "values": {
+      "index": 15,
+      "date": "19/09/22",
+      "deliveryNote": "SH22035678",
+      "sku": "TIA-2",
+      "description": "שליכט צבעוני T150 בסיס W טיח הארץ",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 226.5,
+      "discount": 10,
+      "total": 203.85
+     },
+     "check": {
+      "ok": true,
+      "expected": 203.85,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "16",
+      "",
+      "19/09/22",
+      "SH22035678",
+      "12809",
+      "תוספת גיוון בגוון",
+      "1.00 יח'",
+      "8.55 ש\"ח",
+      "",
+      "8.55"
+     ],
+     "values": {
+      "index": 16,
+      "date": "19/09/22",
+      "deliveryNote": "SH22035678",
+      "sku": "12809",
+      "description": "תוספת גיוון בגוון",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 8.55,
+      "total": 8.55
+     },
+     "check": {
+      "ok": true,
+      "expected": 8.55,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "17",
+      "",
+      "19/09/22",
+      "SH22035678",
+      "2.",
+      "לקח זוב",
+      "1.00 יח'",
+      "0.01 ש\"ח",
+      "",
+      "0.01"
+     ],
+     "values": {
+      "index": 17,
+      "date": "19/09/22",
+      "deliveryNote": "SH22035678",
+      "sku": "2.",
+      "description": "לקח זוב",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 0.01,
+      "total": 0.01
+     },
+     "check": {
+      "ok": true,
+      "expected": 0.01,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "18",
+      "",
+      "20/09/22",
+      "SH22035906",
+      "tzb-21027",
+      "מכסה 110 עליון לבן קנט רחב/ דק.",
+      "1.00 יח'",
+      "6.84 ש\"ח",
+      "15.00%",
+      "5.81"
+     ],
+     "values": {
+      "index": 18,
+      "date": "20/09/22",
+      "deliveryNote": "SH22035906",
+      "sku": "tzb-21027",
+      "description": "מכסה 110 עליון לבן קנט רחב/ דק.",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 6.84,
+      "discount": 15,
+      "total": 5.81
+     },
+     "check": {
+      "ok": true,
+      "expected": 5.81,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "19",
+      "",
+      "20/09/22",
+      "SH22035906",
+      "3+",
+      "לקח זוצ",
+      "1.00 יח'",
+      "0.01 ש\"ח",
+      "",
+      "0.01"
+     ],
+     "values": {
+      "index": 19,
+      "date": "20/09/22",
+      "deliveryNote": "SH22035906",
+      "sku": "3+",
+      "description": "לקח זוצ",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 0.01,
+      "total": 0.01
+     },
+     "check": {
+      "ok": true,
+      "expected": 0.01,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "20",
+      "",
+      "20/09/22",
+      "SH22035925",
+      "CER-135577",
+      "חרסה כיור חרצית 40 לבן עם חור",
+      "1.00 יח'",
+      "179.49 ש\"ח",
+      "10.00%",
+      "161.54"
+     ],
+     "values": {
+      "index": 20,
+      "date": "20/09/22",
+      "deliveryNote": "SH22035925",
+      "sku": "CER-135577",
+      "description": "חרסה כיור חרצית 40 לבן עם חור",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 179.49,
+      "discount": 10,
+      "total": 161.54
+     },
+     "check": {
+      "ok": true,
+      "expected": 161.54,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "21",
+      "",
+      "20/09/22",
+      "SH22035925",
+      "ZM-26801",
+      "ברז ניל אורגינל 3/8 צול",
+      "8.00 יח'",
+      "23.93 ש\"ח",
+      "16.00%",
+      "160.81"
+     ],
+     "values": {
+      "index": 21,
+      "date": "20/09/22",
+      "deliveryNote": "SH22035925",
+      "sku": "ZM-26801",
+      "description": "ברז ניל אורגינל 3/8 צול",
+      "quantity": 8,
+      "unit": "יח'",
+      "unitPrice": 23.93,
+      "discount": 16,
+      "total": 160.81
+     },
+     "check": {
+      "ok": true,
+      "expected": 160.81,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "22",
+      "",
+      "20/09/22",
+      "SH22035925",
+      "ZM-268011",
+      "ברז ניל אורגינל 1/2 צול",
+      "2.00 יח'",
+      "24.22 ש\"ח",
+      "16.00%",
+      "40.69"
+     ],
+     "values": {
+      "index": 22,
+      "date": "20/09/22",
+      "deliveryNote": "SH22035925",
+      "sku": "ZM-268011",
+      "description": "ברז ניל אורגינל 1/2 צול",
+      "quantity": 2,
+      "unit": "יח'",
+      "unitPrice": 24.22,
+      "discount": 16,
+      "total": 40.69
+     },
+     "check": {
+      "ok": true,
+      "expected": 40.69,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "23",
+      "",
+      "20/09/22",
+      "SH22035925",
+      "MTI-16000",
+      "אמבטיה קיוביק 160*70 לבן",
+      "1.00 יח'",
+      "688.03 ש\"ח",
+      "10.00%",
+      "619.23"
+     ],
+     "values": {
+      "index": 23,
+      "date": "20/09/22",
+      "deliveryNote": "SH22035925",
+      "sku": "MTI-16000",
+      "description": "אמבטיה קיוביק 160*70 לבן",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 688.03,
+      "discount": 10,
+      "total": 619.23
+     },
+     "check": {
+      "ok": true,
+      "expected": 619.23,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "24",
+      "",
+      "20/09/22",
+      "SH22035925",
+      "YW-71021",
+      "ברז כביסה רגיל מהיר (מיני) קצר YW\\ZM",
+      "1.00 יח'",
+      "19.66 ש\"ח",
+      "16.00%",
+      "16.51"
+     ],
+     "values": {
+      "index": 24,
+      "date": "20/09/22",
+      "deliveryNote": "SH22035925",
+      "sku": "YW-71021",
+      "description": "ברז כביסה רגיל מהיר (מיני) קצר YW\\ZM",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 19.66,
+      "discount": 16,
+      "total": 16.51
+     },
+     "check": {
+      "ok": true,
+      "expected": 16.51,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "25",
+      "",
+      "20/09/22",
+      "SH22035925",
+      "TAI-23102",
+      "דלת קומפלט (+משקוף) צבע אגוז 80 שמאל",
+      "1.00 יח'",
+      "512.82 ש\"ח",
+      "10.00%",
+      "461.54"
+     ],
+     "values": {
+      "index": 25,
+      "date": "20/09/22",
+      "deliveryNote": "SH22035925",
+      "sku": "TAI-23102",
+      "description": "דלת קומפלט (+משקוף) צבע אגוז 80 שמאל",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 512.82,
+      "discount": 10,
+      "total": 461.54
+     },
+     "check": {
+      "ok": true,
+      "expected": 461.54,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "26",
+      "",
+      "20/09/22",
+      "SH22035925",
+      "9.",
+      "דזוא זיוסץ הזמין ואוסף",
+      "1.00 יח'",
+      "0.01 ש\"ח",
+      "",
+      "0.01"
+     ],
+     "values": {
+      "index": 26,
+      "date": "20/09/22",
+      "deliveryNote": "SH22035925",
+      "sku": "9.",
+      "description": "דזוא זיוסץ הזמין ואוסף",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 0.01,
+      "total": 0.01
+     },
+     "check": {
+      "ok": true,
+      "expected": 0.01,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "27",
+      "",
+      "20/09/22",
+      "SH22035925",
+      "9.",
+      "אספקה לסניף ולאצ הלקוח אוסף משם",
+      "1.00 יח'",
+      "0.01 ש\"ח",
+      "",
+      "0.01"
+     ],
+     "values": {
+      "index": 27,
+      "date": "20/09/22",
+      "deliveryNote": "SH22035925",
+      "sku": "9.",
+      "description": "אספקה לסניף ולאצ הלקוח אוסף משם",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 0.01,
+      "total": 0.01
+     },
+     "check": {
+      "ok": true,
+      "expected": 0.01,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "28",
+      "",
+      "29/09/22",
+      "SH22036676",
+      "GOL-G0650451",
+      "ולסיר ברך 110-15º כחול טריפלוס",
+      "4.00 יח'",
+      "41.15 ש\"ח",
+      "40.00%",
+      "98.76"
+     ],
+     "values": {
+      "index": 28,
+      "date": "29/09/22",
+      "deliveryNote": "SH22036676",
+      "sku": "GOL-G0650451",
+      "description": "ולסיר ברך 110-15º כחול טריפלוס",
+      "quantity": 4,
+      "unit": "יח'",
+      "unitPrice": 41.15,
+      "discount": 40,
+      "total": 98.76
+     },
+     "check": {
+      "ok": true,
+      "expected": 98.76,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "29",
+      "",
+      "29/09/22",
+      "SH22036676",
+      "GOL-G0650811",
+      "ולסיר מצמד שרוול 110 כחול טריפלוס",
+      "2.00 יח'",
+      "55.45 ש\"ח",
+      "40.00%",
+      "66.54"
+     ],
+     "values": {
+      "index": 29,
+      "date": "29/09/22",
+      "deliveryNote": "SH22036676",
+      "sku": "GOL-G0650811",
+      "description": "ולסיר מצמד שרוול 110 כחול טריפלוס",
+      "quantity": 2,
+      "unit": "יח'",
+      "unitPrice": 55.45,
+      "discount": 40,
+      "total": 66.54
+     },
+     "check": {
+      "ok": true,
+      "expected": 66.54,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "30",
+      "",
+      "29/09/22",
+      "SH22036676",
+      "SAL-8954394",
+      "מסעף 87 מעודן T 110/110/110 כתום חוליות",
+      "2.00 יח'",
+      "21.37 ש\"ח",
+      "15.00%",
+      "36.33"
+     ],
+     "values": {
+      "index": 30,
+      "date": "29/09/22",
+      "deliveryNote": "SH22036676",
+      "sku": "SAL-8954394",
+      "description": "מסעף 87 מעודן T 110/110/110 כתום חוליות",
+      "quantity": 2,
+      "unit": "יח'",
+      "unitPrice": 21.37,
+      "discount": 15,
+      "total": 36.33
+     },
+     "check": {
+      "ok": true,
+      "expected": 36.33,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "31",
+      "",
+      "29/09/22",
+      "SH22036676",
+      "7.",
+      "לקח תהיטצ זוגבו",
+      "1.00 יח'",
+      "0.01 ש\"ח",
+      "",
+      "0.01"
+     ],
+     "values": {
+      "index": 31,
+      "date": "29/09/22",
+      "deliveryNote": "SH22036676",
+      "sku": "7.",
+      "description": "לקח תהיטצ זוגבו",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 0.01,
+      "total": 0.01
+     },
+     "check": {
+      "ok": true,
+      "expected": 0.01,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "32",
+      "",
+      "29/09/22",
+      "SH22036919",
+      "ELK-50520",
+      "בלוק 20*20*40 (50 במשטח)",
+      "1,000.00 יח'",
+      "4.20 ש\"ח",
+      "",
+      "4,200.00"
+     ],
+     "values": {
+      "index": 32,
+      "date": "29/09/22",
+      "deliveryNote": "SH22036919",
+      "sku": "ELK-50520",
+      "description": "בלוק 20*20*40 (50 במשטח)",
+      "quantity": 1000,
+      "unit": "יח'",
+      "unitPrice": 4.2,
+      "total": 4200
+     },
+     "check": {
+      "ok": true,
+      "expected": 4200,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "33",
+      "",
+      "29/09/22",
+      "SH22036919",
+      "1234",
+      "20 משטחים",
+      "1.00 יח'",
+      "0.01 ש\"ח",
+      "",
+      "0.01"
+     ],
+     "values": {
+      "index": 33,
+      "date": "29/09/22",
+      "deliveryNote": "SH22036919",
+      "sku": "1234",
+      "description": "20 משטחים",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 0.01,
+      "total": 0.01
+     },
+     "check": {
+      "ok": true,
+      "expected": 0.01,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "34",
+      "",
+      "29/09/22",
+      "SH22036919",
+      "000",
+      "בלוק תעלה U 40*20*20 מחיר לבלוק. (50 במשטח)",
+      "500.00 יח'",
+      "4.80 ש\"ח",
+      "",
+      "2,400.00"
+     ],
+     "values": {
+      "index": 34,
+      "date": "29/09/22",
+      "deliveryNote": "SH22036919",
+      "sku": "000",
+      "description": "בלוק תעלה U 40*20*20 מחיר לבלוק. (50 במשטח)",
+      "quantity": 500,
+      "unit": "יח'",
+      "unitPrice": 4.8,
+      "total": 2400
+     },
+     "check": {
+      "ok": true,
+      "expected": 2400,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "35",
+      "",
+      "29/09/22",
+      "SH22036919",
+      "1234",
+      "10 משטחים",
+      "1.00 יח'",
+      "0.01 ש\"ח",
+      "",
+      "0.01"
+     ],
+     "values": {
+      "index": 35,
+      "date": "29/09/22",
+      "deliveryNote": "SH22036919",
+      "sku": "1234",
+      "description": "10 משטחים",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 0.01,
+      "total": 0.01
+     },
+     "check": {
+      "ok": true,
+      "expected": 0.01,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "36",
+      "",
+      "29/09/22",
+      "SH22036919",
+      "25845",
+      "חיוב משטח ריק בלוקים",
+      "30.00 יח'",
+      "20.00 ש\"ח",
+      "",
+      "600.00"
+     ],
+     "values": {
+      "index": 36,
+      "date": "29/09/22",
+      "deliveryNote": "SH22036919",
+      "sku": "25845",
+      "description": "חיוב משטח ריק בלוקים",
+      "quantity": 30,
+      "unit": "יח'",
+      "unitPrice": 20,
+      "total": 600
+     },
+     "check": {
+      "ok": true,
+      "expected": 600,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "37",
+      "",
+      "29/09/22",
+      "SH22036919",
+      "000",
+      "משאית מנוף כצהכוף",
+      "1.00 יח'",
+      "500.00 ש\"ח",
+      "",
+      "500.00"
+     ],
+     "values": {
+      "index": 37,
+      "date": "29/09/22",
+      "deliveryNote": "SH22036919",
+      "sku": "000",
+      "description": "משאית מנוף כצהכוף",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 500,
+      "total": 500
+     },
+     "check": {
+      "ok": true,
+      "expected": 500,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "38",
+      "",
+      "29/09/22",
+      "SH22036919",
+      "1234",
+      "אספקה ישירה",
+      "1.00 יח'",
+      "0.01 ש\"ח",
+      "",
+      "0.01"
+     ],
+     "values": {
+      "index": 38,
+      "date": "29/09/22",
+      "deliveryNote": "SH22036919",
+      "sku": "1234",
+      "description": "אספקה ישירה",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 0.01,
+      "total": 0.01
+     },
+     "check": {
+      "ok": true,
+      "expected": 0.01,
+      "diff": 0
+     }
+    }
+   ],
+   "pages": [
+    1
+   ]
+  },
+  "totals": [
+   {
+    "label": "מחיר כולל",
+    "value": 13066.65,
+    "currency": null,
+    "percent": null,
+    "role": "subtotal",
+    "page": 2
+   },
+   {
+    "label": "הנחה כללית (0.00%)",
+    "value": -0.02,
+    "currency": null,
+    "percent": 0,
+    "role": "discount",
+    "page": 2
+   },
+   {
+    "label": "מחיר אחרי הנחה",
+    "value": 13066.67,
+    "currency": null,
+    "percent": null,
+    "role": "afterDiscount",
+    "page": 2
+   },
+   {
+    "label": "מע\"מ (17.00%)",
+    "value": 2221.33,
+    "currency": null,
+    "percent": 17,
+    "role": "vat",
+    "page": 2
+   },
+   {
+    "label": "סה\"כ מחיר",
+    "value": 15288,
+    "currency": "ILS",
+    "percent": null,
+    "role": "total",
+    "page": 2
+   },
+   {
+    "label": "יתרה בהנח\"ש",
+    "value": 15288,
+    "currency": "ILS",
+    "percent": null,
+    "role": "balance",
+    "page": 2
+   }
+  ],
+  "footer": {
+   "fields": [
+    {
+     "label": "ברקוד מספר חשבונית",
+     "value": "*BL092298549*",
+     "page": 2,
+     "y": 609.58
+    },
+    {
+     "label": "מחיר כולל",
+     "value": "13,066.65",
+     "page": 2,
+     "y": 610.16
+    },
+    {
+     "label": "לתשלום עד",
+     "value": "30/11/22",
+     "page": 2,
+     "y": 599.7
+    },
+    {
+     "label": "הנחה כללית (0.00%)",
+     "value": "0.02-",
+     "page": 2,
+     "y": 599.7
+    },
+    {
+     "label": "תנאי תשלום",
+     "value": "ת84",
+     "page": 2,
+     "y": 590.4
+    },
+    {
+     "label": "מחיר אחרי הנחה",
+     "value": "13,066.67",
+     "page": 2,
+     "y": 585.17
+    },
+    {
+     "label": "מס. לקוח",
+     "value": "739643",
+     "page": 2,
+     "y": 581.11
+    },
+    {
+     "label": "מע\"מ (17.00%)",
+     "value": "2,221.33",
+     "page": 2,
+     "y": 574.71
+    },
+    {
+     "label": "סוכן",
+     "value": "ובאר זיבכחץ",
+     "page": 2,
+     "y": 571.81
+    },
+    {
+     "label": "סה\"כ מחיר",
+     "value": "15,288.00 ש\"ח",
+     "page": 2,
+     "y": 560.19
+    },
+    {
+     "label": "יתרה בהנח\"ש",
+     "value": "15,288.00 ש\"ח",
+     "page": 2,
+     "y": 552.63
+    },
+    {
+     "label": "סניף",
+     "value": "סניף תוצת",
+     "page": 2,
+     "y": 535.78
+    },
+    {
+     "label": "פרטי בנק להעברה חזההוט",
+     "value": "בנק חפוזכסיתו (31), סניף 034 חשבון 760768 ק\"ת ת.ת. סלאזוף סיאדו חזווך פב\"ט",
+     "page": 2,
+     "y": 438.75
+    }
+   ]
+  },
+  "checks": [
+   {
+    "name": "lines-sum",
+    "ok": true,
+    "expected": 13066.65,
+    "actual": 13066.65,
+    "diff": 0,
+    "label": "מחיר כולל"
+   },
+   {
+    "name": "line-arithmetic",
+    "ok": true,
+    "checked": 38,
+    "failed": []
+   },
+   {
+    "name": "discount",
+    "ok": true,
+    "expected": 13066.67,
+    "actual": 13066.67,
+    "diff": 0,
+    "sign": "plus"
+   },
+   {
+    "name": "vat",
+    "ok": true,
+    "expected": 2221.33,
+    "actual": 2221.33,
+    "diff": 0
+   },
+   {
+    "name": "grand-total",
+    "ok": true,
+    "expected": 15288,
+    "actual": 15288,
+    "diff": 0
+   }
+  ]
+ },
+ "document": {
+  "schema": "pdf-inspector-he/invoice-document@1",
+  "pdf": {
+   "type": "TextBased",
+   "pages": [
+    1
+   ]
+  },
+  "status": "ok",
+  "reasons": [],
+  "invoice": {
+   "document_type": "invoice",
+   "invoice_number": "IS782235329",
+   "invoice_date": "2022-09-30",
+   "supplier_name": "ס.ת. קלבזוף איחכו פזווך דא\"א",
+   "supplier_tax_id": "089697773",
+   "subtotal": 13066.65,
+   "discount": -0.02,
+   "after_discount": 13066.67,
+   "vat_rate": 17,
+   "vat": 2221.33,
+   "total": 15288,
+   "currency": "ILS",
+   "checks_ok": true
+  },
+  "header": {
+   "fields": [
+    {
+     "label": "טלפון",
+     "value": "608473448"
+    },
+    {
+     "label": "פקס",
+     "value": "94637836056"
+    },
+    {
+     "label": "עוסק מורשה",
+     "value": "089697773"
+    },
+    {
+     "label": "מס. תיק ניכויים",
+     "value": "774602716"
+    },
+    {
+     "label": "טלפון",
+     "value": "9102760280"
+    },
+    {
+     "label": "תאריך חשבונית",
+     "value": "30/09/22"
+    },
+    {
+     "label": "תאריך הדפסה",
+     "value": "06/10/22"
+    },
+    {
+     "label": "שעת הדפסה",
+     "value": "15:52"
+    },
+    {
+     "label": "מספר תעודה",
+     "value": "IS782235329"
+    },
+    {
+     "label": "פרטים",
+     "value": "חש. מרכזת החפ-95"
+    }
+   ],
+   "blocks": [
+    {
+     "page": 1,
+     "text": "ס.ת. קלבזוף איחכו פזווך דא\"א\nפפו עד\nתחיש לאר 26558\nטלפון: 608473448 , פקס: 94637836056\nעוסק מורשה: 089697773\nמס. תיק ניכויים: 774602716"
+    },
+    {
+     "page": 1,
+     "text": "לכבוד:\nטזך עינזטך\nטלפון: 9102760280"
+    },
+    {
+     "page": 1,
+     "text": "תאריך חשבונית: 30/09/22\nתאריך הדפסה: 06/10/22\nשעת הדפסה: 15:52\nמספר תעודה: IS782235329\nפרטים: חש. מרכזת החפ-95"
+    },
+    {
+     "page": 1,
+     "text": "חשבונית מס מרכזת AL044333092 - מקור (מסמך ממוחשב)"
+    }
+   ]
+  },
+  "totals": [
+   {
+    "label": "מחיר כולל",
+    "role": "subtotal",
+    "value": 13066.65,
+    "percent": null,
+    "currency": null
+   },
+   {
+    "label": "הנחה כללית (0.00%)",
+    "role": "discount",
+    "value": -0.02,
+    "percent": 0,
+    "currency": null
+   },
+   {
+    "label": "מחיר אחרי הנחה",
+    "role": "afterDiscount",
+    "value": 13066.67,
+    "percent": null,
+    "currency": null
+   },
+   {
+    "label": "מע\"מ (17.00%)",
+    "role": "vat",
+    "value": 2221.33,
+    "percent": 17,
+    "currency": null
+   },
+   {
+    "label": "סה\"כ מחיר",
+    "role": "total",
+    "value": 15288,
+    "percent": null,
+    "currency": "ILS"
+   },
+   {
+    "label": "יתרה בהנח\"ש",
+    "role": "balance",
+    "value": 15288,
+    "percent": null,
+    "currency": "ILS"
+   }
+  ],
+  "columns": [
+   {
+    "name": "ש.",
+    "role": "index"
+   },
+   {
+    "name": "תאור אתר",
+    "role": "site"
+   },
+   {
+    "name": "תאריך התעודה",
+    "role": "date"
+   },
+   {
+    "name": "תעודה",
+    "role": "deliveryNote"
+   },
+   {
+    "name": "מק\"ט",
+    "role": "sku"
+   },
+   {
+    "name": "תאור מוצר",
+    "role": "description"
+   },
+   {
+    "name": "כמות",
+    "role": "quantity"
+   },
+   {
+    "name": "מחיר ליחידה",
+    "role": "unitPrice"
+   },
+   {
+    "name": "הנחה",
+    "role": "discount"
+   },
+   {
+    "name": "סה\"כ מחיר",
+    "role": "total"
+   }
+  ],
+  "lines": [
+   {
+    "row": 1,
+    "line_no": 1,
+    "page": 1,
+    "date": "2022-09-05",
+    "delivery_note": "SH22033247",
+    "order_ref": null,
+    "sku": "BAR-S1821716450",
+    "description": "בורג איסכורית \"1. קודח. (350 בחבילה) ברסיס",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "חב",
+    "unit_price": 166.67,
+    "discount_pct": 25,
+    "net_unit_price": null,
+    "line_total": 125,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 2,
+    "line_no": 2,
+    "page": 1,
+    "date": "2022-09-05",
+    "delivery_note": "SH22033247",
+    "order_ref": null,
+    "sku": "NOA-127-12",
+    "description": "עוגן גמבו 3/8 (כ 9 ממ) רגיל. מחיר ליחידה",
+    "site_text": null,
+    "quantity": 50,
+    "unit": "יח'",
+    "unit_price": 2.99,
+    "discount_pct": 28,
+    "net_unit_price": null,
+    "line_total": 107.64,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 3,
+    "line_no": 3,
+    "page": 1,
+    "date": "2022-09-05",
+    "delivery_note": "SH22033247",
+    "order_ref": null,
+    "sku": "3+",
+    "description": "לקח פיפו זיוהץ",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 0.01,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 0.01,
+    "currency": "ILS",
+    "marker": true,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 4,
+    "line_no": 4,
+    "page": 1,
+    "date": "2022-09-08",
+    "delivery_note": "SH22033994",
+    "order_ref": null,
+    "sku": "APO-101025",
+    "description": "בלה ריקה רגילה 60\\60\\80",
+    "site_text": "צמכוף",
+    "quantity": 50,
+    "unit": "יח'",
+    "unit_price": 10.26,
+    "discount_pct": 8,
+    "net_unit_price": null,
+    "line_total": 471.96,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 5,
+    "line_no": 5,
+    "page": 1,
+    "date": "2022-09-08",
+    "delivery_note": "SH22033994",
+    "order_ref": null,
+    "sku": "2.",
+    "description": "לקח ויתמו",
+    "site_text": "פהכוף",
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 0.01,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 0.01,
+    "currency": "ILS",
+    "marker": true,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 6,
+    "line_no": 6,
+    "page": 1,
+    "date": "2022-09-11",
+    "delivery_note": "SH22034280",
+    "order_ref": null,
+    "sku": "NOA-5905.1",
+    "description": "ציר ספר כנף לריתוך 10 ממ שחור פתוח/סגור",
+    "site_text": null,
+    "quantity": 2,
+    "unit": "יח'",
+    "unit_price": 6.84,
+    "discount_pct": 10,
+    "net_unit_price": null,
+    "line_total": 12.31,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 7,
+    "line_no": 7,
+    "page": 1,
+    "date": "2022-09-11",
+    "delivery_note": "SH22034280",
+    "order_ref": null,
+    "sku": "3+",
+    "description": "לקח טיצו זיוסץ",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 0.01,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 0.01,
+    "currency": "ILS",
+    "marker": true,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 8,
+    "line_no": 8,
+    "page": 1,
+    "date": "2022-09-13",
+    "delivery_note": "SH22034802",
+    "order_ref": null,
+    "sku": "miko-1113",
+    "description": "קצף פוליאורטן דאן בראוון 825 מל להדבקת קלקר",
+    "site_text": null,
+    "quantity": 72,
+    "unit": "יח'",
+    "unit_price": 44.44,
+    "discount_pct": 16,
+    "net_unit_price": null,
+    "line_total": 2687.73,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 9,
+    "line_no": 9,
+    "page": 1,
+    "date": "2022-09-13",
+    "delivery_note": "SH22034802",
+    "order_ref": null,
+    "sku": "7.",
+    "description": "לקח ביזו",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 0.01,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 0.01,
+    "currency": "ILS",
+    "marker": true,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 10,
+    "line_no": 10,
+    "page": 1,
+    "date": "2022-09-18",
+    "delivery_note": "SH22035486",
+    "order_ref": null,
+    "sku": "ZAN-174",
+    "description": "ספוג כחול פשוט לרובה ועוד",
+    "site_text": null,
+    "quantity": 6,
+    "unit": "יח'",
+    "unit_price": 5.13,
+    "discount_pct": 15,
+    "net_unit_price": null,
+    "line_total": 26.16,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 11,
+    "line_no": 11,
+    "page": 1,
+    "date": "2022-09-18",
+    "delivery_note": "SH22035486",
+    "order_ref": null,
+    "sku": "VIN-3518",
+    "description": "חורץ רובה האיכותי גראאט נק",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 29.91,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 29.91,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 12,
+    "line_no": 12,
+    "page": 1,
+    "date": "2022-09-18",
+    "delivery_note": "SH22035486",
+    "order_ref": null,
+    "sku": "26",
+    "description": "לקח זוצ",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 0.01,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 0.01,
+    "currency": "ILS",
+    "marker": true,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 13,
+    "line_no": 13,
+    "page": 1,
+    "date": "2022-09-18",
+    "delivery_note": "SH22035511",
+    "order_ref": null,
+    "sku": "ROC-121000948",
+    "description": "חומצת מלח 32 אחוז 4 ליטר",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 25.64,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 25.64,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 14,
+    "line_no": 14,
+    "page": 1,
+    "date": "2022-09-18",
+    "delivery_note": "SH22035511",
+    "order_ref": null,
+    "sku": "2.",
+    "description": "לקח זוצ",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 0.01,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 0.01,
+    "currency": "ILS",
+    "marker": true,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 15,
+    "line_no": 15,
+    "page": 1,
+    "date": "2022-09-19",
+    "delivery_note": "SH22035678",
+    "order_ref": null,
+    "sku": "TIA-2",
+    "description": "שליכט צבעוני T150 בסיס W טיח הארץ",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 226.5,
+    "discount_pct": 10,
+    "net_unit_price": null,
+    "line_total": 203.85,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 16,
+    "line_no": 16,
+    "page": 1,
+    "date": "2022-09-19",
+    "delivery_note": "SH22035678",
+    "order_ref": null,
+    "sku": "12809",
+    "description": "תוספת גיוון בגוון",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 8.55,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 8.55,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 17,
+    "line_no": 17,
+    "page": 1,
+    "date": "2022-09-19",
+    "delivery_note": "SH22035678",
+    "order_ref": null,
+    "sku": "2.",
+    "description": "לקח זוב",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 0.01,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 0.01,
+    "currency": "ILS",
+    "marker": true,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 18,
+    "line_no": 18,
+    "page": 1,
+    "date": "2022-09-20",
+    "delivery_note": "SH22035906",
+    "order_ref": null,
+    "sku": "tzb-21027",
+    "description": "מכסה 110 עליון לבן קנט רחב/ דק.",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 6.84,
+    "discount_pct": 15,
+    "net_unit_price": null,
+    "line_total": 5.81,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 19,
+    "line_no": 19,
+    "page": 1,
+    "date": "2022-09-20",
+    "delivery_note": "SH22035906",
+    "order_ref": null,
+    "sku": "3+",
+    "description": "לקח זוצ",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 0.01,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 0.01,
+    "currency": "ILS",
+    "marker": true,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 20,
+    "line_no": 20,
+    "page": 1,
+    "date": "2022-09-20",
+    "delivery_note": "SH22035925",
+    "order_ref": null,
+    "sku": "CER-135577",
+    "description": "חרסה כיור חרצית 40 לבן עם חור",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 179.49,
+    "discount_pct": 10,
+    "net_unit_price": null,
+    "line_total": 161.54,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 21,
+    "line_no": 21,
+    "page": 1,
+    "date": "2022-09-20",
+    "delivery_note": "SH22035925",
+    "order_ref": null,
+    "sku": "ZM-26801",
+    "description": "ברז ניל אורגינל 3/8 צול",
+    "site_text": null,
+    "quantity": 8,
+    "unit": "יח'",
+    "unit_price": 23.93,
+    "discount_pct": 16,
+    "net_unit_price": null,
+    "line_total": 160.81,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 22,
+    "line_no": 22,
+    "page": 1,
+    "date": "2022-09-20",
+    "delivery_note": "SH22035925",
+    "order_ref": null,
+    "sku": "ZM-268011",
+    "description": "ברז ניל אורגינל 1/2 צול",
+    "site_text": null,
+    "quantity": 2,
+    "unit": "יח'",
+    "unit_price": 24.22,
+    "discount_pct": 16,
+    "net_unit_price": null,
+    "line_total": 40.69,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 23,
+    "line_no": 23,
+    "page": 1,
+    "date": "2022-09-20",
+    "delivery_note": "SH22035925",
+    "order_ref": null,
+    "sku": "MTI-16000",
+    "description": "אמבטיה קיוביק 160*70 לבן",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 688.03,
+    "discount_pct": 10,
+    "net_unit_price": null,
+    "line_total": 619.23,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 24,
+    "line_no": 24,
+    "page": 1,
+    "date": "2022-09-20",
+    "delivery_note": "SH22035925",
+    "order_ref": null,
+    "sku": "YW-71021",
+    "description": "ברז כביסה רגיל מהיר (מיני) קצר YW\\ZM",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 19.66,
+    "discount_pct": 16,
+    "net_unit_price": null,
+    "line_total": 16.51,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 25,
+    "line_no": 25,
+    "page": 1,
+    "date": "2022-09-20",
+    "delivery_note": "SH22035925",
+    "order_ref": null,
+    "sku": "TAI-23102",
+    "description": "דלת קומפלט (+משקוף) צבע אגוז 80 שמאל",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 512.82,
+    "discount_pct": 10,
+    "net_unit_price": null,
+    "line_total": 461.54,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 26,
+    "line_no": 26,
+    "page": 1,
+    "date": "2022-09-20",
+    "delivery_note": "SH22035925",
+    "order_ref": null,
+    "sku": "9.",
+    "description": "דזוא זיוסץ הזמין ואוסף",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 0.01,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 0.01,
+    "currency": "ILS",
+    "marker": true,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 27,
+    "line_no": 27,
+    "page": 1,
+    "date": "2022-09-20",
+    "delivery_note": "SH22035925",
+    "order_ref": null,
+    "sku": "9.",
+    "description": "אספקה לסניף ולאצ הלקוח אוסף משם",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 0.01,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 0.01,
+    "currency": "ILS",
+    "marker": true,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 28,
+    "line_no": 28,
+    "page": 1,
+    "date": "2022-09-29",
+    "delivery_note": "SH22036676",
+    "order_ref": null,
+    "sku": "GOL-G0650451",
+    "description": "ולסיר ברך 110-15º כחול טריפלוס",
+    "site_text": null,
+    "quantity": 4,
+    "unit": "יח'",
+    "unit_price": 41.15,
+    "discount_pct": 40,
+    "net_unit_price": null,
+    "line_total": 98.76,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 29,
+    "line_no": 29,
+    "page": 1,
+    "date": "2022-09-29",
+    "delivery_note": "SH22036676",
+    "order_ref": null,
+    "sku": "GOL-G0650811",
+    "description": "ולסיר מצמד שרוול 110 כחול טריפלוס",
+    "site_text": null,
+    "quantity": 2,
+    "unit": "יח'",
+    "unit_price": 55.45,
+    "discount_pct": 40,
+    "net_unit_price": null,
+    "line_total": 66.54,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 30,
+    "line_no": 30,
+    "page": 1,
+    "date": "2022-09-29",
+    "delivery_note": "SH22036676",
+    "order_ref": null,
+    "sku": "SAL-8954394",
+    "description": "מסעף 87 מעודן T 110/110/110 כתום חוליות",
+    "site_text": null,
+    "quantity": 2,
+    "unit": "יח'",
+    "unit_price": 21.37,
+    "discount_pct": 15,
+    "net_unit_price": null,
+    "line_total": 36.33,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 31,
+    "line_no": 31,
+    "page": 1,
+    "date": "2022-09-29",
+    "delivery_note": "SH22036676",
+    "order_ref": null,
+    "sku": "7.",
+    "description": "לקח תהיטצ זוגבו",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 0.01,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 0.01,
+    "currency": "ILS",
+    "marker": true,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 32,
+    "line_no": 32,
+    "page": 1,
+    "date": "2022-09-29",
+    "delivery_note": "SH22036919",
+    "order_ref": null,
+    "sku": "ELK-50520",
+    "description": "בלוק 20*20*40 (50 במשטח)",
+    "site_text": null,
+    "quantity": 1000,
+    "unit": "יח'",
+    "unit_price": 4.2,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 4200,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 33,
+    "line_no": 33,
+    "page": 1,
+    "date": "2022-09-29",
+    "delivery_note": "SH22036919",
+    "order_ref": null,
+    "sku": "1234",
+    "description": "20 משטחים",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 0.01,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 0.01,
+    "currency": "ILS",
+    "marker": true,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 34,
+    "line_no": 34,
+    "page": 1,
+    "date": "2022-09-29",
+    "delivery_note": "SH22036919",
+    "order_ref": null,
+    "sku": "000",
+    "description": "בלוק תעלה U 40*20*20 מחיר לבלוק. (50 במשטח)",
+    "site_text": null,
+    "quantity": 500,
+    "unit": "יח'",
+    "unit_price": 4.8,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 2400,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 35,
+    "line_no": 35,
+    "page": 1,
+    "date": "2022-09-29",
+    "delivery_note": "SH22036919",
+    "order_ref": null,
+    "sku": "1234",
+    "description": "10 משטחים",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 0.01,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 0.01,
+    "currency": "ILS",
+    "marker": true,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 36,
+    "line_no": 36,
+    "page": 1,
+    "date": "2022-09-29",
+    "delivery_note": "SH22036919",
+    "order_ref": null,
+    "sku": "25845",
+    "description": "חיוב משטח ריק בלוקים",
+    "site_text": null,
+    "quantity": 30,
+    "unit": "יח'",
+    "unit_price": 20,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 600,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 37,
+    "line_no": 37,
+    "page": 1,
+    "date": "2022-09-29",
+    "delivery_note": "SH22036919",
+    "order_ref": null,
+    "sku": "000",
+    "description": "משאית מנוף כצהכוף",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 500,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 500,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 38,
+    "line_no": 38,
+    "page": 1,
+    "date": "2022-09-29",
+    "delivery_note": "SH22036919",
+    "order_ref": null,
+    "sku": "1234",
+    "description": "אספקה ישירה",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 0.01,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 0.01,
+    "currency": "ILS",
+    "marker": true,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   }
+  ],
+  "checks": [
+   {
+    "name": "lines-sum",
+    "ok": true,
+    "expected": 13066.65,
+    "actual": 13066.65,
+    "diff": 0,
+    "label": "מחיר כולל"
+   },
+   {
+    "name": "line-arithmetic",
+    "ok": true
+   },
+   {
+    "name": "discount",
+    "ok": true,
+    "expected": 13066.67,
+    "actual": 13066.67,
+    "diff": 0,
+    "sign": "plus"
+   },
+   {
+    "name": "vat",
+    "ok": true,
+    "expected": 2221.33,
+    "actual": 2221.33,
+    "diff": 0
+   },
+   {
+    "name": "grand-total",
+    "ok": true,
+    "expected": 15288,
+    "actual": 15288,
+    "diff": 0
+   }
+  ],
+  "failed_rows": [],
+  "auto_fixed": [],
+  "repaired": [],
+  "repair": null
+ },
+ "csv": "invoice_number,invoice_date,supplier_name,supplier_tax_id,line_no,page,date,delivery_note,order_ref,sku,description,quantity,unit,unit_price,discount_pct,net_unit_price,line_total,currency,check_ok,check_diff,site_text,marker,is_return\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,1,1,2022-09-05,SH22033247,,BAR-S1821716450,\"בורג איסכורית \"\"1. קודח. (350 בחבילה) ברסיס\",1,חב,166.67,25,,125,ILS,true,0,,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,2,1,2022-09-05,SH22033247,,NOA-127-12,עוגן גמבו 3/8 (כ 9 ממ) רגיל. מחיר ליחידה,50,יח',2.99,28,,107.64,ILS,true,0,,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,3,1,2022-09-05,SH22033247,,3+,לקח פיפו זיוהץ,1,יח',0.01,,,0.01,ILS,true,0,,true,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,4,1,2022-09-08,SH22033994,,APO-101025,בלה ריקה רגילה 60\\60\\80,50,יח',10.26,8,,471.96,ILS,true,0,צמכוף,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,5,1,2022-09-08,SH22033994,,2.,לקח ויתמו,1,יח',0.01,,,0.01,ILS,true,0,פהכוף,true,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,6,1,2022-09-11,SH22034280,,NOA-5905.1,ציר ספר כנף לריתוך 10 ממ שחור פתוח/סגור,2,יח',6.84,10,,12.31,ILS,true,0,,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,7,1,2022-09-11,SH22034280,,3+,לקח טיצו זיוסץ,1,יח',0.01,,,0.01,ILS,true,0,,true,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,8,1,2022-09-13,SH22034802,,miko-1113,קצף פוליאורטן דאן בראוון 825 מל להדבקת קלקר,72,יח',44.44,16,,2687.73,ILS,true,0,,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,9,1,2022-09-13,SH22034802,,7.,לקח ביזו,1,יח',0.01,,,0.01,ILS,true,0,,true,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,10,1,2022-09-18,SH22035486,,ZAN-174,ספוג כחול פשוט לרובה ועוד,6,יח',5.13,15,,26.16,ILS,true,0,,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,11,1,2022-09-18,SH22035486,,VIN-3518,חורץ רובה האיכותי גראאט נק,1,יח',29.91,,,29.91,ILS,true,0,,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,12,1,2022-09-18,SH22035486,,26,לקח זוצ,1,יח',0.01,,,0.01,ILS,true,0,,true,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,13,1,2022-09-18,SH22035511,,ROC-121000948,חומצת מלח 32 אחוז 4 ליטר,1,יח',25.64,,,25.64,ILS,true,0,,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,14,1,2022-09-18,SH22035511,,2.,לקח זוצ,1,יח',0.01,,,0.01,ILS,true,0,,true,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,15,1,2022-09-19,SH22035678,,TIA-2,שליכט צבעוני T150 בסיס W טיח הארץ,1,יח',226.5,10,,203.85,ILS,true,0,,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,16,1,2022-09-19,SH22035678,,12809,תוספת גיוון בגוון,1,יח',8.55,,,8.55,ILS,true,0,,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,17,1,2022-09-19,SH22035678,,2.,לקח זוב,1,יח',0.01,,,0.01,ILS,true,0,,true,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,18,1,2022-09-20,SH22035906,,tzb-21027,מכסה 110 עליון לבן קנט רחב/ דק.,1,יח',6.84,15,,5.81,ILS,true,0,,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,19,1,2022-09-20,SH22035906,,3+,לקח זוצ,1,יח',0.01,,,0.01,ILS,true,0,,true,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,20,1,2022-09-20,SH22035925,,CER-135577,חרסה כיור חרצית 40 לבן עם חור,1,יח',179.49,10,,161.54,ILS,true,0,,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,21,1,2022-09-20,SH22035925,,ZM-26801,ברז ניל אורגינל 3/8 צול,8,יח',23.93,16,,160.81,ILS,true,0,,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,22,1,2022-09-20,SH22035925,,ZM-268011,ברז ניל אורגינל 1/2 צול,2,יח',24.22,16,,40.69,ILS,true,0,,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,23,1,2022-09-20,SH22035925,,MTI-16000,אמבטיה קיוביק 160*70 לבן,1,יח',688.03,10,,619.23,ILS,true,0,,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,24,1,2022-09-20,SH22035925,,YW-71021,ברז כביסה רגיל מהיר (מיני) קצר YW\\ZM,1,יח',19.66,16,,16.51,ILS,true,0,,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,25,1,2022-09-20,SH22035925,,TAI-23102,דלת קומפלט (+משקוף) צבע אגוז 80 שמאל,1,יח',512.82,10,,461.54,ILS,true,0,,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,26,1,2022-09-20,SH22035925,,9.,דזוא זיוסץ הזמין ואוסף,1,יח',0.01,,,0.01,ILS,true,0,,true,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,27,1,2022-09-20,SH22035925,,9.,אספקה לסניף ולאצ הלקוח אוסף משם,1,יח',0.01,,,0.01,ILS,true,0,,true,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,28,1,2022-09-29,SH22036676,,GOL-G0650451,ולסיר ברך 110-15º כחול טריפלוס,4,יח',41.15,40,,98.76,ILS,true,0,,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,29,1,2022-09-29,SH22036676,,GOL-G0650811,ולסיר מצמד שרוול 110 כחול טריפלוס,2,יח',55.45,40,,66.54,ILS,true,0,,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,30,1,2022-09-29,SH22036676,,SAL-8954394,מסעף 87 מעודן T 110/110/110 כתום חוליות,2,יח',21.37,15,,36.33,ILS,true,0,,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,31,1,2022-09-29,SH22036676,,7.,לקח תהיטצ זוגבו,1,יח',0.01,,,0.01,ILS,true,0,,true,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,32,1,2022-09-29,SH22036919,,ELK-50520,בלוק 20*20*40 (50 במשטח),1000,יח',4.2,,,4200,ILS,true,0,,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,33,1,2022-09-29,SH22036919,,1234,20 משטחים,1,יח',0.01,,,0.01,ILS,true,0,,true,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,34,1,2022-09-29,SH22036919,,000,בלוק תעלה U 40*20*20 מחיר לבלוק. (50 במשטח),500,יח',4.8,,,2400,ILS,true,0,,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,35,1,2022-09-29,SH22036919,,1234,10 משטחים,1,יח',0.01,,,0.01,ILS,true,0,,true,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,36,1,2022-09-29,SH22036919,,25845,חיוב משטח ריק בלוקים,30,יח',20,,,600,ILS,true,0,,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,37,1,2022-09-29,SH22036919,,000,משאית מנוף כצהכוף,1,יח',500,,,500,ILS,true,0,,false,false\r\nIS782235329,2022-09-30,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,38,1,2022-09-29,SH22036919,,1234,אספקה ישירה,1,יח',0.01,,,0.01,ILS,true,0,,true,false\r\n",
+ "repair": null
+}

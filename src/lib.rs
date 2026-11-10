@@ -38,6 +38,7 @@ pub mod detector;
 pub mod extractor;
 mod form_bbox_repair;
 pub mod glyph_names;
+pub mod invoice;
 mod mac_glyph_order;
 pub mod markdown;
 mod overlong_numerals;
@@ -86,13 +87,13 @@ use text_quality::{
 use tounicode::FontCMaps;
 
 #[cfg(not(target_arch = "wasm32"))]
-struct ProcessingTimer(std::time::Instant);
+pub(crate) struct ProcessingTimer(std::time::Instant);
 
 #[cfg(target_arch = "wasm32")]
-struct ProcessingTimer;
+pub(crate) struct ProcessingTimer;
 
 impl ProcessingTimer {
-    fn start() -> Self {
+    pub(crate) fn start() -> Self {
         #[cfg(not(target_arch = "wasm32"))]
         {
             Self(std::time::Instant::now())
@@ -104,7 +105,7 @@ impl ProcessingTimer {
         }
     }
 
-    fn elapsed_ms(&self) -> u64 {
+    pub(crate) fn elapsed_ms(&self) -> u64 {
         #[cfg(not(target_arch = "wasm32"))]
         {
             self.0.elapsed().as_millis() as u64
@@ -373,7 +374,7 @@ pub fn process_pdf_with_options<P: AsRef<Path>>(
     let (doc, page_count) =
         load_document_from_path_with_password(&path, options.password.as_deref())?;
 
-    process_document(doc, page_count, options, start)
+    process_document(doc, page_count, options, start, None)
 }
 
 /// Process a PDF from a memory buffer with full extraction.
@@ -399,7 +400,24 @@ pub fn process_pdf_mem_with_options(
     let (doc, page_count) =
         load_document_from_mem_with_password(buffer, options.password.as_deref())?;
 
-    process_document(doc, page_count, options, start)
+    process_document(doc, page_count, options, start, None)
+}
+
+/// [`process_pdf_mem_with_options`] together with the positioned text items
+/// the Markdown was built from (selected pages only, user space), so a caller
+/// that needs both — the invoice layer — reads the document once instead of
+/// running the positioned-text extraction a second time.
+pub(crate) fn process_pdf_mem_with_items(
+    buffer: &[u8],
+    options: PdfOptions,
+) -> Result<(PdfProcessResult, Vec<types::TextItem>), PdfError> {
+    let start = ProcessingTimer::start();
+    validate_pdf_bytes(buffer)?;
+    let (doc, page_count) =
+        load_document_from_mem_with_password(buffer, options.password.as_deref())?;
+    let mut items = Vec::new();
+    let result = process_document(doc, page_count, options, start, Some(&mut items))?;
+    Ok((result, items))
 }
 
 // =========================================================================
@@ -4584,6 +4602,7 @@ fn process_document(
     page_count: u32,
     options: PdfOptions,
     start: ProcessingTimer,
+    items_out: Option<&mut Vec<types::TextItem>>,
 ) -> Result<PdfProcessResult, PdfError> {
     // Step 1 — Detection (cheap: scans content streams for text operators)
     let detection = detector::detect_from_document(&doc, page_count, &options.detection)?;
@@ -4822,6 +4841,13 @@ fn process_document(
                 .into_iter()
                 .filter(|page| selected_page(*page))
                 .collect();
+            if let Some(out) = items_out {
+                *out = items
+                    .iter()
+                    .filter(|item| selected_page(item.page))
+                    .cloned()
+                    .collect();
+            }
             let FolioFilteredItems {
                 items,
                 layout_items,

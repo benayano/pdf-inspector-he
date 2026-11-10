@@ -1,0 +1,1404 @@
+{
+ "invoice": {
+  "rtl": true,
+  "header": {
+   "blocks": [
+    {
+     "page": 1,
+     "top": 835.0300000000001,
+     "left": 459.61,
+     "right": 588.69,
+     "lines": [
+      "ס.ת. קלבזוף איחכו פזווך דא\"א",
+      "פפו עד",
+      "תחיש לאר 26558",
+      "טלפון: 608473448 , פקס: 94637836056",
+      "עוסק מורשה: 089697773",
+      "מס. תיק ניכויים: 774602716"
+     ],
+     "text": "ס.ת. קלבזוף איחכו פזווך דא\"א\nפפו עד\nתחיש לאר 26558\nטלפון: 608473448 , פקס: 94637836056\nעוסק מורשה: 089697773\nמס. תיק ניכויים: 774602716",
+     "fields": [
+      {
+       "label": "טלפון",
+       "value": "608473448",
+       "page": 1,
+       "y": 792.61
+      },
+      {
+       "label": "פקס",
+       "value": "94637836056",
+       "page": 1,
+       "y": 792.61
+      },
+      {
+       "label": "עוסק מורשה",
+       "value": "089697773",
+       "page": 1,
+       "y": 782.73
+      },
+      {
+       "label": "מס. תיק ניכויים",
+       "value": "774602716",
+       "page": 1,
+       "y": 773.44
+      }
+     ]
+    },
+    {
+     "page": 1,
+     "top": 754.26,
+     "left": 521.21,
+     "right": 588.25,
+     "lines": [
+      "לכבוד:",
+      "טזך עינזטך",
+      "טלפון: 9102760280"
+     ],
+     "text": "לכבוד:\nטזך עינזטך\nטלפון: 9102760280",
+     "fields": [
+      {
+       "label": "טלפון",
+       "value": "9102760280",
+       "page": 1,
+       "y": 728.11
+      }
+     ]
+    },
+    {
+     "page": 1,
+     "top": 754.26,
+     "left": 76.12,
+     "right": 166.26,
+     "lines": [
+      "תאריך חשבונית: 31/10/22",
+      "תאריך הדפסה: 07/11/22",
+      "שעת הדפסה: 18:39",
+      "מספר תעודה: IS782237565",
+      "פרטים: חש. מרכזת סיה-98"
+     ],
+     "text": "תאריך חשבונית: 31/10/22\nתאריך הדפסה: 07/11/22\nשעת הדפסה: 18:39\nמספר תעודה: IS782237565\nפרטים: חש. מרכזת סיה-98",
+     "fields": [
+      {
+       "label": "תאריך חשבונית",
+       "value": "31/10/22",
+       "page": 1,
+       "y": 746.71
+      },
+      {
+       "label": "תאריך הדפסה",
+       "value": "07/11/22",
+       "page": 1,
+       "y": 737.41
+      },
+      {
+       "label": "שעת הדפסה",
+       "value": "18:39",
+       "page": 1,
+       "y": 728.11
+      },
+      {
+       "label": "מספר תעודה",
+       "value": "IS782237565",
+       "page": 1,
+       "y": 718.82
+      },
+      {
+       "label": "פרטים",
+       "value": "חש. מרכזת סיה-98",
+       "page": 1,
+       "y": 709.52
+      }
+     ]
+    },
+    {
+     "page": 1,
+     "top": 625.27,
+     "left": 174.9,
+     "right": 420.12,
+     "lines": [
+      "חשבונית מס מרכזת EL044336950 - מקור (מסמך ממוחשב)"
+     ],
+     "text": "חשבונית מס מרכזת EL044336950 - מקור (מסמך ממוחשב)",
+     "fields": []
+    }
+   ],
+   "fields": [
+    {
+     "label": "טלפון",
+     "value": "608473448",
+     "page": 1,
+     "y": 792.61
+    },
+    {
+     "label": "פקס",
+     "value": "94637836056",
+     "page": 1,
+     "y": 792.61
+    },
+    {
+     "label": "עוסק מורשה",
+     "value": "089697773",
+     "page": 1,
+     "y": 782.73
+    },
+    {
+     "label": "מס. תיק ניכויים",
+     "value": "774602716",
+     "page": 1,
+     "y": 773.44
+    },
+    {
+     "label": "טלפון",
+     "value": "9102760280",
+     "page": 1,
+     "y": 728.11
+    },
+    {
+     "label": "תאריך חשבונית",
+     "value": "31/10/22",
+     "page": 1,
+     "y": 746.71
+    },
+    {
+     "label": "תאריך הדפסה",
+     "value": "07/11/22",
+     "page": 1,
+     "y": 737.41
+    },
+    {
+     "label": "שעת הדפסה",
+     "value": "18:39",
+     "page": 1,
+     "y": 728.11
+    },
+    {
+     "label": "מספר תעודה",
+     "value": "IS782237565",
+     "page": 1,
+     "y": 718.82
+    },
+    {
+     "label": "פרטים",
+     "value": "חש. מרכזת סיה-98",
+     "page": 1,
+     "y": 709.52
+    }
+   ]
+  },
+  "lines": {
+   "columns": [
+    {
+     "name": "ש.",
+     "role": "index"
+    },
+    {
+     "name": "תאריך התעודה",
+     "role": "date"
+    },
+    {
+     "name": "תעודה",
+     "role": "deliveryNote"
+    },
+    {
+     "name": "מק\"ט",
+     "role": "sku"
+    },
+    {
+     "name": "תאור מוצר",
+     "role": "description"
+    },
+    {
+     "name": "כמות",
+     "role": "quantity"
+    },
+    {
+     "name": "מחיר ליחידה",
+     "role": "unitPrice"
+    },
+    {
+     "name": "הנחה",
+     "role": "discount"
+    },
+    {
+     "name": "סה\"כ מחיר",
+     "role": "total"
+    }
+   ],
+   "rows": [
+    {
+     "page": 1,
+     "cells": [
+      "1",
+      "02/10/22",
+      "SH22037122",
+      "KA-4",
+      "מסטיק אקרילי לבן TYTAN",
+      "12.00 יח'",
+      "7.69 ש\"ח",
+      "16.00%",
+      "77.52"
+     ],
+     "values": {
+      "index": 1,
+      "date": "02/10/22",
+      "deliveryNote": "SH22037122",
+      "sku": "KA-4",
+      "description": "מסטיק אקרילי לבן TYTAN",
+      "quantity": 12,
+      "unit": "יח'",
+      "unitPrice": 7.69,
+      "discount": 16,
+      "total": 77.52
+     },
+     "check": {
+      "ok": true,
+      "expected": 77.52,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "2",
+      "02/10/22",
+      "SH22037122",
+      "26",
+      "לקח זוצ",
+      "1.00 יח'",
+      "0.01 ש\"ח",
+      "",
+      "0.01"
+     ],
+     "values": {
+      "index": 2,
+      "date": "02/10/22",
+      "deliveryNote": "SH22037122",
+      "sku": "26",
+      "description": "לקח זוצ",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 0.01,
+      "total": 0.01
+     },
+     "check": {
+      "ok": true,
+      "expected": 0.01,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "3",
+      "06/10/22",
+      "SH22037705",
+      "TAI-23102",
+      "דלת קומפלט (+משקוף) צבע אגוז 80 שמאל",
+      "1.00- יח'",
+      "512.82 ש\"ח",
+      "10.00%",
+      "461.54-"
+     ],
+     "values": {
+      "index": 3,
+      "date": "06/10/22",
+      "deliveryNote": "SH22037705",
+      "sku": "TAI-23102",
+      "description": "דלת קומפלט (+משקוף) צבע אגוז 80 שמאל",
+      "quantity": -1,
+      "unit": "יח'",
+      "unitPrice": 512.82,
+      "discount": 10,
+      "total": -461.54
+     },
+     "check": {
+      "ok": true,
+      "expected": -461.54,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "4",
+      "06/10/22",
+      "SH22037705",
+      "16975",
+      "דלת סטנלי חוץ קומפלט 80 שמאל",
+      "1.00 יח'",
+      "1,068.38 ש\"ח",
+      "10.00%",
+      "961.54"
+     ],
+     "values": {
+      "index": 4,
+      "date": "06/10/22",
+      "deliveryNote": "SH22037705",
+      "sku": "16975",
+      "description": "דלת סטנלי חוץ קומפלט 80 שמאל",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 1068.38,
+      "discount": 10,
+      "total": 961.54
+     },
+     "check": {
+      "ok": true,
+      "expected": 961.54,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "5",
+      "06/10/22",
+      "SH22037705",
+      "9.",
+      "לאסוף את הדלת פנים טורסק ולעדכן אותו שהגיע הסטנל",
+      "1.00 יח'",
+      "0.01 ש\"ח",
+      "",
+      "0.01"
+     ],
+     "values": {
+      "index": 5,
+      "date": "06/10/22",
+      "deliveryNote": "SH22037705",
+      "sku": "9.",
+      "description": "לאסוף את הדלת פנים טורסק ולעדכן אותו שהגיע הסטנל",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 0.01,
+      "total": 0.01
+     },
+     "check": {
+      "ok": true,
+      "expected": 0.01,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "6",
+      "06/10/22",
+      "SH22037705",
+      "9.",
+      "עבור רזוח זיותץ לדבר איתו 7076618973",
+      "1.00 יח'",
+      "0.01 ש\"ח",
+      "",
+      "0.01"
+     ],
+     "values": {
+      "index": 6,
+      "date": "06/10/22",
+      "deliveryNote": "SH22037705",
+      "sku": "9.",
+      "description": "עבור רזוח זיותץ לדבר איתו 7076618973",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 0.01,
+      "total": 0.01
+     },
+     "check": {
+      "ok": true,
+      "expected": 0.01,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "7",
+      "18/10/22",
+      "SH22038393",
+      "GOL-G0504053",
+      "ולסיר ברך 110-45º אפור PP3",
+      "4.00- יח'",
+      "21.88 ש\"ח",
+      "40.00%",
+      "52.51-"
+     ],
+     "values": {
+      "index": 7,
+      "date": "18/10/22",
+      "deliveryNote": "SH22038393",
+      "sku": "GOL-G0504053",
+      "description": "ולסיר ברך 110-45º אפור PP3",
+      "quantity": -4,
+      "unit": "יח'",
+      "unitPrice": 21.88,
+      "discount": 40,
+      "total": -52.51
+     },
+     "check": {
+      "ok": true,
+      "expected": -52.51,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "8",
+      "18/10/22",
+      "SH22038393",
+      "3005",
+      "לקח תעממו",
+      "1.00 יח'",
+      "0.01 ש\"ח",
+      "",
+      "0.01"
+     ],
+     "values": {
+      "index": 8,
+      "date": "18/10/22",
+      "deliveryNote": "SH22038393",
+      "sku": "3005",
+      "description": "לקח תעממו",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 0.01,
+      "total": 0.01
+     },
+     "check": {
+      "ok": true,
+      "expected": 0.01,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "9",
+      "23/10/22",
+      "SH22039076",
+      "TM-109",
+      "רובה טמבור 109 גוון קרמל 5 קילו CE40",
+      "2.00 יח'",
+      "59.83 ש\"ח",
+      "12.00%",
+      "105.30"
+     ],
+     "values": {
+      "index": 9,
+      "date": "23/10/22",
+      "deliveryNote": "SH22039076",
+      "sku": "TM-109",
+      "description": "רובה טמבור 109 גוון קרמל 5 קילו CE40",
+      "quantity": 2,
+      "unit": "יח'",
+      "unitPrice": 59.83,
+      "discount": 12,
+      "total": 105.3
+     },
+     "check": {
+      "ok": true,
+      "expected": 105.3,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "10",
+      "23/10/22",
+      "SH22039076",
+      "LK-1144501",
+      "ראצט קשירה 25 ממ אורך 4 מטר -מלאי תוצת",
+      "1.00 יח'",
+      "20.51 ש\"ח",
+      "10.00%",
+      "18.46"
+     ],
+     "values": {
+      "index": 10,
+      "date": "23/10/22",
+      "deliveryNote": "SH22039076",
+      "sku": "LK-1144501",
+      "description": "ראצט קשירה 25 ממ אורך 4 מטר -מלאי תוצת",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 20.51,
+      "discount": 10,
+      "total": 18.46
+     },
+     "check": {
+      "ok": true,
+      "expected": 18.46,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "11",
+      "23/10/22",
+      "SH22039076",
+      "SAB-11223",
+      "פלס מגנטי TRUPER \"9",
+      "1.00 יח'",
+      "27.35 ש\"ח",
+      "",
+      "27.35"
+     ],
+     "values": {
+      "index": 11,
+      "date": "23/10/22",
+      "deliveryNote": "SH22039076",
+      "sku": "SAB-11223",
+      "description": "פלס מגנטי TRUPER \"9",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 27.35,
+      "total": 27.35
+     },
+     "check": {
+      "ok": true,
+      "expected": 27.35,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "12",
+      "23/10/22",
+      "SH22039076",
+      "TAM-149-330",
+      "אוראה גלון 10 ליטר משאיות",
+      "1.00 יח'",
+      "44.44 ש\"ח",
+      "",
+      "44.44"
+     ],
+     "values": {
+      "index": 12,
+      "date": "23/10/22",
+      "deliveryNote": "SH22039076",
+      "sku": "TAM-149-330",
+      "description": "אוראה גלון 10 ליטר משאיות",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 44.44,
+      "total": 44.44
+     },
+     "check": {
+      "ok": true,
+      "expected": 44.44,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "13",
+      "23/10/22",
+      "SH22039076",
+      "2.",
+      "לקח זופ",
+      "1.00 יח'",
+      "0.01 ש\"ח",
+      "",
+      "0.01"
+     ],
+     "values": {
+      "index": 13,
+      "date": "23/10/22",
+      "deliveryNote": "SH22039076",
+      "sku": "2.",
+      "description": "לקח זופ",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 0.01,
+      "total": 0.01
+     },
+     "check": {
+      "ok": true,
+      "expected": 0.01,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "14",
+      "27/10/22",
+      "SH22040010",
+      "3..",
+      "בעקבות תקלה לא חויב בזמן האספקה",
+      "1.00 יח'",
+      "0.01 ש\"ח",
+      "",
+      "0.01"
+     ],
+     "values": {
+      "index": 14,
+      "date": "27/10/22",
+      "deliveryNote": "SH22040010",
+      "sku": "3..",
+      "description": "בעקבות תקלה לא חויב בזמן האספקה",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 0.01,
+      "total": 0.01
+     },
+     "check": {
+      "ok": true,
+      "expected": 0.01,
+      "diff": 0
+     }
+    },
+    {
+     "page": 1,
+     "cells": [
+      "15",
+      "27/10/22",
+      "SH22040010",
+      "11",
+      "משלוח בקו גב ההר",
+      "1.00 יח'",
+      "50.00 ש\"ח",
+      "",
+      "50.00"
+     ],
+     "values": {
+      "index": 15,
+      "date": "27/10/22",
+      "deliveryNote": "SH22040010",
+      "sku": "11",
+      "description": "משלוח בקו גב ההר",
+      "quantity": 1,
+      "unit": "יח'",
+      "unitPrice": 50,
+      "total": 50
+     },
+     "check": {
+      "ok": true,
+      "expected": 50,
+      "diff": 0
+     }
+    }
+   ],
+   "pages": [
+    1
+   ]
+  },
+  "totals": [
+   {
+    "label": "מחיר כולל",
+    "value": 770.62,
+    "currency": null,
+    "percent": null,
+    "role": "subtotal",
+    "page": 1
+   },
+   {
+    "label": "הנחה כללית (0.04%-)",
+    "value": -0.32,
+    "currency": null,
+    "percent": -0.04,
+    "role": "discount",
+    "page": 1
+   },
+   {
+    "label": "מחיר אחרי הנחה",
+    "value": 770.94,
+    "currency": null,
+    "percent": null,
+    "role": "afterDiscount",
+    "page": 1
+   },
+   {
+    "label": "מע\"מ (17.00%)",
+    "value": 131.06,
+    "currency": null,
+    "percent": 17,
+    "role": "vat",
+    "page": 1
+   },
+   {
+    "label": "סה\"כ מחיר",
+    "value": 902,
+    "currency": "ILS",
+    "percent": null,
+    "role": "total",
+    "page": 1
+   },
+   {
+    "label": "יתרה בהנח\"ש",
+    "value": 16190,
+    "currency": "ILS",
+    "percent": null,
+    "role": "balance",
+    "page": 1
+   }
+  ],
+  "footer": {
+   "fields": [
+    {
+     "label": "ברקוד מספר חשבונית",
+     "value": "*AL753911025*",
+     "page": 1,
+     "y": 357.98
+    },
+    {
+     "label": "מחיר כולל",
+     "value": "770.62",
+     "page": 1,
+     "y": 358.56
+    },
+    {
+     "label": "לתשלום עד",
+     "value": "31/12/22",
+     "page": 1,
+     "y": 348.1
+    },
+    {
+     "label": "הנחה כללית (0.04%-)",
+     "value": "0.32-",
+     "page": 1,
+     "y": 348.1
+    },
+    {
+     "label": "תנאי תשלום",
+     "value": "ת23",
+     "page": 1,
+     "y": 338.81
+    },
+    {
+     "label": "מחיר אחרי הנחה",
+     "value": "770.94",
+     "page": 1,
+     "y": 333.58
+    },
+    {
+     "label": "מס. לקוח",
+     "value": "451607",
+     "page": 1,
+     "y": 329.51
+    },
+    {
+     "label": "מע\"מ (17.00%)",
+     "value": "131.06",
+     "page": 1,
+     "y": 323.12
+    },
+    {
+     "label": "סוכן",
+     "value": "אתס חפתות",
+     "page": 1,
+     "y": 320.21
+    },
+    {
+     "label": "סה\"כ מחיר",
+     "value": "902.00 ש\"ח",
+     "page": 1,
+     "y": 308.59
+    },
+    {
+     "label": "יתרה בהנח\"ש",
+     "value": "16,190.00 ש\"ח",
+     "page": 1,
+     "y": 301.04
+    },
+    {
+     "label": "סניף",
+     "value": "סניף תוצס",
+     "page": 1,
+     "y": 284.19
+    },
+    {
+     "label": "פרטי בנק להעברה חזסעומ",
+     "value": "בנק סהוזכחיחו (31), סניף 034 חשבון 743847 צ\"ת א.ת. פרחזוף פיטצו חזווך עצ\"ח",
+     "page": 1,
+     "y": 187.15
+    }
+   ]
+  },
+  "checks": [
+   {
+    "name": "lines-sum",
+    "ok": true,
+    "expected": 770.62,
+    "actual": 770.62,
+    "diff": 0,
+    "label": "מחיר כולל"
+   },
+   {
+    "name": "line-arithmetic",
+    "ok": true,
+    "checked": 15,
+    "failed": []
+   },
+   {
+    "name": "discount",
+    "ok": true,
+    "expected": 770.94,
+    "actual": 770.94,
+    "diff": 0,
+    "sign": "plus"
+   },
+   {
+    "name": "vat",
+    "ok": true,
+    "expected": 131.06,
+    "actual": 131.06,
+    "diff": 0
+   },
+   {
+    "name": "grand-total",
+    "ok": true,
+    "expected": 902,
+    "actual": 902,
+    "diff": 0
+   }
+  ]
+ },
+ "document": {
+  "schema": "pdf-inspector-he/invoice-document@1",
+  "pdf": {
+   "type": "TextBased",
+   "pages": [
+    1
+   ]
+  },
+  "status": "ok",
+  "reasons": [],
+  "invoice": {
+   "document_type": "invoice",
+   "invoice_number": "IS782237565",
+   "invoice_date": "2022-10-31",
+   "supplier_name": "ס.ת. קלבזוף איחכו פזווך דא\"א",
+   "supplier_tax_id": "089697773",
+   "subtotal": 770.62,
+   "discount": -0.32,
+   "after_discount": 770.94,
+   "vat_rate": 17,
+   "vat": 131.06,
+   "total": 902,
+   "currency": "ILS",
+   "checks_ok": true
+  },
+  "header": {
+   "fields": [
+    {
+     "label": "טלפון",
+     "value": "608473448"
+    },
+    {
+     "label": "פקס",
+     "value": "94637836056"
+    },
+    {
+     "label": "עוסק מורשה",
+     "value": "089697773"
+    },
+    {
+     "label": "מס. תיק ניכויים",
+     "value": "774602716"
+    },
+    {
+     "label": "טלפון",
+     "value": "9102760280"
+    },
+    {
+     "label": "תאריך חשבונית",
+     "value": "31/10/22"
+    },
+    {
+     "label": "תאריך הדפסה",
+     "value": "07/11/22"
+    },
+    {
+     "label": "שעת הדפסה",
+     "value": "18:39"
+    },
+    {
+     "label": "מספר תעודה",
+     "value": "IS782237565"
+    },
+    {
+     "label": "פרטים",
+     "value": "חש. מרכזת סיה-98"
+    }
+   ],
+   "blocks": [
+    {
+     "page": 1,
+     "text": "ס.ת. קלבזוף איחכו פזווך דא\"א\nפפו עד\nתחיש לאר 26558\nטלפון: 608473448 , פקס: 94637836056\nעוסק מורשה: 089697773\nמס. תיק ניכויים: 774602716"
+    },
+    {
+     "page": 1,
+     "text": "לכבוד:\nטזך עינזטך\nטלפון: 9102760280"
+    },
+    {
+     "page": 1,
+     "text": "תאריך חשבונית: 31/10/22\nתאריך הדפסה: 07/11/22\nשעת הדפסה: 18:39\nמספר תעודה: IS782237565\nפרטים: חש. מרכזת סיה-98"
+    },
+    {
+     "page": 1,
+     "text": "חשבונית מס מרכזת EL044336950 - מקור (מסמך ממוחשב)"
+    }
+   ]
+  },
+  "totals": [
+   {
+    "label": "מחיר כולל",
+    "role": "subtotal",
+    "value": 770.62,
+    "percent": null,
+    "currency": null
+   },
+   {
+    "label": "הנחה כללית (0.04%-)",
+    "role": "discount",
+    "value": -0.32,
+    "percent": -0.04,
+    "currency": null
+   },
+   {
+    "label": "מחיר אחרי הנחה",
+    "role": "afterDiscount",
+    "value": 770.94,
+    "percent": null,
+    "currency": null
+   },
+   {
+    "label": "מע\"מ (17.00%)",
+    "role": "vat",
+    "value": 131.06,
+    "percent": 17,
+    "currency": null
+   },
+   {
+    "label": "סה\"כ מחיר",
+    "role": "total",
+    "value": 902,
+    "percent": null,
+    "currency": "ILS"
+   },
+   {
+    "label": "יתרה בהנח\"ש",
+    "role": "balance",
+    "value": 16190,
+    "percent": null,
+    "currency": "ILS"
+   }
+  ],
+  "columns": [
+   {
+    "name": "ש.",
+    "role": "index"
+   },
+   {
+    "name": "תאריך התעודה",
+    "role": "date"
+   },
+   {
+    "name": "תעודה",
+    "role": "deliveryNote"
+   },
+   {
+    "name": "מק\"ט",
+    "role": "sku"
+   },
+   {
+    "name": "תאור מוצר",
+    "role": "description"
+   },
+   {
+    "name": "כמות",
+    "role": "quantity"
+   },
+   {
+    "name": "מחיר ליחידה",
+    "role": "unitPrice"
+   },
+   {
+    "name": "הנחה",
+    "role": "discount"
+   },
+   {
+    "name": "סה\"כ מחיר",
+    "role": "total"
+   }
+  ],
+  "lines": [
+   {
+    "row": 1,
+    "line_no": 1,
+    "page": 1,
+    "date": "2022-10-02",
+    "delivery_note": "SH22037122",
+    "order_ref": null,
+    "sku": "KA-4",
+    "description": "מסטיק אקרילי לבן TYTAN",
+    "site_text": null,
+    "quantity": 12,
+    "unit": "יח'",
+    "unit_price": 7.69,
+    "discount_pct": 16,
+    "net_unit_price": null,
+    "line_total": 77.52,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 2,
+    "line_no": 2,
+    "page": 1,
+    "date": "2022-10-02",
+    "delivery_note": "SH22037122",
+    "order_ref": null,
+    "sku": "26",
+    "description": "לקח זוצ",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 0.01,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 0.01,
+    "currency": "ILS",
+    "marker": true,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 3,
+    "line_no": 3,
+    "page": 1,
+    "date": "2022-10-06",
+    "delivery_note": "SH22037705",
+    "order_ref": null,
+    "sku": "TAI-23102",
+    "description": "דלת קומפלט (+משקוף) צבע אגוז 80 שמאל",
+    "site_text": null,
+    "quantity": -1,
+    "unit": "יח'",
+    "unit_price": 512.82,
+    "discount_pct": 10,
+    "net_unit_price": null,
+    "line_total": -461.54,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": true,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 4,
+    "line_no": 4,
+    "page": 1,
+    "date": "2022-10-06",
+    "delivery_note": "SH22037705",
+    "order_ref": null,
+    "sku": "16975",
+    "description": "דלת סטנלי חוץ קומפלט 80 שמאל",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 1068.38,
+    "discount_pct": 10,
+    "net_unit_price": null,
+    "line_total": 961.54,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 5,
+    "line_no": 5,
+    "page": 1,
+    "date": "2022-10-06",
+    "delivery_note": "SH22037705",
+    "order_ref": null,
+    "sku": "9.",
+    "description": "לאסוף את הדלת פנים טורסק ולעדכן אותו שהגיע הסטנל",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 0.01,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 0.01,
+    "currency": "ILS",
+    "marker": true,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 6,
+    "line_no": 6,
+    "page": 1,
+    "date": "2022-10-06",
+    "delivery_note": "SH22037705",
+    "order_ref": null,
+    "sku": "9.",
+    "description": "עבור רזוח זיותץ לדבר איתו 7076618973",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 0.01,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 0.01,
+    "currency": "ILS",
+    "marker": true,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 7,
+    "line_no": 7,
+    "page": 1,
+    "date": "2022-10-18",
+    "delivery_note": "SH22038393",
+    "order_ref": null,
+    "sku": "GOL-G0504053",
+    "description": "ולסיר ברך 110-45º אפור PP3",
+    "site_text": null,
+    "quantity": -4,
+    "unit": "יח'",
+    "unit_price": 21.88,
+    "discount_pct": 40,
+    "net_unit_price": null,
+    "line_total": -52.51,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": true,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 8,
+    "line_no": 8,
+    "page": 1,
+    "date": "2022-10-18",
+    "delivery_note": "SH22038393",
+    "order_ref": null,
+    "sku": "3005",
+    "description": "לקח תעממו",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 0.01,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 0.01,
+    "currency": "ILS",
+    "marker": true,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 9,
+    "line_no": 9,
+    "page": 1,
+    "date": "2022-10-23",
+    "delivery_note": "SH22039076",
+    "order_ref": null,
+    "sku": "TM-109",
+    "description": "רובה טמבור 109 גוון קרמל 5 קילו CE40",
+    "site_text": null,
+    "quantity": 2,
+    "unit": "יח'",
+    "unit_price": 59.83,
+    "discount_pct": 12,
+    "net_unit_price": null,
+    "line_total": 105.3,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 10,
+    "line_no": 10,
+    "page": 1,
+    "date": "2022-10-23",
+    "delivery_note": "SH22039076",
+    "order_ref": null,
+    "sku": "LK-1144501",
+    "description": "ראצט קשירה 25 ממ אורך 4 מטר -מלאי תוצת",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 20.51,
+    "discount_pct": 10,
+    "net_unit_price": null,
+    "line_total": 18.46,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 11,
+    "line_no": 11,
+    "page": 1,
+    "date": "2022-10-23",
+    "delivery_note": "SH22039076",
+    "order_ref": null,
+    "sku": "SAB-11223",
+    "description": "פלס מגנטי TRUPER \"9",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 27.35,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 27.35,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 12,
+    "line_no": 12,
+    "page": 1,
+    "date": "2022-10-23",
+    "delivery_note": "SH22039076",
+    "order_ref": null,
+    "sku": "TAM-149-330",
+    "description": "אוראה גלון 10 ליטר משאיות",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 44.44,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 44.44,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 13,
+    "line_no": 13,
+    "page": 1,
+    "date": "2022-10-23",
+    "delivery_note": "SH22039076",
+    "order_ref": null,
+    "sku": "2.",
+    "description": "לקח זופ",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 0.01,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 0.01,
+    "currency": "ILS",
+    "marker": true,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 14,
+    "line_no": 14,
+    "page": 1,
+    "date": "2022-10-27",
+    "delivery_note": "SH22040010",
+    "order_ref": null,
+    "sku": "3..",
+    "description": "בעקבות תקלה לא חויב בזמן האספקה",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 0.01,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 0.01,
+    "currency": "ILS",
+    "marker": true,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   },
+   {
+    "row": 15,
+    "line_no": 15,
+    "page": 1,
+    "date": "2022-10-27",
+    "delivery_note": "SH22040010",
+    "order_ref": null,
+    "sku": "11",
+    "description": "משלוח בקו גב ההר",
+    "site_text": null,
+    "quantity": 1,
+    "unit": "יח'",
+    "unit_price": 50,
+    "discount_pct": null,
+    "net_unit_price": null,
+    "line_total": 50,
+    "currency": "ILS",
+    "marker": false,
+    "is_return": false,
+    "check_ok": true,
+    "check_diff": 0
+   }
+  ],
+  "checks": [
+   {
+    "name": "lines-sum",
+    "ok": true,
+    "expected": 770.62,
+    "actual": 770.62,
+    "diff": 0,
+    "label": "מחיר כולל"
+   },
+   {
+    "name": "line-arithmetic",
+    "ok": true
+   },
+   {
+    "name": "discount",
+    "ok": true,
+    "expected": 770.94,
+    "actual": 770.94,
+    "diff": 0,
+    "sign": "plus"
+   },
+   {
+    "name": "vat",
+    "ok": true,
+    "expected": 131.06,
+    "actual": 131.06,
+    "diff": 0
+   },
+   {
+    "name": "grand-total",
+    "ok": true,
+    "expected": 902,
+    "actual": 902,
+    "diff": 0
+   }
+  ],
+  "failed_rows": [],
+  "auto_fixed": [],
+  "repaired": [],
+  "repair": null
+ },
+ "csv": "invoice_number,invoice_date,supplier_name,supplier_tax_id,line_no,page,date,delivery_note,order_ref,sku,description,quantity,unit,unit_price,discount_pct,net_unit_price,line_total,currency,check_ok,check_diff,site_text,marker,is_return\r\nIS782237565,2022-10-31,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,1,1,2022-10-02,SH22037122,,KA-4,מסטיק אקרילי לבן TYTAN,12,יח',7.69,16,,77.52,ILS,true,0,,false,false\r\nIS782237565,2022-10-31,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,2,1,2022-10-02,SH22037122,,26,לקח זוצ,1,יח',0.01,,,0.01,ILS,true,0,,true,false\r\nIS782237565,2022-10-31,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,3,1,2022-10-06,SH22037705,,TAI-23102,דלת קומפלט (+משקוף) צבע אגוז 80 שמאל,-1,יח',512.82,10,,-461.54,ILS,true,0,,false,true\r\nIS782237565,2022-10-31,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,4,1,2022-10-06,SH22037705,,16975,דלת סטנלי חוץ קומפלט 80 שמאל,1,יח',1068.38,10,,961.54,ILS,true,0,,false,false\r\nIS782237565,2022-10-31,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,5,1,2022-10-06,SH22037705,,9.,לאסוף את הדלת פנים טורסק ולעדכן אותו שהגיע הסטנל,1,יח',0.01,,,0.01,ILS,true,0,,true,false\r\nIS782237565,2022-10-31,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,6,1,2022-10-06,SH22037705,,9.,עבור רזוח זיותץ לדבר איתו 7076618973,1,יח',0.01,,,0.01,ILS,true,0,,true,false\r\nIS782237565,2022-10-31,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,7,1,2022-10-18,SH22038393,,GOL-G0504053,ולסיר ברך 110-45º אפור PP3,-4,יח',21.88,40,,-52.51,ILS,true,0,,false,true\r\nIS782237565,2022-10-31,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,8,1,2022-10-18,SH22038393,,3005,לקח תעממו,1,יח',0.01,,,0.01,ILS,true,0,,true,false\r\nIS782237565,2022-10-31,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,9,1,2022-10-23,SH22039076,,TM-109,רובה טמבור 109 גוון קרמל 5 קילו CE40,2,יח',59.83,12,,105.3,ILS,true,0,,false,false\r\nIS782237565,2022-10-31,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,10,1,2022-10-23,SH22039076,,LK-1144501,ראצט קשירה 25 ממ אורך 4 מטר -מלאי תוצת,1,יח',20.51,10,,18.46,ILS,true,0,,false,false\r\nIS782237565,2022-10-31,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,11,1,2022-10-23,SH22039076,,SAB-11223,\"פלס מגנטי TRUPER \"\"9\",1,יח',27.35,,,27.35,ILS,true,0,,false,false\r\nIS782237565,2022-10-31,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,12,1,2022-10-23,SH22039076,,TAM-149-330,אוראה גלון 10 ליטר משאיות,1,יח',44.44,,,44.44,ILS,true,0,,false,false\r\nIS782237565,2022-10-31,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,13,1,2022-10-23,SH22039076,,2.,לקח זופ,1,יח',0.01,,,0.01,ILS,true,0,,true,false\r\nIS782237565,2022-10-31,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,14,1,2022-10-27,SH22040010,,3..,בעקבות תקלה לא חויב בזמן האספקה,1,יח',0.01,,,0.01,ILS,true,0,,true,false\r\nIS782237565,2022-10-31,\"ס.ת. קלבזוף איחכו פזווך דא\"\"א\",089697773,15,1,2022-10-27,SH22040010,,11,משלוח בקו גב ההר,1,יח',50,,,50,ILS,true,0,,false,false\r\n",
+ "repair": null
+}

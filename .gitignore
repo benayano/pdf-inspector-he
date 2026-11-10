@@ -1,6 +1,7 @@
 # Rust build artifacts
 /target/
 /wasm/target/
+/ffi/target/
 /wasm/pkg/
 debug/
 *.pdb
@@ -8,6 +9,7 @@ debug/
 # Cargo lock (optional for libraries)
 Cargo.lock
 !/wasm/Cargo.lock
+!/ffi/Cargo.lock
 
 # IDE
 .idea/
@@ -45,3 +47,10 @@ __pycache__/
 
 # pdf-inspector-he: the anonymized invoice corpus is committed
 !he/fixtures/invoices/*.pdf
+/wasm/pkg-web/
+/wasm/pkg-deno/
+/wasm/pkg-edge/
+# Anonymized invoice fixtures are part of the test suite.
+!he/fixtures/**/*.pdf
+/android/
+/native/
