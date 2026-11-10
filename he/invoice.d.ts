@@ -148,8 +148,16 @@ export interface InvoiceDetails {
   bank_code: string | null;
   bank_branch: string | null;
   bank_account: string | null;
-  /** מספר הקצאה, digits only. */
+  /** מספר הקצאה, digits only: a labelled value, or the one nine-digit number by the label. */
   allocation_number: string | null;
+  /**
+   * The label is printed but the code could not decide (no nine-digit number by it, or several):
+   * every number of 9+ digits on the label's line and the line under it. Ask a model to pick
+   * ONE OF THESE, never to write a number. Absent when decided or when no label is printed.
+   */
+  allocation_candidates?: string[];
+  /** The label's line and the line under it, as printed (for that question). */
+  allocation_context?: string;
 }
 
 /**

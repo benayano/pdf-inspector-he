@@ -69,8 +69,17 @@ class InvoiceDetails {
   String? get bankBranch => _str(json['bank_branch']);
   String? get bankAccount => _str(json['bank_account']);
 
-  /// מספר הקצאה, digits only.
+  /// מספר הקצאה, digits only: a labelled value, or the one nine-digit number
+  /// printed by the label.
   String? get allocationNumber => _str(json['allocation_number']);
+
+  /// The label is printed but the code could not decide: the numbers of 9+
+  /// digits by it. A model may pick ONE OF THESE; empty when decided.
+  List<String> get allocationCandidates =>
+      (json['allocation_candidates'] as List? ?? const []).whereType<String>().toList();
+
+  /// The label's line and the line under it, as printed.
+  String? get allocationContext => _str(json['allocation_context']);
 }
 
 /// One item line, as printed (Hebrew already in reading order).
