@@ -263,10 +263,35 @@ fn details_of_the_corpus() {
             "20",
             "483",
             "064061",
+            Some("378249449"),
         ),
-        ("priority-1p", "2022-12-31", "ת23", "31", "034", "743847"),
-        ("priority-2p", "2022-11-30", "ת84", "31", "034", "760768"),
-        ("priority-4p", "2022-10-31", "ת54", "31", "034", "275261"),
+        (
+            "priority-1p",
+            "2022-12-31",
+            "ת23",
+            "31",
+            "034",
+            "743847",
+            None,
+        ),
+        (
+            "priority-2p",
+            "2022-11-30",
+            "ת84",
+            "31",
+            "034",
+            "760768",
+            None,
+        ),
+        (
+            "priority-4p",
+            "2022-10-31",
+            "ת54",
+            "31",
+            "034",
+            "275261",
+            None,
+        ),
     ];
     for ((pdf, name), want) in CORPUS.iter().zip(expected) {
         assert_eq!(*name, want.0);
@@ -287,7 +312,13 @@ fn details_of_the_corpus() {
         );
         assert!(d.supplier_phone.is_some_and(|p| p.len() >= 9), "{name}");
         assert!(d.supplier_address.is_some(), "{name}");
-        assert_eq!(d.allocation_number, None, "{name}");
+        // 2026: printed under its label next to a 17-digit request id; the
+        // 2022 invoices predate allocation numbers and print no label.
+        assert_eq!(d.allocation_number.as_deref(), want.6, "{name}");
+        assert!(
+            d.allocation_candidates.is_empty() && d.allocation_context.is_none(),
+            "{name}"
+        );
     }
 }
 

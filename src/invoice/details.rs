@@ -24,8 +24,17 @@ pub struct Details {
     pub bank_code: Option<String>,
     pub bank_branch: Option<String>,
     pub bank_account: Option<String>,
-    /// מספר הקצאה (9 digits or more), digits only.
+    /// מספר הקצאה, digits only: a labelled value, or the ONE nine-digit
+    /// number printed on the label's line or the line under it.
     pub allocation_number: Option<String>,
+    /// The label is printed but the code could not decide: every number of
+    /// 9 digits or more on the label's line and the line under it. A caller
+    /// may ask a model to pick ONE OF THESE (never to write a number).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub allocation_candidates: Vec<String>,
+    /// The label's line and the line under it, as printed (for that question).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub allocation_context: Option<String>,
 }
 
 impl Details {
@@ -70,6 +79,46 @@ pub fn bank_details(text: &str) -> Option<(String, String, String)> {
     (account.len() >= 4).then(|| (bank[1].to_string(), branch[1].to_string(), account))
 }
 
+/// What stands by the allocation label: (the number when it is decided,
+/// the candidates when it is not, the two lines read).
+///
+/// An allocation number is nine digits. Invoices print it on the label's own
+/// line or alone on the line under it, at times next to a longer request id
+/// ("20260831202850882 243012854"): exactly one nine-digit number there is
+/// the allocation number; none or several is left to the caller.
+pub fn allocation_near_label(lines: &[&str]) -> (Option<String>, Vec<String>, Option<String>) {
+    let Some((at, label)) = lines
+        .iter()
+        .enumerate()
+        .find_map(|(i, l)| ALLOCATION.find(l).map(|m| (i, m)))
+    else {
+        return (None, vec![], None);
+    };
+    let same = &lines[at][label.end()..];
+    let under = lines[at + 1..]
+        .iter()
+        .map(|l| l.trim())
+        .find(|l| !l.is_empty())
+        .unwrap_or("");
+    let mut numbers: Vec<String> = Vec::new();
+    for part in [same, under] {
+        for run in part.split(|c: char| !c.is_ascii_digit()) {
+            if (9..=20).contains(&run.len()) && !numbers.iter().any(|n| n == run) {
+                numbers.push(run.to_string());
+            }
+        }
+    }
+    let nine: Vec<&String> = numbers.iter().filter(|n| n.len() == 9).collect();
+    if nine.len() == 1 {
+        return (Some(nine[0].clone()), vec![], None);
+    }
+    let context: String = format!("{}\n{}", lines[at].trim(), under)
+        .chars()
+        .take(300)
+        .collect();
+    (None, numbers, Some(context.trim().to_string()))
+}
+
 fn supplier_block(header: &Header) -> Option<&Block> {
     let tax = header
         .fields
@@ -100,6 +149,25 @@ pub fn details_from(header: &Header, footer_fields: &[Field], footer_text: &str)
     };
     let supplier = supplier_block(header);
     let bank = bank_details(footer_text);
+    let labelled = fields()
+        .filter(|f| ALLOCATION.is_match(&f.label))
+        .map(|f| f.value.trim())
+        .find(|v| v.len() >= 9 && v.chars().all(|c| c.is_ascii_digit()))
+        .map(str::to_string);
+    // Under the table first (where it is printed), then the header blocks.
+    let lines: Vec<&str> = footer_text
+        .lines()
+        .chain(
+            header
+                .blocks
+                .iter()
+                .flat_map(|b| b.lines.iter().map(String::as_str)),
+        )
+        .collect();
+    let (near, allocation_candidates, allocation_context) = match labelled {
+        Some(_) => (None, vec![], None),
+        None => allocation_near_label(&lines),
+    };
     Details {
         due_date: fields()
             .filter(|f| DUE.is_match(&f.label))
@@ -116,11 +184,9 @@ pub fn details_from(header: &Header, footer_fields: &[Field], footer_text: &str)
         bank_code: bank.as_ref().map(|b| b.0.clone()),
         bank_branch: bank.as_ref().map(|b| b.1.clone()),
         bank_account: bank.as_ref().map(|b| b.2.clone()),
-        allocation_number: fields()
-            .filter(|f| ALLOCATION.is_match(&f.label))
-            .map(|f| f.value.trim())
-            .find(|v| v.len() >= 9 && v.chars().all(|c| c.is_ascii_digit()))
-            .map(str::to_string),
+        allocation_number: labelled.or(near),
+        allocation_candidates,
+        allocation_context,
     }
 }
 
@@ -144,6 +210,36 @@ mod tests {
         assert_eq!(bank_details("סניף: סניף צפון"), None);
         assert_eq!(bank_details("להעברה: בנק לאומי (10) סניף 800"), None);
         assert_eq!(bank_details("בנק לאומי (10) סניף 800 חשבון 123456"), None);
+    }
+
+    #[test]
+    fn allocation_is_the_one_nine_digit_number_by_the_label() {
+        // Alone on the line under the label, next to a longer request id.
+        let (n, c, ctx) =
+            allocation_near_label(&["מספר הקצאה:", "20260831202850882 243012854", "בנק 12"]);
+        assert_eq!((n.as_deref(), c.len(), ctx), (Some("243012854"), 0, None));
+        // On the label's own line, after another field.
+        let (n, _, _) = allocation_near_label(&["מספר הקצאה: יתרה: 58,913.00 ש\"ח 123456789"]);
+        assert_eq!(n.as_deref(), Some("123456789"));
+        // Two nine-digit numbers: not decided here, both offered.
+        let (n, c, ctx) = allocation_near_label(&["מספר הקצאה:", "123456789 987654321"]);
+        assert_eq!(n, None);
+        assert_eq!(c, ["123456789", "987654321"]);
+        assert_eq!(ctx.as_deref(), Some("מספר הקצאה:\n123456789 987654321"));
+        // The label with no number: nothing to pick, the context says so.
+        let (n, c, ctx) = allocation_near_label(&["מספר הקצאה:", "", "חתימה"]);
+        assert_eq!(
+            (n, c.len(), ctx.as_deref()),
+            (None, 0, Some("מספר הקצאה:\nחתימה"))
+        );
+        // No label: nothing at all (a nine-digit tax id elsewhere is not it).
+        assert_eq!(
+            allocation_near_label(&["עוסק מורשה: 123456782"]),
+            (None, vec![], None)
+        );
+        // A number two lines under the label is too far.
+        let (n, c, _) = allocation_near_label(&["מספר הקצאה:", "לתשלום", "123456789"]);
+        assert_eq!((n, c.len()), (None, 0));
     }
 
     fn field(label: &str, value: &str) -> Field {

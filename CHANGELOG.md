@@ -11,6 +11,11 @@ version and date. Earlier releases are described in their
 
 ### Added (pdf-inspector-he)
 
+- **Allocation number by its label.** `details.allocation_number` is also the one nine-digit number
+  printed on the label's line or the line under it (often next to a longer request id). When that
+  is none or several, `allocation_candidates` and `allocation_context` carry what a caller needs to
+  ask a model to pick one of the printed numbers.
+
 - **Invoice read: one pass, more in the answer.** `read_invoice` takes the positioned items from the
   same extraction as the Markdown (about a third faster, identical output), classifies first
   (`max_pages`; a scan is answered unread), and can return page 1's Markdown (`first_page`), with

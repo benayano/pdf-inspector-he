@@ -121,7 +121,9 @@ pass) after classifying it, so a scan costs a millisecond or two. Request option
 from the labelled fields around the table and the text under it (`src/invoice/details.rs`):
 `due_date` (ISO, only a printed date), `payment_terms`, `supplier_phone`, `supplier_address`,
 `bank_code` / `bank_branch` / `bank_account` (all three or none, only after "להעברה" / "פרטי בנק"),
-`allocation_number`. A value that is not printed is null.
+`allocation_number` (the one nine-digit number on the label's line or the line under it; when the
+label is printed and that is none or several, `allocation_candidates` + `allocation_context` let a
+caller ask a model to pick one of the printed numbers). A value that is not printed is null.
 
 ### Apps: C ABI and Dart (`dart:ffi`)
 

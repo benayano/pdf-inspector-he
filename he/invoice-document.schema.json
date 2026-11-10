@@ -47,7 +47,9 @@
         "bank_code": { "type": ["string", "null"], "description": "bank number, digits; bank_code, bank_branch and bank_account come together or not at all" },
         "bank_branch": { "type": ["string", "null"] },
         "bank_account": { "type": ["string", "null"] },
-        "allocation_number": { "type": ["string", "null"], "description": "tax authority allocation number, digits" }
+        "allocation_number": { "type": ["string", "null"], "description": "tax authority allocation number, digits: a labelled value, or the one nine-digit number on the label's line or the line under it" },
+        "allocation_candidates": { "type": "array", "items": { "type": "string" }, "description": "only when the label is printed and the code could not decide: the numbers of 9+ digits by the label. A model may pick one of these" },
+        "allocation_context": { "type": "string", "description": "the label's line and the line under it, as printed" }
       }
     },
     "header": {
